@@ -6,6 +6,9 @@ on:
     paths:
       - 'strategy_lab/**'
       - 'scripts/**'
+      - 'deploy/**'
+      - 'docs/**'
+      - '.env.example'
       - '.github/workflows/smoke.yml'
       - 'requirements.txt'
       - 'pyproject.toml'
