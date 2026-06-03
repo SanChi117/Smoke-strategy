@@ -84,9 +84,15 @@ def main() -> None:
             assert column in feature_columns, f"missing upgraded feature column: {column}"
         assert any(row["setup_bias"] in {"breakout", "pullback", "ignition", "range_rotation", "liquidity_reclaim"} for row in feature_rows), "expected at least one actionable setup bias"
 
+        risk_rows = read_rows(out / "risk_plans.csv")
+        risk_columns = set(risk_rows[0])
+        for column in ["confidence_hint", "target_policy", "risk_grade", "target_rr", "stop_pct"]:
+            assert column in risk_columns, f"missing upgraded risk plan column: {column}"
+        assert any(row["risk_grade"] in {"A", "B", "C"} for row in risk_rows), "expected at least one tradable risk grade"
+
         generated_rows = read_rows(out / "generated_trades.csv")
         generated_columns = set(generated_rows[0])
-        for column in ["setup_type", "trend_context", "volatility_regime", "structure_type", "risk_plan_reason", "target_rr", "stop_pct"]:
+        for column in ["setup_type", "trend_context", "volatility_regime", "structure_type", "confidence_hint", "target_policy", "risk_grade", "risk_plan_reason", "target_rr", "stop_pct"]:
             assert column in generated_columns, f"missing generated trade context column: {column}"
 
     print("CANDLE PIPELINE SMOKE TEST OK")
