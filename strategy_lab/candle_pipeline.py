@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+"""Candle-to-trades research pipeline.
+
+This is the first executable skeleton for the missing chain:
+
+candles CSV -> features -> candidate setups -> risk plans -> generated trades CSV
+
+It does not prove profitability and does not connect to an exchange. It only
+creates normalized research artifacts that can be fed into the integrated
+trade pipeline.
+"""
+
+from __future__ import annotations
+
+import csv
+from dataclasses import asdict
+from pathlib import Path
+
+from strategy_lab.feature_builder import build_features, rows_as_dicts as feature_rows_as_dicts
+from strategy_lab.market_data import read_candles_csv, validate_candles
+from strategy_lab.risk_model import build_risk_plans, risk_plan_to_trade, rows_as_dicts as risk_rows_as_dicts
+from strategy_lab.setup_generator import generate_candidate_setups, rows_as_dicts as candidate_rows_as_dicts
+
+
+def write_dict_csv(path: str | Path, rows: list[dict]) -> None:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not rows:
+        path.write_text("", encoding="utf-8")
+        return
+    with path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def trade_rows_as_dicts(trades) -> list[dict]:
+    rows = []
+    for trade in trades:
+        row = asdict(trade)
+        row["entry_time"] = trade.entry_time.isoformat(timespec="seconds") if hasattr(trade.entry_time, "isoformat") else str(trade.entry_time)
+        row["exit_time"] = trade.exit_time.isoformat(timespec="seconds") if hasattr(trade.exit_time, "isoformat") else str(trade.exit_time)
+        rows.append(row)
+    return rows
+
+
+def run_candle_pipeline(candles_csv: str | Path, out_dir: str | Path = "results", min_confidence: float = 50.0) -> dict[str, int]:
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    candles = read_candles_csv(candles_csv)
+    validate_candles(candles)
+    features = build_features(candles)
+    candidates = generate_candidate_setups(features, min_confidence=min_confidence)
+    plans = build_risk_plans(candidates)
+    trades = [risk_plan_to_trade(plan) for plan in plans]
+
+    write_dict_csv(out / "candle_features.csv", feature_rows_as_dicts(features))
+    write_dict_csv(out / "candidate_setups.csv", candidate_rows_as_dicts(candidates))
+    write_dict_csv(out / "risk_plans.csv", risk_rows_as_dicts(plans))
+    write_dict_csv(out / "generated_trades.csv", trade_rows_as_dicts(trades))
+
+    return {
+        "candles": len(candles),
+        "features": len(features),
+        "candidates": len(candidates),
+        "risk_plans": len(plans),
+        "generated_trades": len(trades),
+    }
+
+
+def main() -> None:
+    import argparse
+
+    p = argparse.ArgumentParser()
+    p.add_argument("--candles", required=True)
+    p.add_argument("--out-dir", default="results")
+    p.add_argument("--min-confidence", type=float, default=50.0)
+    args = p.parse_args()
+
+    summary = run_candle_pipeline(args.candles, args.out_dir, min_confidence=args.min_confidence)
+    print("Candle pipeline complete")
+    for key, value in summary.items():
+        print(f"{key}: {value}")
+
+
+if __name__ == "__main__":
+    main()
