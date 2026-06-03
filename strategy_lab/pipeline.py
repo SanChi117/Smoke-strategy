@@ -16,6 +16,7 @@ from pathlib import Path
 
 from strategy_lab.config import PipelineConfig, get_risk_profile
 from strategy_lab.portfolio_simulator import simulate_dynamic_portfolio
+from strategy_lab.risk_diagnostics import build_risk_diagnostics, build_risk_policy_notes, rows_as_dicts as diagnostic_rows_as_dicts
 from strategy_lab.rolling_symbol_strength import (
     CostConfig,
     RollingConfig,
@@ -150,6 +151,8 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
             risk_pcts[key] = risk_pct
 
     write_dict_csv(out / "pipeline_decisions.csv", [asdict(row) for row in decisions])
+    write_dict_csv(out / "pipeline_risk_diagnostics.csv", diagnostic_rows_as_dicts(build_risk_diagnostics(decisions)))
+    write_dict_csv(out / "pipeline_risk_policy.csv", diagnostic_rows_as_dicts(build_risk_policy_notes()))
 
     result = simulate_dynamic_portfolio(
         allowed_trades,
