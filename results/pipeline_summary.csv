@@ -1,2 +1,2 @@
-profile,initial_cash,leverage,base_risk_pct,max_risk_pct,candidates,allowed_candidates,executed_trades,final_cash,ret_pct,max_dd_pct,pf,winrate,max_loss_streak,symbols_traded,symbols_positive
-growth_100_20x,100.0,20.0,0.0075,0.01,16045,899,622,327.07,227.07,5.58,2.7111,70.42,4,8,8
+profile,initial_cash,leverage,base_risk_pct,max_risk_pct,candidates,allowed_candidates,executed_trades,skipped,skipped_no_risk,skipped_max_positions,skipped_symbol_limit,skipped_cash,skipped_daily_halt,skipped_weekly_halt,final_cash,ret_pct,max_dd_pct,pf,winrate,max_loss_streak,symbols_traded,symbols_positive,total_fees,avg_risk_pct
+growth_100_20x,100.0,20.0,0.0075,0.01,16045,899,622,277,0,255,22,0,0,0,247.53,147.53,3.95,2.7547,70.42,4,8,8,33.3555,0.004775
