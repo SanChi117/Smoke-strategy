@@ -47,7 +47,7 @@ jobs:
 
       - name: Run sample rolling cycle
         run: |
-          python scripts/run_sample_rolling_cycle.py \
+          python scripts/run_sample_rolling_cycle_fixed.py \
             --trades-csv data/sample_runner_trades.csv \
             --out results/sample_rolling_report.csv \
             --start 2025-01-01 \
@@ -73,4 +73,4 @@ jobs:
             data/sample_runner_trades.csv
             results/sample_rolling_report.csv
 
-# trigger: 2026-06-03-sample-rolling-commit
+# trigger: fixed-size-risk-no-reinvest
