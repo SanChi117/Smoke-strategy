@@ -1,0 +1,89 @@
+name: Integrated Research Pipeline
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'strategy_lab/config.py'
+      - 'strategy_lab/schemas.py'
+      - 'strategy_lab/universe_selector.py'
+      - 'strategy_lab/pipeline.py'
+      - 'strategy_lab/rolling_symbol_strength.py'
+      - 'strategy_lab/trade_quality_score.py'
+      - 'strategy_lab/structure_learning.py'
+      - 'scripts/run_pipeline.py'
+      - 'scripts/generate_sample_runner_trades.py'
+      - '.github/workflows/pipeline.yml'
+      - 'pyproject.toml'
+
+permissions:
+  contents: write
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Prepare deterministic sample input
+        run: |
+          python scripts/generate_sample_runner_trades.py \
+            --out data/sample_runner_trades.csv \
+            --symbols 40 \
+            --days 520 \
+            --start 2025-01-01
+
+      - name: Run integrated pipeline
+        run: |
+          python scripts/run_pipeline.py \
+            --input data/sample_runner_trades.csv \
+            --out-dir results \
+            --profile growth_100_20x
+
+      - name: Show pipeline outputs
+        run: |
+          cat results/pipeline_summary.csv
+          echo ''
+          head -30 results/pipeline_universe_ranking.csv
+          echo ''
+          head -30 results/pipeline_decisions.csv
+
+      - name: Commit compact pipeline results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results/pipeline_summary.csv \
+                  results/pipeline_universe_ranking.csv
+          if git diff --cached --quiet; then
+            echo "No pipeline result changes to commit"
+          else
+            git commit -m "Update integrated pipeline generated results"
+            git push
+          fi
+
+      - name: Upload pipeline artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: integrated-pipeline-report
+          path: |
+            results/pipeline_summary.csv
+            results/pipeline_universe_ranking.csv
+            results/pipeline_decisions.csv
