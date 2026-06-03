@@ -17,6 +17,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from strategy_lab.candle_exit_simulator import SimulatedExit, exit_to_trade, rows_as_dicts as exit_rows_as_dicts, simulate_plan_exits
+from strategy_lab.exit_diagnostics import build_exit_diagnostics, rows_as_dicts as exit_diagnostic_rows_as_dicts
 from strategy_lab.feature_builder import build_features, rows_as_dicts as feature_rows_as_dicts
 from strategy_lab.market_data import read_candles_csv, validate_candles
 from strategy_lab.risk_model import RiskPlan, build_risk_plans, rows_as_dicts as risk_rows_as_dicts
@@ -75,11 +76,13 @@ def run_candle_pipeline(candles_csv: str | Path, out_dir: str | Path = "results"
     plans = build_risk_plans(candidates)
     exits = simulate_plan_exits(plans, candles)
     generated_trade_rows = trade_rows_from_plans(plans, exits)
+    exit_diagnostics = build_exit_diagnostics(plans, exits)
 
     write_dict_csv(out / "candle_features.csv", feature_rows_as_dicts(features))
     write_dict_csv(out / "candidate_setups.csv", candidate_rows_as_dicts(candidates))
     write_dict_csv(out / "risk_plans.csv", risk_rows_as_dicts(plans))
     write_dict_csv(out / "candle_exit_results.csv", exit_rows_as_dicts(exits))
+    write_dict_csv(out / "candle_exit_diagnostics.csv", exit_diagnostic_rows_as_dicts(exit_diagnostics))
     write_dict_csv(out / "generated_trades.csv", generated_trade_rows)
 
     return {
@@ -88,6 +91,7 @@ def run_candle_pipeline(candles_csv: str | Path, out_dir: str | Path = "results"
         "candidates": len(candidates),
         "risk_plans": len(plans),
         "exit_results": len(exits),
+        "exit_diagnostics": len(exit_diagnostics),
         "generated_trades": len(generated_trade_rows),
     }
 
