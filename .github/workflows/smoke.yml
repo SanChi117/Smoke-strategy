@@ -51,3 +51,7 @@ jobs:
       - name: Run end-to-end smoke test
         run: |
           python -m strategy_lab.end_to_end_smoke_test
+
+      - name: Run research server smoke test
+        run: |
+          python -m strategy_lab.research_server_smoke_test
