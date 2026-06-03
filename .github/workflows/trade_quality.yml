@@ -1,0 +1,64 @@
+name: Trade Quality Score
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'strategy_lab/trade_quality_score.py'
+      - 'scripts/run_trade_quality_report.py'
+      - '.github/workflows/trade_quality.yml'
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  trade-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Prepare deterministic sample input
+        run: |
+          python scripts/generate_sample_runner_trades.py \
+            --out data/sample_runner_trades.csv \
+            --symbols 40 \
+            --days 520 \
+            --start 2025-01-01
+
+      - name: Run trade quality report
+        run: |
+          python scripts/run_trade_quality_report.py \
+            --input data/sample_runner_trades.csv \
+            --lookback-days 30 \
+            --min-history-trades 3
+
+      - name: Show summary
+        run: |
+          cat results/trade_quality_summary.csv
+          echo ''
+          head -20 results/trade_quality_breakdown.csv
+
+      - name: Upload trade quality artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: trade-quality-report
+          path: |
+            results/trade_quality_scored_trades.csv
+            results/trade_quality_breakdown.csv
+            results/trade_quality_summary.csv
