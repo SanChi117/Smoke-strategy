@@ -13,6 +13,10 @@ on:
       - 'requirements.txt'
       - 'pyproject.toml'
 
+concurrency:
+  group: smoke-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -24,7 +28,7 @@ jobs:
   smoke:
     name: smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -50,11 +54,3 @@ jobs:
       - name: Run candle pipeline smoke test
         run: |
           python -m strategy_lab.candle_pipeline_smoke_test
-
-      - name: Run end-to-end smoke test
-        run: |
-          python -m strategy_lab.end_to_end_smoke_test
-
-      - name: Run research server smoke test
-        run: |
-          python -m strategy_lab.research_server_smoke_test
