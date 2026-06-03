@@ -47,3 +47,7 @@ jobs:
       - name: Run candle pipeline smoke test
         run: |
           python -m strategy_lab.candle_pipeline_smoke_test
+
+      - name: Run end-to-end smoke test
+        run: |
+          python -m strategy_lab.end_to_end_smoke_test
