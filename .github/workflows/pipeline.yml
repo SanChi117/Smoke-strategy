@@ -6,15 +6,23 @@ on:
     paths:
       - 'strategy_lab/config.py'
       - 'strategy_lab/schemas.py'
+      - 'strategy_lab/market_data.py'
+      - 'strategy_lab/feature_builder.py'
+      - 'strategy_lab/setup_generator.py'
+      - 'strategy_lab/risk_model.py'
+      - 'strategy_lab/candle_pipeline.py'
+      - 'strategy_lab/candle_pipeline_smoke_test.py'
       - 'strategy_lab/universe_selector.py'
       - 'strategy_lab/portfolio_simulator.py'
       - 'strategy_lab/risk_diagnostics.py'
+      - 'strategy_lab/validation.py'
       - 'strategy_lab/pipeline.py'
       - 'strategy_lab/pipeline_smoke_test.py'
       - 'strategy_lab/rolling_symbol_strength.py'
       - 'strategy_lab/trade_quality_score.py'
       - 'strategy_lab/structure_learning.py'
       - 'scripts/run_pipeline.py'
+      - 'scripts/run_candle_pipeline.py'
       - 'scripts/generate_sample_runner_trades.py'
       - '.github/workflows/pipeline.yml'
       - 'pyproject.toml'
@@ -50,6 +58,10 @@ jobs:
         run: |
           python -m strategy_lab.pipeline_smoke_test
 
+      - name: Run candle pipeline smoke test
+        run: |
+          python -m strategy_lab.candle_pipeline_smoke_test
+
       - name: Prepare deterministic sample input
         run: |
           python scripts/generate_sample_runner_trades.py \
@@ -69,6 +81,8 @@ jobs:
         run: |
           cat results/pipeline_summary.csv
           echo ''
+          cat results/pipeline_validation_summary.csv
+          echo ''
           head -30 results/pipeline_universe_ranking.csv
           echo ''
           head -30 results/pipeline_risk_diagnostics.csv
@@ -80,6 +94,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add results/pipeline_summary.csv \
+                  results/pipeline_validation_summary.csv \
+                  results/pipeline_validation_issues.csv \
                   results/pipeline_universe_ranking.csv \
                   results/pipeline_risk_diagnostics.csv \
                   results/pipeline_risk_policy.csv
@@ -96,6 +112,8 @@ jobs:
           name: integrated-pipeline-report
           path: |
             results/pipeline_summary.csv
+            results/pipeline_validation_summary.csv
+            results/pipeline_validation_issues.csv
             results/pipeline_universe_ranking.csv
             results/pipeline_risk_diagnostics.csv
             results/pipeline_risk_policy.csv
