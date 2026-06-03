@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate deterministic sample runner trades for rolling selector development."""
+"""Generate deterministic but realistic sample runner trades for rolling selector development."""
 
 from __future__ import annotations
 
@@ -11,24 +11,28 @@ from pathlib import Path
 
 
 def quality_for_symbol(symbol_index: int, day_index: int) -> float:
-    # Deterministic changing symbol quality. Some symbols are stable, some rotate by regime.
-    base = 0.35 + (symbol_index % 7) * 0.08
-    regime = math.sin((day_index / 22.0) + symbol_index * 0.7) * 0.55
-    cycle = math.cos((day_index / 47.0) - symbol_index * 0.3) * 0.25
+    # Rotating symbol quality. Most symbols are mediocre; only a few are temporarily strong.
+    base = -0.10 + (symbol_index % 9) * 0.035
+    regime = math.sin((day_index / 31.0) + symbol_index * 0.73) * 0.34
+    cycle = math.cos((day_index / 71.0) - symbol_index * 0.29) * 0.16
     return base + regime + cycle
 
 
 def make_trade(symbol: str, symbol_index: int, day_index: int, trade_index: int, start: datetime) -> dict:
-    entry_time = start + timedelta(days=day_index, hours=(trade_index * 3 + symbol_index) % 20)
+    entry_time = start + timedelta(days=day_index, hours=(trade_index * 5 + symbol_index) % 20)
     exit_time = entry_time + timedelta(hours=8 + ((symbol_index + trade_index) % 24))
     side = "long" if (day_index + symbol_index + trade_index) % 2 == 0 else "short"
     q = quality_for_symbol(symbol_index, day_index)
     noise = math.sin(day_index * 1.91 + trade_index * 2.17 + symbol_index * 0.41)
-    win = (q + noise * 0.38) > 0.55
+
+    # Win threshold intentionally strict. Good regimes help, but do not create perfect symbols.
+    win = (q + noise * 0.55) > 0.18
     if win:
-        r_mult = 1.8 + (symbol_index % 4) * 0.35 + max(0.0, q) * 0.45
+        r_mult = 0.95 + (symbol_index % 4) * 0.12 + max(0.0, q) * 0.35
     else:
-        r_mult = -1.0
+        # Some losses are slightly worse than -1R to imitate slippage/late exits.
+        r_mult = -1.0 - (0.15 if (day_index + symbol_index) % 11 == 0 else 0.0)
+
     entry = 100.0 + symbol_index * 3.0 + math.sin(day_index / 5.0) * 2.0
     risk = entry * (0.015 + (symbol_index % 5) * 0.002)
     if side == "long":
@@ -47,7 +51,7 @@ def make_trade(symbol: str, symbol_index: int, day_index: int, trade_index: int,
         "exit": round(exit_price, 6),
         "r_mult": round(r_mult, 6),
         "kind": "runner",
-        "source": "sample_generator",
+        "source": "sample_generator_v2_realistic",
     }
 
 
@@ -66,12 +70,14 @@ def main() -> None:
     rows = []
     for day in range(args.days):
         for idx, symbol in enumerate(symbols):
-            # Not every symbol trades every day. Stronger periods create more opportunities.
             q = quality_for_symbol(idx, day)
             raw = math.sin(day * 0.73 + idx * 1.37)
-            if q + raw * 0.2 < 0.2:
+            # Fewer opportunities. Weak symbols sometimes produce no setup at all.
+            if q + raw * 0.25 < -0.22:
                 continue
-            trades_today = 1 + (1 if q > 0.8 and day % 3 == 0 else 0)
+            trades_today = 1
+            if q > 0.36 and day % 8 == 0:
+                trades_today = 2
             for ti in range(trades_today):
                 rows.append(make_trade(symbol, idx, day, ti, start))
 
