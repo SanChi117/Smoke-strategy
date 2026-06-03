@@ -10,4 +10,5 @@ __all__ = [
     "universe_selector",
     "portfolio_simulator",
     "pipeline",
+    "pipeline_smoke_test",
 ]
