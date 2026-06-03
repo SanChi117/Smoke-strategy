@@ -77,6 +77,11 @@ def count_csv_rows(path: Path) -> int:
         return max(0, sum(1 for _ in csv.DictReader(f)))
 
 
+def first_csv_row(path: Path) -> dict[str, str]:
+    with path.open("r", newline="", encoding="utf-8") as f:
+        return next(csv.DictReader(f), {})
+
+
 def main() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
@@ -92,12 +97,16 @@ def main() -> None:
         decisions_path = out_dir / "pipeline_decisions.csv"
         diagnostics_path = out_dir / "pipeline_risk_diagnostics.csv"
         policy_path = out_dir / "pipeline_risk_policy.csv"
+        validation_summary_path = out_dir / "pipeline_validation_summary.csv"
+        validation_issues_path = out_dir / "pipeline_validation_issues.csv"
 
         assert summary_path.exists(), "pipeline summary was not created"
         assert universe_path.exists(), "pipeline universe ranking was not created"
         assert decisions_path.exists(), "pipeline decisions were not created"
         assert diagnostics_path.exists(), "pipeline risk diagnostics were not created"
         assert policy_path.exists(), "pipeline risk policy was not created"
+        assert validation_summary_path.exists(), "pipeline validation summary was not created"
+        assert validation_issues_path.exists(), "pipeline validation issues file was not created"
 
         assert summary.profile == "growth_100_20x", "wrong risk profile"
         assert summary.initial_cash == 100.0, "wrong initial cash"
@@ -113,6 +122,8 @@ def main() -> None:
         assert count_csv_rows(decisions_path) == summary.candidates, "decisions must cover every candidate"
         assert count_csv_rows(diagnostics_path) > 0, "risk diagnostics must not be empty"
         assert count_csv_rows(policy_path) > 0, "risk policy must not be empty"
+        assert count_csv_rows(validation_summary_path) == 1, "validation summary must contain exactly one row"
+        assert first_csv_row(validation_summary_path).get("status") in {"OK", "WARN"}, "validation must not fail"
 
     print("PIPELINE SMOKE TEST OK")
 
