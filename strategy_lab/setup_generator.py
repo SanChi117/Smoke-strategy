@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """Setup generator for candle-feature based strategy research.
 
-Converts MarketFeature rows into candidate trade ideas. This is not a final
-live-entry engine; it is the executable skeleton where future strategy rules
-will be attached.
+Converts MarketFeature rows into candidate trade ideas.
+
+This is still research logic, but it now separates the main setup families:
+- breakout / breakdown continuation
+- trend pullback
+- range rotation
+- liquidity reclaim
+- ignition
 """
 
 from __future__ import annotations
@@ -29,47 +34,101 @@ class CandidateSetup:
     reason: str
 
 
+def _get(feature: MarketFeature, name: str, default):
+    return getattr(feature, name, default)
+
+
 def side_from_feature(feature: MarketFeature) -> str:
-    if feature.trend_context == "countertrend":
+    setup = feature.setup_bias
+    trend_direction = _get(feature, "trend_direction", "neutral")
+    range_position = float(_get(feature, "range_position", 0.5))
+    liquidity_event = _get(feature, "liquidity_event", "none")
+    candle_signal = _get(feature, "candle_signal", "neutral")
+
+    if setup in {"breakout", "pullback", "ignition"}:
+        if trend_direction == "down" or feature.structure_type == "breakdown_continuation":
+            return "short"
+        return "long"
+    if setup == "range_rotation":
+        return "long" if range_position <= 0.25 else "short"
+    if setup == "liquidity_reclaim":
+        if liquidity_event == "low_sweep_reclaim" or candle_signal.startswith("bull"):
+            return "long"
+        return "short"
+    if candle_signal.startswith("bear"):
         return "short"
     return "long"
 
 
 def setup_confidence(feature: MarketFeature) -> float:
-    score = 45.0
-    if feature.structure_type == "continuation":
-        score += 16.0
-    if feature.setup_bias == "ignition":
-        score += 10.0
-    if feature.setup_bias == "pullback":
-        score += 6.0
-    if feature.volatility_regime == "normal":
+    setup = feature.setup_bias
+    trend_direction = _get(feature, "trend_direction", "neutral")
+    volume_state = _get(feature, "volume_state", "normal")
+    candle_signal = _get(feature, "candle_signal", "neutral")
+    liquidity_event = _get(feature, "liquidity_event", "none")
+    range_position = float(_get(feature, "range_position", 0.5))
+    setup_quality = float(_get(feature, "setup_quality", 50.0))
+
+    score = setup_quality
+    if setup == "breakout":
+        score += 8.0
+    elif setup == "pullback":
         score += 5.0
-    if feature.volatility_regime == "high":
-        score -= 6.0
-    if feature.volume_ratio >= 1.4:
+    elif setup == "ignition":
         score += 6.0
-    if feature.body_pct >= 0.45:
+    elif setup == "liquidity_reclaim":
         score += 4.0
-    if feature.trend_context == "countertrend":
+    elif setup == "range_rotation":
+        score += 2.0
+    elif setup.startswith("watch"):
+        score -= 12.0
+
+    if feature.volatility_regime == "normal":
+        score += 4.0
+    elif feature.volatility_regime == "high" and setup not in {"breakout", "ignition"}:
         score -= 10.0
+    elif feature.volatility_regime == "low" and setup == "breakout":
+        score -= 4.0
+
+    if volume_state == "surge":
+        score += 7.0
+    elif volume_state == "above_average":
+        score += 3.0
+    elif volume_state == "dry":
+        score -= 10.0
+
+    if setup in {"breakout", "pullback", "ignition"} and trend_direction == "neutral":
+        score -= 10.0
+    if setup == "range_rotation" and not (range_position <= 0.25 or range_position >= 0.75):
+        score -= 12.0
+    if liquidity_event != "none":
+        score += 5.0
+    if candle_signal in {"bull_impulse", "bear_impulse", "bull_rejection", "bear_rejection"}:
+        score += 3.0
+
     return max(0.0, min(100.0, score))
 
 
 def should_emit_candidate(feature: MarketFeature, min_confidence: float = 50.0) -> bool:
-    if feature.setup_bias == "watch":
+    setup = feature.setup_bias
+    if setup == "watch":
         return False
-    if feature.volatility_regime == "high" and feature.structure_type != "continuation":
+    if setup == "watch_impulse" and setup_confidence(feature) < max(70.0, min_confidence):
+        return False
+    if feature.volatility_regime == "high" and setup not in {"breakout", "ignition", "liquidity_reclaim"}:
+        return False
+    if _get(feature, "volume_state", "normal") == "dry":
         return False
     return setup_confidence(feature) >= min_confidence
 
 
 def generate_candidate_setups(features: Iterable[MarketFeature], min_confidence: float = 50.0, min_spacing_minutes: int = 60) -> list[CandidateSetup]:
     candidates: list[CandidateSetup] = []
-    last_time: dict[tuple[str, str], object] = {}
+    last_time: dict[tuple[str, str, str], object] = {}
     for feature in sorted(features, key=lambda f: (f.symbol, f.time)):
         side = side_from_feature(feature)
-        key = (feature.symbol, side)
+        setup = feature.setup_bias
+        key = (feature.symbol, side, setup)
         prev = last_time.get(key)
         if prev is not None and hasattr(feature.time, "__sub__"):
             if feature.time - prev < timedelta(minutes=min_spacing_minutes):
@@ -77,17 +136,24 @@ def generate_candidate_setups(features: Iterable[MarketFeature], min_confidence:
         if not should_emit_candidate(feature, min_confidence=min_confidence):
             continue
         conf = setup_confidence(feature)
+        reason = (
+            f"setup={setup}|side={side}|trend={feature.trend_context}|dir={_get(feature, 'trend_direction', 'neutral')}|"
+            f"structure={feature.structure_type}|vol={feature.volatility_regime}|vr={feature.volume_ratio}|"
+            f"vol_state={_get(feature, 'volume_state', 'normal')}|candle={_get(feature, 'candle_signal', 'neutral')}|"
+            f"liq={_get(feature, 'liquidity_event', 'none')}|pos={_get(feature, 'range_position', 0.5)}|"
+            f"quality={_get(feature, 'setup_quality', 0.0)}"
+        )
         candidates.append(CandidateSetup(
             symbol=feature.symbol,
             side=side,
             entry_time=feature.time,
             entry=feature.close,
-            setup_type=feature.setup_bias,
+            setup_type=setup,
             trend_context=feature.trend_context,
             volatility_regime=feature.volatility_regime,
             structure_type=feature.structure_type,
             confidence_hint=round(conf, 4),
-            reason=f"{feature.setup_bias}|{feature.trend_context}|{feature.structure_type}|vol={feature.volatility_regime}|vr={feature.volume_ratio}",
+            reason=reason,
         ))
         last_time[key] = feature.time
     return candidates
