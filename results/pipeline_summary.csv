@@ -1,0 +1,2 @@
+profile,initial_cash,leverage,base_risk_pct,max_risk_pct,candidates,allowed_candidates,executed_trades,final_cash,ret_pct,max_dd_pct,pf,winrate,max_loss_streak,symbols_traded,symbols_positive
+growth_100_20x,100.0,20.0,0.0075,0.01,16045,899,622,327.07,227.07,5.58,2.7111,70.42,4,8,8
