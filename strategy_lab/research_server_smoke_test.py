@@ -25,17 +25,19 @@ def free_port() -> int:
 def make_candles_csv(path: Path) -> None:
     start = datetime(2025, 1, 1)
     rows: list[dict] = []
-    symbols = ["AAAUSDT", "BBBUSDT", "CCCUSDT"]
+    symbols = ["AAAUSDT", "BBBUSDT", "CCCUSDT", "DDDUSDT"]
     for idx, symbol in enumerate(symbols):
         price = 90.0 + idx * 20.0
-        for i in range(220):
-            drift = 0.18 if idx < 2 else 0.03
-            impulse = 0.32 if i % 10 in {0, 1, 2} else -0.05
+        # More than 30 days of hourly candles so the server end-to-end test
+        # gives rolling selector enough lookback after feature/setup generation.
+        for i in range(1000):
+            drift = 0.18 if idx < 3 else -0.02
+            impulse = 0.34 if i % 10 in {0, 1, 2} else -0.05
             open_p = price
             close_p = max(1.0, open_p + drift + impulse)
             high = max(open_p, close_p) + 0.75
             low = min(open_p, close_p) - 0.55
-            volume = 1000 + idx * 120 + (300 if i % 10 in {0, 1, 2} else 0)
+            volume = 1000 + idx * 120 + (350 if i % 10 in {0, 1, 2} else 0)
             rows.append({
                 "symbol": symbol,
                 "time": (start + timedelta(hours=i)).isoformat(timespec="seconds"),
@@ -54,7 +56,7 @@ def make_candles_csv(path: Path) -> None:
 
 
 def request_json(port: int, method: str, path: str, body: dict | None = None) -> tuple[int, dict]:
-    conn = HTTPConnection("127.0.0.1", port, timeout=10)
+    conn = HTTPConnection("127.0.0.1", port, timeout=20)
     payload = json.dumps(body or {}).encode("utf-8") if body is not None else None
     headers = {"Content-Type": "application/json"} if body is not None else {}
     conn.request(method, path, body=payload, headers=headers)
@@ -90,6 +92,9 @@ def main() -> None:
             assert payload["status"] == "ok", payload
             assert payload["summary"]["generated_trades"] > 0, payload
             assert payload["summary"]["pipeline_candidates"] == payload["summary"]["generated_trades"], payload
+            assert payload["summary"]["allowed_candidates"] > 0, payload
+            assert payload["summary"]["executed_trades"] > 0, payload
+            assert payload["summary"]["avg_risk_pct"] > 0, payload
 
             status, payload = request_json(port, "GET", "/reports/latest?out_dir=results")
             assert status == 200, payload
