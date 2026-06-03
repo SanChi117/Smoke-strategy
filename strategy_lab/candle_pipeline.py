@@ -18,7 +18,7 @@ from pathlib import Path
 
 from strategy_lab.feature_builder import build_features, rows_as_dicts as feature_rows_as_dicts
 from strategy_lab.market_data import read_candles_csv, validate_candles
-from strategy_lab.risk_model import build_risk_plans, risk_plan_to_trade, rows_as_dicts as risk_rows_as_dicts
+from strategy_lab.risk_model import RiskPlan, build_risk_plans, risk_plan_to_trade, rows_as_dicts as risk_rows_as_dicts
 from strategy_lab.setup_generator import generate_candidate_setups, rows_as_dicts as candidate_rows_as_dicts
 
 
@@ -34,12 +34,26 @@ def write_dict_csv(path: str | Path, rows: list[dict]) -> None:
         writer.writerows(rows)
 
 
-def trade_rows_as_dicts(trades) -> list[dict]:
+def trade_rows_from_plans(plans: list[RiskPlan]) -> list[dict]:
+    """Build a pipeline-ready generated trades CSV.
+
+    The integrated pipeline needs the normalized trade columns, while the
+    structure-learning layer benefits from optional context columns. Keeping
+    the context here prevents the candle path from becoming blind again.
+    """
     rows = []
-    for trade in trades:
+    for plan in plans:
+        trade = risk_plan_to_trade(plan)
         row = asdict(trade)
         row["entry_time"] = trade.entry_time.isoformat(timespec="seconds") if hasattr(trade.entry_time, "isoformat") else str(trade.entry_time)
         row["exit_time"] = trade.exit_time.isoformat(timespec="seconds") if hasattr(trade.exit_time, "isoformat") else str(trade.exit_time)
+        row["setup_type"] = plan.setup_type
+        row["trend_context"] = plan.trend_context
+        row["volatility_regime"] = plan.volatility_regime
+        row["structure_type"] = plan.structure_type
+        row["risk_plan_reason"] = plan.reason
+        row["target_rr"] = plan.target_rr
+        row["stop_pct"] = plan.stop_pct
         rows.append(row)
     return rows
 
@@ -53,19 +67,19 @@ def run_candle_pipeline(candles_csv: str | Path, out_dir: str | Path = "results"
     features = build_features(candles)
     candidates = generate_candidate_setups(features, min_confidence=min_confidence)
     plans = build_risk_plans(candidates)
-    trades = [risk_plan_to_trade(plan) for plan in plans]
+    generated_trade_rows = trade_rows_from_plans(plans)
 
     write_dict_csv(out / "candle_features.csv", feature_rows_as_dicts(features))
     write_dict_csv(out / "candidate_setups.csv", candidate_rows_as_dicts(candidates))
     write_dict_csv(out / "risk_plans.csv", risk_rows_as_dicts(plans))
-    write_dict_csv(out / "generated_trades.csv", trade_rows_as_dicts(trades))
+    write_dict_csv(out / "generated_trades.csv", generated_trade_rows)
 
     return {
         "candles": len(candles),
         "features": len(features),
         "candidates": len(candidates),
         "risk_plans": len(plans),
-        "generated_trades": len(trades),
+        "generated_trades": len(generated_trade_rows),
     }
 
 
