@@ -1,0 +1,88 @@
+name: Full Strategy Assembly
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'strategy_lab/strategy_assembly.py'
+      - 'strategy_lab/rolling_symbol_strength.py'
+      - 'strategy_lab/trade_quality_score.py'
+      - 'strategy_lab/structure_learning.py'
+      - 'scripts/run_strategy_assembly_report.py'
+      - 'scripts/generate_sample_runner_trades.py'
+      - '.github/workflows/strategy_assembly.yml'
+      - 'pyproject.toml'
+
+permissions:
+  contents: write
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  strategy-assembly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Prepare deterministic sample input
+        run: |
+          python scripts/generate_sample_runner_trades.py \
+            --out data/sample_runner_trades.csv \
+            --symbols 40 \
+            --days 520 \
+            --start 2025-01-01
+
+      - name: Run full strategy assembly report
+        run: |
+          python scripts/run_strategy_assembly_report.py \
+            --input data/sample_runner_trades.csv \
+            --out-dir results \
+            --start 2025-01-01 \
+            --end 2026-05-31 \
+            --rolling-lookback-days 30 \
+            --rolling-rebalance-days 7 \
+            --rolling-top-n 5 \
+            --leverage 20
+
+      - name: Show assembly report
+        run: |
+          cat results/strategy_assembly_report.csv
+          echo ''
+          cat results/strategy_assembly_gate_matrix.csv
+
+      - name: Commit generated assembly results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results/strategy_assembly_report.csv \
+                  results/strategy_assembly_gate_matrix.csv
+          if git diff --cached --quiet; then
+            echo "No strategy assembly result changes to commit"
+          else
+            git commit -m "Update strategy assembly generated results"
+            git push
+          fi
+
+      - name: Upload strategy assembly artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: strategy-assembly-report
+          path: |
+            results/strategy_assembly_report.csv
+            results/strategy_assembly_gate_matrix.csv
