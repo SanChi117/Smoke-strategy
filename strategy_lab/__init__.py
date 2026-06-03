@@ -11,6 +11,8 @@ __all__ = [
     "candle_pipeline_smoke_test",
     "end_to_end_pipeline",
     "end_to_end_smoke_test",
+    "research_server",
+    "research_server_smoke_test",
     "rolling_symbol_strength",
     "trade_quality_score",
     "structure_learning",
