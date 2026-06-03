@@ -51,6 +51,9 @@ def trade_rows_from_plans(plans: list[RiskPlan]) -> list[dict]:
         row["trend_context"] = plan.trend_context
         row["volatility_regime"] = plan.volatility_regime
         row["structure_type"] = plan.structure_type
+        row["confidence_hint"] = plan.confidence_hint
+        row["target_policy"] = plan.target_policy
+        row["risk_grade"] = plan.risk_grade
         row["risk_plan_reason"] = plan.reason
         row["target_rr"] = plan.target_rr
         row["stop_pct"] = plan.stop_pct
