@@ -7,6 +7,7 @@ on:
       - 'strategy_lab/config.py'
       - 'strategy_lab/schemas.py'
       - 'strategy_lab/universe_selector.py'
+      - 'strategy_lab/portfolio_simulator.py'
       - 'strategy_lab/pipeline.py'
       - 'strategy_lab/rolling_symbol_strength.py'
       - 'strategy_lab/trade_quality_score.py'
