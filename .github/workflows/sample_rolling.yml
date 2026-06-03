@@ -1,0 +1,55 @@
+name: Sample Rolling Cycle
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'strategy_lab/**'
+      - 'scripts/**'
+      - '.github/workflows/sample_rolling.yml'
+      - 'requirements.txt'
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  sample_rolling:
+    name: sample rolling
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Generate sample runner trades
+        run: |
+          python scripts/generate_sample_runner_trades.py \
+            --out data/sample_runner_trades.csv \
+            --symbols 40 \
+            --days 520 \
+            --start 2025-01-01
+
+      - name: Run sample rolling cycle
+        run: |
+          python scripts/run_sample_rolling_cycle.py \
+            --trades-csv data/sample_runner_trades.csv \
+            --out results/sample_rolling_report.csv \
+            --start 2025-01-01 \
+            --end 2026-05-31
+
+      - name: Upload sample rolling artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sample-rolling-results
+          path: |
+            data/sample_runner_trades.csv
+            results/sample_rolling_report.csv
