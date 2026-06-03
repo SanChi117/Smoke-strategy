@@ -3,7 +3,7 @@
 
 This is the first executable skeleton for the missing chain:
 
-candles CSV -> features -> candidate setups -> risk plans -> generated trades CSV
+candles CSV -> features -> candidate setups -> risk plans -> candle exits -> generated trades CSV
 
 It does not prove profitability and does not connect to an exchange. It only
 creates normalized research artifacts that can be fed into the integrated
@@ -16,9 +16,10 @@ import csv
 from dataclasses import asdict
 from pathlib import Path
 
+from strategy_lab.candle_exit_simulator import SimulatedExit, exit_to_trade, rows_as_dicts as exit_rows_as_dicts, simulate_plan_exits
 from strategy_lab.feature_builder import build_features, rows_as_dicts as feature_rows_as_dicts
 from strategy_lab.market_data import read_candles_csv, validate_candles
-from strategy_lab.risk_model import RiskPlan, build_risk_plans, risk_plan_to_trade, rows_as_dicts as risk_rows_as_dicts
+from strategy_lab.risk_model import RiskPlan, build_risk_plans, rows_as_dicts as risk_rows_as_dicts
 from strategy_lab.setup_generator import generate_candidate_setups, rows_as_dicts as candidate_rows_as_dicts
 
 
@@ -34,7 +35,7 @@ def write_dict_csv(path: str | Path, rows: list[dict]) -> None:
         writer.writerows(rows)
 
 
-def trade_rows_from_plans(plans: list[RiskPlan]) -> list[dict]:
+def trade_rows_from_plans(plans: list[RiskPlan], exits: list[SimulatedExit]) -> list[dict]:
     """Build a pipeline-ready generated trades CSV.
 
     The integrated pipeline needs the normalized trade columns, while the
@@ -42,8 +43,8 @@ def trade_rows_from_plans(plans: list[RiskPlan]) -> list[dict]:
     the context here prevents the candle path from becoming blind again.
     """
     rows = []
-    for plan in plans:
-        trade = risk_plan_to_trade(plan)
+    for plan, exit_result in zip(plans, exits):
+        trade = exit_to_trade(plan, exit_result)
         row = asdict(trade)
         row["entry_time"] = trade.entry_time.isoformat(timespec="seconds") if hasattr(trade.entry_time, "isoformat") else str(trade.entry_time)
         row["exit_time"] = trade.exit_time.isoformat(timespec="seconds") if hasattr(trade.exit_time, "isoformat") else str(trade.exit_time)
@@ -54,6 +55,8 @@ def trade_rows_from_plans(plans: list[RiskPlan]) -> list[dict]:
         row["confidence_hint"] = plan.confidence_hint
         row["target_policy"] = plan.target_policy
         row["risk_grade"] = plan.risk_grade
+        row["exit_reason"] = exit_result.exit_reason
+        row["bars_held"] = exit_result.bars_held
         row["risk_plan_reason"] = plan.reason
         row["target_rr"] = plan.target_rr
         row["stop_pct"] = plan.stop_pct
@@ -70,11 +73,13 @@ def run_candle_pipeline(candles_csv: str | Path, out_dir: str | Path = "results"
     features = build_features(candles)
     candidates = generate_candidate_setups(features, min_confidence=min_confidence)
     plans = build_risk_plans(candidates)
-    generated_trade_rows = trade_rows_from_plans(plans)
+    exits = simulate_plan_exits(plans, candles)
+    generated_trade_rows = trade_rows_from_plans(plans, exits)
 
     write_dict_csv(out / "candle_features.csv", feature_rows_as_dicts(features))
     write_dict_csv(out / "candidate_setups.csv", candidate_rows_as_dicts(candidates))
     write_dict_csv(out / "risk_plans.csv", risk_rows_as_dicts(plans))
+    write_dict_csv(out / "candle_exit_results.csv", exit_rows_as_dicts(exits))
     write_dict_csv(out / "generated_trades.csv", generated_trade_rows)
 
     return {
@@ -82,6 +87,7 @@ def run_candle_pipeline(candles_csv: str | Path, out_dir: str | Path = "results"
         "features": len(features),
         "candidates": len(candidates),
         "risk_plans": len(plans),
+        "exit_results": len(exits),
         "generated_trades": len(generated_trade_rows),
     }
 
