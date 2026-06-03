@@ -13,17 +13,14 @@ import csv
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
-from statistics import mean
 
 from strategy_lab.config import PipelineConfig, get_risk_profile
+from strategy_lab.portfolio_simulator import simulate_dynamic_portfolio
 from strategy_lab.rolling_symbol_strength import (
-    CapitalConfig,
     CostConfig,
     RollingConfig,
     build_rolling_trades,
     load_trades_csv,
-    pf,
-    simulate_capital,
 )
 from strategy_lab.schemas import PipelineDecision, PipelineSummary
 from strategy_lab.structure_learning import (
@@ -68,14 +65,6 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
     out.mkdir(parents=True, exist_ok=True)
 
     cost = CostConfig(fee_rate=cfg.fee_rate, slippage_rate=cfg.slippage_rate)
-    cap = CapitalConfig(
-        initial_cash=profile.initial_cash,
-        risk_pct=profile.base_risk_pct,
-        leverage=profile.leverage,
-        max_positions=profile.max_positions,
-        max_margin_pct=profile.max_margin_pct,
-        reinvest=profile.reinvest,
-    )
 
     all_trades = load_trades_csv(input_csv)
     trade_by_key = {trade_key(t.symbol, t.side, t.entry_time): t for t in all_trades}
@@ -111,6 +100,8 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
 
     decisions: list[PipelineDecision] = []
     allowed_trades = []
+    risk_pcts: dict[tuple[str, str, object], float] = {}
+
     for key, trade in sorted(trade_by_key.items(), key=lambda item: (item[1].entry_time, item[1].symbol, item[1].side)):
         q = quality_by_key[key]
         s = structure_by_key[key]
@@ -156,12 +147,17 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
         ))
         if allowed:
             allowed_trades.append(trade)
+            risk_pcts[key] = risk_pct
 
     write_dict_csv(out / "pipeline_decisions.csv", [asdict(row) for row in decisions])
 
-    # Capital simulation currently uses the base profile risk. Dynamic per-trade risk
-    # is recorded in pipeline_decisions and will be wired into the next simulator upgrade.
-    result = simulate_capital(allowed_trades, cap, cost, f"{cfg.name}_{profile.name}")
+    result = simulate_dynamic_portfolio(
+        allowed_trades,
+        risk_pcts,
+        profile,
+        cost,
+        f"{cfg.name}_{profile.name}",
+    )
     summary = PipelineSummary(
         profile=profile.name,
         initial_cash=profile.initial_cash,
@@ -171,6 +167,13 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
         candidates=len(all_trades),
         allowed_candidates=len(allowed_trades),
         executed_trades=result.trades,
+        skipped=result.skipped,
+        skipped_no_risk=result.skipped_no_risk,
+        skipped_max_positions=result.skipped_max_positions,
+        skipped_symbol_limit=result.skipped_symbol_limit,
+        skipped_cash=result.skipped_cash,
+        skipped_daily_halt=result.skipped_daily_halt,
+        skipped_weekly_halt=result.skipped_weekly_halt,
         final_cash=round(result.final_cash, 2),
         ret_pct=round(result.ret_pct, 2),
         max_dd_pct=round(result.max_dd_pct, 2),
@@ -179,6 +182,8 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
         max_loss_streak=result.max_loss_streak,
         symbols_traded=result.symbols_traded,
         symbols_positive=result.symbols_positive,
+        total_fees=round(result.total_fees, 4),
+        avg_risk_pct=round(result.avg_risk_pct, 6),
     )
     write_dict_csv(out / "pipeline_summary.csv", [asdict(summary)])
     return summary
@@ -199,11 +204,13 @@ def main() -> None:
     print(f"Candidates: {summary.candidates}")
     print(f"Allowed candidates: {summary.allowed_candidates}")
     print(f"Executed trades: {summary.executed_trades}")
+    print(f"Skipped: {summary.skipped}")
     print(f"Final cash: {summary.final_cash}")
     print(f"Return: {summary.ret_pct}%")
     print(f"DD: {summary.max_dd_pct}%")
     print(f"PF: {summary.pf}")
     print(f"Winrate: {summary.winrate}%")
+    print(f"Avg risk pct: {summary.avg_risk_pct}")
 
 
 if __name__ == "__main__":
