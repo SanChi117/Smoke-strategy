@@ -12,6 +12,8 @@ on:
       - 'strategy_lab/risk_model.py'
       - 'strategy_lab/candle_pipeline.py'
       - 'strategy_lab/candle_pipeline_smoke_test.py'
+      - 'strategy_lab/end_to_end_pipeline.py'
+      - 'strategy_lab/end_to_end_smoke_test.py'
       - 'strategy_lab/universe_selector.py'
       - 'strategy_lab/portfolio_simulator.py'
       - 'strategy_lab/risk_diagnostics.py'
@@ -23,6 +25,7 @@ on:
       - 'strategy_lab/structure_learning.py'
       - 'scripts/run_pipeline.py'
       - 'scripts/run_candle_pipeline.py'
+      - 'scripts/run_end_to_end_pipeline.py'
       - 'scripts/generate_sample_runner_trades.py'
       - '.github/workflows/pipeline.yml'
       - 'pyproject.toml'
@@ -61,6 +64,10 @@ jobs:
       - name: Run candle pipeline smoke test
         run: |
           python -m strategy_lab.candle_pipeline_smoke_test
+
+      - name: Run end-to-end smoke test
+        run: |
+          python -m strategy_lab.end_to_end_smoke_test
 
       - name: Prepare deterministic sample input
         run: |
