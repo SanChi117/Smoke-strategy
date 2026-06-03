@@ -17,7 +17,8 @@ def make_candles_csv(path: Path) -> None:
     symbols = ["AAAUSDT", "BBBUSDT", "CCCUSDT", "DDDUSDT"]
     for idx, symbol in enumerate(symbols):
         price = 80.0 + idx * 15.0
-        for i in range(220):
+        # More than 30 days of hourly candles so rolling selector has enough lookback.
+        for i in range(1000):
             drift = 0.16 if idx < 3 else -0.02
             impulse = 0.35 if i % 11 in {0, 1, 2} else -0.06
             open_p = price
@@ -75,6 +76,9 @@ def main() -> None:
         assert summary.features > 0, "expected features"
         assert summary.generated_trades > 0, "expected generated trades"
         assert summary.pipeline_candidates == summary.generated_trades, "generated trades must feed pipeline candidates"
+        assert summary.allowed_candidates > 0, "rolling selector should allow candidates after lookback"
+        assert summary.executed_trades > 0, "dynamic portfolio should execute trades"
+        assert summary.avg_risk_pct > 0, "dynamic risk should be applied"
         assert summary.final_cash > 0, "final cash must stay positive"
 
     print("END-TO-END SMOKE TEST OK")
