@@ -1,0 +1,147 @@
+# Deploy Research Server on VPS
+
+This deploys only the research server.
+
+No live trading. No exchange keys. No 3Commas. No order execution.
+
+## 1. Install system packages
+
+```bash
+sudo apt update
+sudo apt install -y git python3 python3-venv curl
+```
+
+## 2. Create service user
+
+```bash
+sudo useradd --system --create-home --shell /usr/sbin/nologin smoke || true
+```
+
+## 3. Clone repository
+
+```bash
+sudo mkdir -p /opt/smoke-strategy
+sudo chown -R $USER:$USER /opt/smoke-strategy
+git clone https://github.com/SanChi117/Smoke-strategy.git /opt/smoke-strategy
+cd /opt/smoke-strategy
+```
+
+## 4. Create Python environment
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install --upgrade pip
+.venv/bin/pip install -e .
+```
+
+## 5. Create `.env`
+
+```bash
+cp .env.example .env
+```
+
+Default safe config:
+
+```bash
+SMOKE_RESEARCH_MODE=research
+SMOKE_RESEARCH_HOST=127.0.0.1
+SMOKE_RESEARCH_PORT=8080
+SMOKE_RESEARCH_BASE_DIR=/opt/smoke-strategy
+```
+
+Keep `127.0.0.1` unless nginx/reverse proxy and firewall are configured.
+
+## 6. Run smoke tests before service install
+
+```bash
+.venv/bin/python -m strategy_lab.smoke_test
+.venv/bin/python -m strategy_lab.pipeline_smoke_test
+.venv/bin/python -m strategy_lab.candle_pipeline_smoke_test
+.venv/bin/python -m strategy_lab.end_to_end_smoke_test
+.venv/bin/python -m strategy_lab.research_server_smoke_test
+```
+
+All tests should end with `OK`.
+
+## 7. Install systemd service
+
+```bash
+sudo cp deploy/systemd/smoke-research.service /etc/systemd/system/smoke-research.service
+sudo chown -R smoke:smoke /opt/smoke-strategy
+sudo systemctl daemon-reload
+sudo systemctl enable smoke-research
+sudo systemctl start smoke-research
+```
+
+## 8. Check status
+
+```bash
+sudo systemctl status smoke-research --no-pager
+```
+
+Health-check:
+
+```bash
+/opt/smoke-strategy/.venv/bin/python /opt/smoke-strategy/scripts/health_check.py --host 127.0.0.1 --port 8080
+```
+
+Or with curl:
+
+```bash
+curl http://127.0.0.1:8080/health
+```
+
+Expected:
+
+```json
+{
+  "status": "ok",
+  "mode": "research"
+}
+```
+
+## 9. Run pipeline through server
+
+### Run existing trade CSV pipeline
+
+```bash
+curl -X POST http://127.0.0.1:8080/run/pipeline \
+  -H 'Content-Type: application/json' \
+  -d '{"input_csv":"data/sample_runner_trades.csv","out_dir":"results","profile":"growth_100_20x"}'
+```
+
+### Run candle end-to-end pipeline
+
+Requires `data/candles.csv`.
+
+```bash
+curl -X POST http://127.0.0.1:8080/run/end-to-end \
+  -H 'Content-Type: application/json' \
+  -d '{"candles_csv":"data/candles.csv","out_dir":"results","profile":"growth_100_20x","min_confidence":50}'
+```
+
+### Read reports
+
+```bash
+curl http://127.0.0.1:8080/reports/latest?out_dir=results
+```
+
+## 10. Logs
+
+```bash
+sudo journalctl -u smoke-research -n 100 --no-pager
+```
+
+Follow logs:
+
+```bash
+sudo journalctl -u smoke-research -f
+```
+
+## Important safety notes
+
+This service must stay research-only.
+
+Do not add exchange API keys.
+Do not add order execution.
+Do not expose port 8080 publicly until authentication/reverse proxy is added.
