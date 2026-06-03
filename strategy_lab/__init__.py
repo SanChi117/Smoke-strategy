@@ -3,6 +3,12 @@
 __all__ = [
     "config",
     "schemas",
+    "market_data",
+    "feature_builder",
+    "setup_generator",
+    "risk_model",
+    "candle_pipeline",
+    "candle_pipeline_smoke_test",
     "rolling_symbol_strength",
     "trade_quality_score",
     "structure_learning",
@@ -10,6 +16,7 @@ __all__ = [
     "universe_selector",
     "portfolio_simulator",
     "risk_diagnostics",
+    "validation",
     "pipeline",
     "pipeline_smoke_test",
 ]
