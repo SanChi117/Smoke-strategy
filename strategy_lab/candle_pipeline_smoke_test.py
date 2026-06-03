@@ -32,7 +32,7 @@ def make_candles_csv(path: Path) -> None:
             close_p = max(1.0, open_p + drift + wave)
             high = max(open_p, close_p) + 0.75
             low = min(open_p, close_p) - 0.55
-            volume = 1000 + idx * 100 + (250 if i % 9 == 0 else 0)
+            volume = 1000 + idx * 100 + (350 if i % 9 in {0, 1} else 0)
             rows.append({
                 "symbol": symbol,
                 "time": (start + timedelta(hours=i)).isoformat(timespec="seconds"),
@@ -49,9 +49,13 @@ def make_candles_csv(path: Path) -> None:
         writer.writerows(rows)
 
 
-def count_rows(path: Path) -> int:
+def read_rows(path: Path) -> list[dict[str, str]]:
     with path.open("r", newline="", encoding="utf-8") as f:
-        return max(0, sum(1 for _ in csv.DictReader(f)))
+        return list(csv.DictReader(f))
+
+
+def count_rows(path: Path) -> int:
+    return len(read_rows(path))
 
 
 def main() -> None:
@@ -73,6 +77,17 @@ def main() -> None:
             path = out / name
             assert path.exists(), f"missing output: {name}"
             assert count_rows(path) > 0, f"empty output: {name}"
+
+        feature_rows = read_rows(out / "candle_features.csv")
+        feature_columns = set(feature_rows[0])
+        for column in ["trend_direction", "trend_strength", "range_position", "volume_state", "candle_signal", "liquidity_event", "setup_quality"]:
+            assert column in feature_columns, f"missing upgraded feature column: {column}"
+        assert any(row["setup_bias"] in {"breakout", "pullback", "ignition", "range_rotation", "liquidity_reclaim"} for row in feature_rows), "expected at least one actionable setup bias"
+
+        generated_rows = read_rows(out / "generated_trades.csv")
+        generated_columns = set(generated_rows[0])
+        for column in ["setup_type", "trend_context", "volatility_regime", "structure_type", "risk_plan_reason", "target_rr", "stop_pct"]:
+            assert column in generated_columns, f"missing generated trade context column: {column}"
 
     print("CANDLE PIPELINE SMOKE TEST OK")
 
