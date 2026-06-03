@@ -72,3 +72,5 @@ jobs:
           path: |
             data/sample_runner_trades.csv
             results/sample_rolling_report.csv
+
+# trigger: 2026-06-03-sample-rolling-commit
