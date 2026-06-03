@@ -1,0 +1,2 @@
+# No external runtime dependencies yet.
+# Keep core research code standard-library only until smoke tests are stable.
