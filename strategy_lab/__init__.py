@@ -4,4 +4,5 @@ __all__ = [
     "rolling_symbol_strength",
     "trade_quality_score",
     "structure_learning",
+    "strategy_assembly",
 ]
