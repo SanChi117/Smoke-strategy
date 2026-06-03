@@ -1,0 +1,2 @@
+lookback_days,min_history_trades,take_threshold,watch_threshold,trades,winrate,avg_r,total_r,pf,avg_confidence,take_trades,take_avg_r,take_pf,watch_trades,watch_avg_r,skip_trades,skip_avg_r
+30,3,65.0,50.0,16045,0.4731,0.0407,652.6931,1.0762,52.87,392,0.6357,3.0341,10968,0.1724,4685,-0.3175
