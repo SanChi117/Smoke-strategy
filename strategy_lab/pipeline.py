@@ -35,6 +35,7 @@ from strategy_lab.trade_quality_score import (
     score_trades as score_quality_trades,
 )
 from strategy_lab.universe_selector import UniverseConfig, allowed_symbols, rank_universe, rows_as_dicts
+from strategy_lab.validation import write_validation_report
 
 
 def parse_dt(value: str | datetime) -> datetime:
@@ -189,6 +190,7 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
         avg_risk_pct=round(result.avg_risk_pct, 6),
     )
     write_dict_csv(out / "pipeline_summary.csv", [asdict(summary)])
+    write_validation_report(out)
     return summary
 
 
