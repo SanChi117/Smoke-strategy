@@ -1,0 +1,87 @@
+name: Structure Learning Layer
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'strategy_lab/structure_learning.py'
+      - 'scripts/run_structure_learning_report.py'
+      - '.github/workflows/structure_learning.yml'
+      - 'scripts/generate_sample_runner_trades.py'
+      - 'pyproject.toml'
+
+permissions:
+  contents: write
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  structure-learning:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Prepare deterministic sample input
+        run: |
+          python scripts/generate_sample_runner_trades.py \
+            --out data/sample_runner_trades.csv \
+            --symbols 40 \
+            --days 520 \
+            --start 2025-01-01
+
+      - name: Run structure learning report
+        run: |
+          python scripts/run_structure_learning_report.py \
+            --input data/sample_runner_trades.csv \
+            --out-dir results \
+            --lookback-days 30 \
+            --min-exact-trades 8 \
+            --min-fallback-trades 20
+
+      - name: Show summary
+        run: |
+          cat results/structure_learning_summary.csv
+          echo ''
+          cat results/structure_learning_decision_compare.csv
+          echo ''
+          head -40 results/structure_learning_breakdown.csv
+
+      - name: Commit compact generated results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results/structure_learning_summary.csv \
+                  results/structure_learning_decision_compare.csv \
+                  results/structure_learning_breakdown.csv
+          if git diff --cached --quiet; then
+            echo "No structure learning result changes to commit"
+          else
+            git commit -m "Update structure learning generated results"
+            git push
+          fi
+
+      - name: Upload structure learning artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: structure-learning-report
+          path: |
+            results/structure_learning_scored_trades.csv
+            results/structure_learning_breakdown.csv
+            results/structure_learning_summary.csv
+            results/structure_learning_decision_compare.csv
