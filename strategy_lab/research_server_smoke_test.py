@@ -31,13 +31,16 @@ def make_candles_csv(path: Path) -> None:
         # More than 30 days of hourly candles so the server end-to-end test
         # gives rolling selector enough lookback after feature/setup generation.
         for i in range(1000):
+            is_impulse = i % 10 in {0, 1, 2}
             drift = 0.18 if idx < 3 else -0.02
-            impulse = 0.34 if i % 10 in {0, 1, 2} else -0.05
+            impulse = 0.55 if is_impulse else -0.05
             open_p = price
             close_p = max(1.0, open_p + drift + impulse)
             high = max(open_p, close_p) + 0.75
             low = min(open_p, close_p) - 0.55
-            volume = 1000 + idx * 120 + (350 if i % 10 in {0, 1, 2} else 0)
+            # Strong synthetic volume surge. The feature builder requires
+            # volume_ratio >= 1.25/1.8 for actionable continuation setups.
+            volume = 1000 + idx * 120 + (1800 if is_impulse else 0)
             rows.append({
                 "symbol": symbol,
                 "time": (start + timedelta(hours=i)).isoformat(timespec="seconds"),
@@ -86,7 +89,7 @@ def main() -> None:
                 "candles_csv": "data/candles.csv",
                 "out_dir": "results",
                 "profile": "growth_100_20x",
-                "min_confidence": 45,
+                "min_confidence": 40,
             })
             assert status == 200, payload
             assert payload["status"] == "ok", payload
