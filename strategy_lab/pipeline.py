@@ -1,0 +1,210 @@
+#!/usr/bin/env python3
+"""Executable research pipeline skeleton for Smoke Strategy Lab.
+
+This is the main integration point. New modules should be attached here rather
+than tested as isolated scripts.
+
+Research only. No live trading. No API keys.
+"""
+
+from __future__ import annotations
+
+import csv
+from dataclasses import asdict
+from datetime import datetime
+from pathlib import Path
+from statistics import mean
+
+from strategy_lab.config import PipelineConfig, get_risk_profile
+from strategy_lab.rolling_symbol_strength import (
+    CapitalConfig,
+    CostConfig,
+    RollingConfig,
+    build_rolling_trades,
+    load_trades_csv,
+    pf,
+    simulate_capital,
+)
+from strategy_lab.schemas import PipelineDecision, PipelineSummary
+from strategy_lab.structure_learning import (
+    StructureLearningConfig,
+    read_trade_rows as read_structure_rows,
+    score_structure_trades,
+)
+from strategy_lab.trade_quality_score import (
+    QualityConfig,
+    read_trade_rows as read_quality_rows,
+    score_trades as score_quality_trades,
+)
+from strategy_lab.universe_selector import UniverseConfig, allowed_symbols, rank_universe, rows_as_dicts
+
+
+def parse_dt(value: str | datetime) -> datetime:
+    if isinstance(value, datetime):
+        return value
+    return datetime.fromisoformat(str(value).strip().replace("Z", ""))
+
+
+def trade_key(symbol: str, side: str, entry_time: str | datetime) -> tuple[str, str, datetime]:
+    return (symbol.upper(), side.lower(), parse_dt(entry_time))
+
+
+def write_dict_csv(path: str | Path, rows: list[dict]) -> None:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not rows:
+        path.write_text("", encoding="utf-8")
+        return
+    with path.open("w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: PipelineConfig | None = None, profile_name: str | None = None) -> PipelineSummary:
+    cfg = cfg or PipelineConfig()
+    profile = get_risk_profile(profile_name or cfg.default_profile)
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+
+    cost = CostConfig(fee_rate=cfg.fee_rate, slippage_rate=cfg.slippage_rate)
+    cap = CapitalConfig(
+        initial_cash=profile.initial_cash,
+        risk_pct=profile.base_risk_pct,
+        leverage=profile.leverage,
+        max_positions=profile.max_positions,
+        max_margin_pct=profile.max_margin_pct,
+        reinvest=profile.reinvest,
+    )
+
+    all_trades = load_trades_csv(input_csv)
+    trade_by_key = {trade_key(t.symbol, t.side, t.entry_time): t for t in all_trades}
+
+    universe_rows = rank_universe(all_trades, UniverseConfig(allow_top_n=9999))
+    universe_allowed = allowed_symbols(universe_rows, UniverseConfig(allow_top_n=9999))
+    write_dict_csv(out / "pipeline_universe_ranking.csv", rows_as_dicts(universe_rows))
+
+    rolling_trades, _windows, _avg_selected = build_rolling_trades(
+        all_trades,
+        parse_dt(cfg.start),
+        parse_dt(cfg.end),
+        RollingConfig(cfg.rolling_lookback_days, cfg.rolling_rebalance_days, cfg.rolling_top_n),
+        cost,
+    )
+    rolling_keys = {trade_key(t.symbol, t.side, t.entry_time) for t in rolling_trades}
+
+    quality_cfg = QualityConfig(
+        lookback_days=cfg.quality_lookback_days,
+        take_threshold=cfg.quality_take_threshold,
+        watch_threshold=cfg.quality_watch_threshold,
+    )
+    quality_rows = score_quality_trades(read_quality_rows(input_csv), quality_cfg)
+    quality_by_key = {trade_key(r.symbol, r.side, r.entry_time): r for r in quality_rows}
+
+    structure_cfg = StructureLearningConfig(
+        lookback_days=cfg.structure_lookback_days,
+        take_threshold=cfg.structure_take_threshold,
+        watch_threshold=cfg.structure_watch_threshold,
+    )
+    structure_rows = score_structure_trades(read_structure_rows(input_csv), structure_cfg)
+    structure_by_key = {trade_key(r.symbol, r.side, r.entry_time): r for r in structure_rows}
+
+    decisions: list[PipelineDecision] = []
+    allowed_trades = []
+    for key, trade in sorted(trade_by_key.items(), key=lambda item: (item[1].entry_time, item[1].symbol, item[1].side)):
+        q = quality_by_key[key]
+        s = structure_by_key[key]
+        in_universe = trade.symbol in universe_allowed
+        in_rolling = key in rolling_keys
+        quality_ok = q.decision != "SKIP"
+        structure_ok = s.structure_decision != "SKIP"
+        allowed = in_universe and in_rolling and quality_ok and structure_ok
+
+        if not in_universe:
+            reason = "symbol_not_allowed_by_universe"
+        elif not in_rolling:
+            reason = "not_in_current_rolling_top"
+        elif not quality_ok:
+            reason = "quality_skip"
+        elif not structure_ok:
+            reason = "structure_skip"
+        else:
+            reason = "allowed_full_balanced"
+
+        if q.decision == "TAKE" and s.structure_decision == "TAKE":
+            risk_pct = min(profile.max_risk_pct, profile.base_risk_pct * profile.take_risk_multiplier)
+        elif allowed:
+            risk_pct = min(profile.max_risk_pct, profile.base_risk_pct * profile.watch_risk_multiplier)
+        else:
+            risk_pct = 0.0
+
+        decisions.append(PipelineDecision(
+            symbol=trade.symbol,
+            side=trade.side,
+            entry_time=trade.entry_time,
+            allowed=allowed,
+            reason=reason,
+            universe_state="allowed" if in_universe else "blocked",
+            quality_decision=q.decision,
+            structure_decision=s.structure_decision,
+            risk_pct=round(risk_pct, 6),
+            leverage=profile.leverage,
+            target_policy=s.recommended_target_policy,
+            setup_type=getattr(s, "setup_type", "unknown"),
+            trend_context=getattr(s, "trend_context", "unknown"),
+            volatility_regime=getattr(s, "volatility_regime", "unknown"),
+        ))
+        if allowed:
+            allowed_trades.append(trade)
+
+    write_dict_csv(out / "pipeline_decisions.csv", [asdict(row) for row in decisions])
+
+    # Capital simulation currently uses the base profile risk. Dynamic per-trade risk
+    # is recorded in pipeline_decisions and will be wired into the next simulator upgrade.
+    result = simulate_capital(allowed_trades, cap, cost, f"{cfg.name}_{profile.name}")
+    summary = PipelineSummary(
+        profile=profile.name,
+        initial_cash=profile.initial_cash,
+        leverage=profile.leverage,
+        base_risk_pct=profile.base_risk_pct,
+        max_risk_pct=profile.max_risk_pct,
+        candidates=len(all_trades),
+        allowed_candidates=len(allowed_trades),
+        executed_trades=result.trades,
+        final_cash=round(result.final_cash, 2),
+        ret_pct=round(result.ret_pct, 2),
+        max_dd_pct=round(result.max_dd_pct, 2),
+        pf=round(result.pf, 4),
+        winrate=round(result.winrate, 2),
+        max_loss_streak=result.max_loss_streak,
+        symbols_traded=result.symbols_traded,
+        symbols_positive=result.symbols_positive,
+    )
+    write_dict_csv(out / "pipeline_summary.csv", [asdict(summary)])
+    return summary
+
+
+def main() -> None:
+    import argparse
+
+    p = argparse.ArgumentParser()
+    p.add_argument("--input", required=True)
+    p.add_argument("--out-dir", default="results")
+    p.add_argument("--profile", default="growth_100_20x")
+    args = p.parse_args()
+
+    summary = run_pipeline(args.input, args.out_dir, profile_name=args.profile)
+    print("Smoke pipeline complete")
+    print(f"Profile: {summary.profile}")
+    print(f"Candidates: {summary.candidates}")
+    print(f"Allowed candidates: {summary.allowed_candidates}")
+    print(f"Executed trades: {summary.executed_trades}")
+    print(f"Final cash: {summary.final_cash}")
+    print(f"Return: {summary.ret_pct}%")
+    print(f"DD: {summary.max_dd_pct}%")
+    print(f"PF: {summary.pf}")
+    print(f"Winrate: {summary.winrate}%")
+
+
+if __name__ == "__main__":
+    main()
