@@ -1,0 +1,21 @@
+[Unit]
+Description=Smoke Strategy Lab Research Server
+After=network.target
+
+[Service]
+Type=simple
+User=smoke
+Group=smoke
+WorkingDirectory=/opt/smoke-strategy
+EnvironmentFile=/opt/smoke-strategy/.env
+ExecStart=/opt/smoke-strategy/.venv/bin/python scripts/run_research_server.py --host ${SMOKE_RESEARCH_HOST} --port ${SMOKE_RESEARCH_PORT} --base-dir ${SMOKE_RESEARCH_BASE_DIR}
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/smoke-strategy/results /opt/smoke-strategy/data
+
+[Install]
+WantedBy=multi-user.target
