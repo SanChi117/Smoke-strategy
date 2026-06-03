@@ -1,0 +1,74 @@
+name: Sample Rolling Cycle Commit Results
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/sample_rolling_commit.yml'
+      - 'pyproject.toml'
+      - 'strategy_lab/**'
+      - 'scripts/**'
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  sample_rolling_commit:
+    name: sample rolling commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Generate sample runner trades
+        run: |
+          python scripts/generate_sample_runner_trades.py \
+            --out data/sample_runner_trades.csv \
+            --symbols 40 \
+            --days 520 \
+            --start 2025-01-01
+
+      - name: Run sample rolling cycle
+        run: |
+          python scripts/run_sample_rolling_cycle.py \
+            --trades-csv data/sample_runner_trades.csv \
+            --out results/sample_rolling_report.csv \
+            --start 2025-01-01 \
+            --end 2026-05-31
+
+      - name: Commit generated results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/sample_runner_trades.csv results/sample_rolling_report.csv
+          if git diff --cached --quiet; then
+            echo "No generated result changes to commit"
+          else
+            git commit -m "Update sample rolling generated results"
+            git push
+          fi
+
+      - name: Upload sample rolling artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sample-rolling-committed-results
+          path: |
+            data/sample_runner_trades.csv
+            results/sample_rolling_report.csv
