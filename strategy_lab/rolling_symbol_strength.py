@@ -46,6 +46,7 @@ class CapitalConfig:
     leverage: float = 20.0
     max_positions: int = 2
     max_margin_pct: float = 0.20
+    reinvest: bool = False
 
 
 @dataclass(frozen=True)
@@ -269,7 +270,8 @@ def simulate_capital(trades: Sequence[Trade], cap: CapitalConfig, cost: CostConf
             continue
         used_margin = sum(x[1] for x in active)
         equity = cash + used_margin
-        risk_amount = equity * cap.risk_pct
+        risk_base = equity if cap.reinvest else cap.initial_cash
+        risk_amount = min(risk_base * cap.risk_pct, equity * cap.risk_pct)
         risk_based_notional = risk_amount / dist
         max_margin = equity * cap.max_margin_pct
         margin = min(max_margin, risk_based_notional / cap.leverage, cash)
@@ -331,11 +333,12 @@ def main() -> None:
     p.add_argument("--rebalance-days", type=int, default=7)
     p.add_argument("--top-n", type=int, default=8)
     p.add_argument("--initial-cash", type=float, default=500.0)
-    p.add_argument("--risk-pct", type=float, default=0.02)
+    p.add_argument("--risk-pct", type=float, default=0.005)
     p.add_argument("--leverage", type=float, default=20.0)
     p.add_argument("--max-positions", type=int, default=2)
     p.add_argument("--fee", type=float, default=0.0008)
     p.add_argument("--slippage", type=float, default=0.0)
+    p.add_argument("--reinvest", action="store_true")
     args = p.parse_args()
 
     trades = load_trades_csv(args.trades_csv)
@@ -344,7 +347,7 @@ def main() -> None:
         parse_dt(args.start),
         parse_dt(args.end),
         RollingConfig(args.lookback_days, args.rebalance_days, args.top_n),
-        CapitalConfig(args.initial_cash, args.risk_pct, args.leverage, args.max_positions),
+        CapitalConfig(args.initial_cash, args.risk_pct, args.leverage, args.max_positions, reinvest=args.reinvest),
         CostConfig(args.fee, args.slippage),
     )
     print(
