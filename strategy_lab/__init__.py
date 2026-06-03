@@ -7,6 +7,7 @@ __all__ = [
     "feature_builder",
     "setup_generator",
     "risk_model",
+    "candle_exit_simulator",
     "candle_pipeline",
     "candle_pipeline_smoke_test",
     "end_to_end_pipeline",
