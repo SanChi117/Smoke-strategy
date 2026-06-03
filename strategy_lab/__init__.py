@@ -9,6 +9,7 @@ __all__ = [
     "strategy_assembly",
     "universe_selector",
     "portfolio_simulator",
+    "risk_diagnostics",
     "pipeline",
     "pipeline_smoke_test",
 ]
