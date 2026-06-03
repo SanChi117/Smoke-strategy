@@ -3,7 +3,7 @@
 
 Checks the missing execution chain:
 
-candles -> features -> candidate setups -> risk plans -> generated trades
+candles -> features -> candidate setups -> risk plans -> candle exits -> generated trades
 
 Research only. No live trading. No API keys.
 """
@@ -24,15 +24,15 @@ def make_candles_csv(path: Path) -> None:
     symbols = ["AAAUSDT", "BBBUSDT", "CCCUSDT"]
     for idx, symbol in enumerate(symbols):
         price = 100.0 + idx * 20.0
-        for i in range(140):
+        for i in range(160):
             # First two symbols trend cleanly. Third is weaker/noisier.
             drift = 0.18 if idx < 2 else -0.03
             wave = 0.25 if i % 7 in {0, 1, 2} else -0.08
             open_p = price
             close_p = max(1.0, open_p + drift + wave)
-            high = max(open_p, close_p) + 0.75
-            low = min(open_p, close_p) - 0.55
-            volume = 1000 + idx * 100 + (350 if i % 9 in {0, 1} else 0)
+            high = max(open_p, close_p) + 0.95
+            low = min(open_p, close_p) - 0.70
+            volume = 1000 + idx * 100 + (600 if i % 9 in {0, 1} else 0)
             rows.append({
                 "symbol": symbol,
                 "time": (start + timedelta(hours=i)).isoformat(timespec="seconds"),
@@ -71,9 +71,10 @@ def main() -> None:
         assert summary["features"] > 0, "expected features"
         assert summary["candidates"] > 0, "expected candidate setups"
         assert summary["risk_plans"] == summary["candidates"], "risk plan count must match candidates"
+        assert summary["exit_results"] == summary["risk_plans"], "exit result count must match risk plans"
         assert summary["generated_trades"] == summary["risk_plans"], "generated trade count must match risk plans"
 
-        for name in ["candle_features.csv", "candidate_setups.csv", "risk_plans.csv", "generated_trades.csv"]:
+        for name in ["candle_features.csv", "candidate_setups.csv", "risk_plans.csv", "candle_exit_results.csv", "generated_trades.csv"]:
             path = out / name
             assert path.exists(), f"missing output: {name}"
             assert count_rows(path) > 0, f"empty output: {name}"
@@ -90,9 +91,15 @@ def main() -> None:
             assert column in risk_columns, f"missing upgraded risk plan column: {column}"
         assert any(row["risk_grade"] in {"A", "B", "C"} for row in risk_rows), "expected at least one tradable risk grade"
 
+        exit_rows = read_rows(out / "candle_exit_results.csv")
+        exit_columns = set(exit_rows[0])
+        for column in ["exit_reason", "bars_held", "r_mult", "exit"]:
+            assert column in exit_columns, f"missing candle exit column: {column}"
+        assert any(row["exit_reason"] in {"take_profit", "stop_loss", "time_stop"} for row in exit_rows), "expected real candle exit reasons"
+
         generated_rows = read_rows(out / "generated_trades.csv")
         generated_columns = set(generated_rows[0])
-        for column in ["setup_type", "trend_context", "volatility_regime", "structure_type", "confidence_hint", "target_policy", "risk_grade", "risk_plan_reason", "target_rr", "stop_pct"]:
+        for column in ["setup_type", "trend_context", "volatility_regime", "structure_type", "confidence_hint", "target_policy", "risk_grade", "exit_reason", "bars_held", "risk_plan_reason", "target_rr", "stop_pct"]:
             assert column in generated_columns, f"missing generated trade context column: {column}"
 
     print("CANDLE PIPELINE SMOKE TEST OK")
