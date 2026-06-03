@@ -9,6 +9,7 @@ on:
       - 'strategy_lab/universe_selector.py'
       - 'strategy_lab/portfolio_simulator.py'
       - 'strategy_lab/pipeline.py'
+      - 'strategy_lab/pipeline_smoke_test.py'
       - 'strategy_lab/rolling_symbol_strength.py'
       - 'strategy_lab/trade_quality_score.py'
       - 'strategy_lab/structure_learning.py'
@@ -43,6 +44,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .
+
+      - name: Run integrated pipeline smoke test
+        run: |
+          python -m strategy_lab.pipeline_smoke_test
 
       - name: Prepare deterministic sample input
         run: |
