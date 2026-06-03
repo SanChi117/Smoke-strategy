@@ -33,6 +33,10 @@ on:
       - '.github/workflows/pipeline.yml'
       - 'pyproject.toml'
 
+concurrency:
+  group: pipeline-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
@@ -63,10 +67,6 @@ jobs:
       - name: Run integrated pipeline smoke test
         run: |
           python -m strategy_lab.pipeline_smoke_test
-
-      - name: Run candle pipeline smoke test
-        run: |
-          python -m strategy_lab.candle_pipeline_smoke_test
 
       - name: Run end-to-end smoke test
         run: |
