@@ -8,6 +8,7 @@ on:
       - 'scripts/**'
       - '.github/workflows/smoke.yml'
       - 'requirements.txt'
+      - 'pyproject.toml'
 
 permissions:
   contents: read
@@ -30,6 +31,15 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Run smoke test
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Run rolling smoke test
         run: |
           python -m strategy_lab.smoke_test
+
+      - name: Run integrated pipeline smoke test
+        run: |
+          python -m strategy_lab.pipeline_smoke_test
