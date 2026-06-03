@@ -50,6 +50,13 @@ class PipelineSummary:
     candidates: int
     allowed_candidates: int
     executed_trades: int
+    skipped: int
+    skipped_no_risk: int
+    skipped_max_positions: int
+    skipped_symbol_limit: int
+    skipped_cash: int
+    skipped_daily_halt: int
+    skipped_weekly_halt: int
     final_cash: float
     ret_pct: float
     max_dd_pct: float
@@ -58,3 +65,5 @@ class PipelineSummary:
     max_loss_streak: int
     symbols_traded: int
     symbols_positive: int
+    total_fees: float
+    avg_risk_pct: float
