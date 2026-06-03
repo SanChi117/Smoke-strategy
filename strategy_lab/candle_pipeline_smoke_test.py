@@ -3,7 +3,7 @@
 
 Checks the missing execution chain:
 
-candles -> features -> candidate setups -> risk plans -> candle exits -> generated trades
+candles -> features -> candidate setups -> risk plans -> candle exits -> exit diagnostics -> generated trades
 
 Research only. No live trading. No API keys.
 """
@@ -72,9 +72,10 @@ def main() -> None:
         assert summary["candidates"] > 0, "expected candidate setups"
         assert summary["risk_plans"] == summary["candidates"], "risk plan count must match candidates"
         assert summary["exit_results"] == summary["risk_plans"], "exit result count must match risk plans"
+        assert summary["exit_diagnostics"] > 0, "expected exit diagnostics"
         assert summary["generated_trades"] == summary["risk_plans"], "generated trade count must match risk plans"
 
-        for name in ["candle_features.csv", "candidate_setups.csv", "risk_plans.csv", "candle_exit_results.csv", "generated_trades.csv"]:
+        for name in ["candle_features.csv", "candidate_setups.csv", "risk_plans.csv", "candle_exit_results.csv", "candle_exit_diagnostics.csv", "generated_trades.csv"]:
             path = out / name
             assert path.exists(), f"missing output: {name}"
             assert count_rows(path) > 0, f"empty output: {name}"
@@ -96,6 +97,14 @@ def main() -> None:
         for column in ["exit_reason", "bars_held", "r_mult", "exit"]:
             assert column in exit_columns, f"missing candle exit column: {column}"
         assert any(row["exit_reason"] in {"take_profit", "stop_loss", "time_stop"} for row in exit_rows), "expected real candle exit reasons"
+
+        diagnostic_rows = read_rows(out / "candle_exit_diagnostics.csv")
+        diagnostic_columns = set(diagnostic_rows[0])
+        for column in ["group", "value", "trades", "take_profit", "stop_loss", "time_stop", "winrate", "avg_r", "avg_bars_held"]:
+            assert column in diagnostic_columns, f"missing exit diagnostic column: {column}"
+        assert any(row["group"] == "all" and row["value"] == "all" for row in diagnostic_rows), "expected all/all exit diagnostic row"
+        assert any(row["group"] == "setup_type" for row in diagnostic_rows), "expected setup_type exit diagnostics"
+        assert any(row["group"] == "risk_grade" for row in diagnostic_rows), "expected risk_grade exit diagnostics"
 
         generated_rows = read_rows(out / "generated_trades.csv")
         generated_columns = set(generated_rows[0])
