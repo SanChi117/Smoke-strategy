@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import tempfile
 import threading
 from datetime import datetime, timedelta
@@ -54,10 +55,12 @@ def make_candles_csv(path: Path) -> None:
         writer.writerows(rows)
 
 
-def request_json(port: int, method: str, path: str, body: dict | None = None) -> tuple[int, dict]:
+def request_json(port: int, method: str, path: str, body: dict | None = None, token: str | None = None) -> tuple[int, dict]:
     conn = HTTPConnection("127.0.0.1", port, timeout=20)
     payload = json.dumps(body or {}).encode("utf-8") if body is not None else None
     headers = {"Content-Type": "application/json"} if body is not None else {}
+    if token:
+        headers["X-Research-Token"] = token
     conn.request(method, path, body=payload, headers=headers)
     resp = conn.getresponse()
     data = resp.read().decode("utf-8")
@@ -65,69 +68,105 @@ def request_json(port: int, method: str, path: str, body: dict | None = None) ->
     return resp.status, json.loads(data)
 
 
+def run_open_server_check(root: Path, candles: Path) -> None:
+    port = free_port()
+    server = ThreadingHTTPServer(("127.0.0.1", port), create_handler(root))
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        status, payload = request_json(port, "GET", "/health")
+        assert status == 200, payload
+        assert payload["status"] == "ok", payload
+        assert payload["mode"] == "research", payload
+        assert payload["auth_enabled"] is False, payload
+        assert "server_version" in payload, payload
+
+        status, payload = request_json(port, "POST", "/run/end-to-end", {
+            "candles_csv": "data/candles.csv",
+            "out_dir": "results",
+            "profile": "growth_100_20x",
+            "min_confidence": 40,
+        })
+        assert status == 200, payload
+        assert payload["status"] == "ok", payload
+        assert payload["run_id"], payload
+        run_id = payload["run_id"]
+        assert payload["out_dir"].endswith(f"results/runs/{run_id}"), payload
+        assert payload["summary"]["generated_trades"] > 0, payload
+        assert payload["summary"]["pipeline_candidates"] == payload["summary"]["generated_trades"], payload
+        assert payload["summary"]["allowed_candidates"] > 0, payload
+        assert payload["summary"]["executed_trades"] > 0, payload
+        assert payload["summary"]["avg_risk_pct"] > 0, payload
+        assert payload["summary"]["sanity_status"] in {"OK", "WARN", "FAIL"}, payload
+        assert (root / "results" / "runs" / run_id / "run_metadata.json").exists(), "missing run metadata"
+
+        status, payload = request_json(port, "GET", "/runs/latest?runs_dir=results/runs")
+        assert status == 200, payload
+        assert payload["status"] == "ok", payload
+        assert payload["run_id"] == run_id, payload
+        assert payload["metadata"]["type"] == "end-to-end", payload
+
+        status, payload = request_json(port, "GET", "/reports/latest?out_dir=results")
+        assert status == 200, payload
+        assert payload["status"] == "ok", payload
+        assert payload["run_id"] == run_id, payload
+        assert "pipeline_summary.csv" in payload["reports"], payload
+        assert "end_to_end_summary.csv" in payload["reports"], payload
+        assert "report_sanity_summary.csv" in payload["reports"], payload
+        assert "report_sanity_issues.csv" in payload["reports"], payload
+        assert "candle_research_report.csv" in payload["reports"], payload
+        assert "candle_exit_diagnostics.csv" in payload["reports"], payload
+        assert "generated_trades.csv" in payload["reports"], payload
+        report_metrics = {row.get("metric") for row in payload["reports"]["candle_research_report.csv"]}
+        assert "avg_r" in report_metrics, payload
+        assert "best_setup_type" in report_metrics, payload
+
+        status, payload = request_json(port, "GET", f"/reports/latest?out_dir=results&run_id={run_id}")
+        assert status == 200, payload
+        assert payload["run_id"] == run_id, payload
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+
+
+def run_auth_server_check(root: Path) -> None:
+    old_token = os.environ.get("RESEARCH_SERVER_TOKEN")
+    os.environ["RESEARCH_SERVER_TOKEN"] = "test-token"
+    port = free_port()
+    server = ThreadingHTTPServer(("127.0.0.1", port), create_handler(root))
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        status, payload = request_json(port, "GET", "/health")
+        assert status == 200, payload
+        assert payload["auth_enabled"] is True, payload
+
+        status, payload = request_json(port, "GET", "/reports/latest?out_dir=results")
+        assert status == 401, payload
+        assert payload["error"] == "unauthorized", payload
+
+        status, payload = request_json(port, "GET", "/reports/latest?out_dir=results", token="bad-token")
+        assert status == 401, payload
+
+        status, payload = request_json(port, "GET", "/reports/latest?out_dir=results", token="test-token")
+        assert status == 200, payload
+        assert payload["status"] == "ok", payload
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+        if old_token is None:
+            os.environ.pop("RESEARCH_SERVER_TOKEN", None)
+        else:
+            os.environ["RESEARCH_SERVER_TOKEN"] = old_token
+
+
 def main() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td)
         candles = root / "data" / "candles.csv"
         make_candles_csv(candles)
-
-        port = free_port()
-        server = ThreadingHTTPServer(("127.0.0.1", port), create_handler(root))
-        thread = threading.Thread(target=server.serve_forever, daemon=True)
-        thread.start()
-        try:
-            status, payload = request_json(port, "GET", "/health")
-            assert status == 200, payload
-            assert payload["status"] == "ok", payload
-            assert payload["mode"] == "research", payload
-            assert "server_version" in payload, payload
-
-            status, payload = request_json(port, "POST", "/run/end-to-end", {
-                "candles_csv": "data/candles.csv",
-                "out_dir": "results",
-                "profile": "growth_100_20x",
-                "min_confidence": 40,
-            })
-            assert status == 200, payload
-            assert payload["status"] == "ok", payload
-            assert payload["run_id"], payload
-            run_id = payload["run_id"]
-            assert payload["out_dir"].endswith(f"results/runs/{run_id}"), payload
-            assert payload["summary"]["generated_trades"] > 0, payload
-            assert payload["summary"]["pipeline_candidates"] == payload["summary"]["generated_trades"], payload
-            assert payload["summary"]["allowed_candidates"] > 0, payload
-            assert payload["summary"]["executed_trades"] > 0, payload
-            assert payload["summary"]["avg_risk_pct"] > 0, payload
-            assert payload["summary"]["sanity_status"] in {"OK", "WARN", "FAIL"}, payload
-            assert (root / "results" / "runs" / run_id / "run_metadata.json").exists(), "missing run metadata"
-
-            status, payload = request_json(port, "GET", "/runs/latest?runs_dir=results/runs")
-            assert status == 200, payload
-            assert payload["status"] == "ok", payload
-            assert payload["run_id"] == run_id, payload
-            assert payload["metadata"]["type"] == "end-to-end", payload
-
-            status, payload = request_json(port, "GET", "/reports/latest?out_dir=results")
-            assert status == 200, payload
-            assert payload["status"] == "ok", payload
-            assert payload["run_id"] == run_id, payload
-            assert "pipeline_summary.csv" in payload["reports"], payload
-            assert "end_to_end_summary.csv" in payload["reports"], payload
-            assert "report_sanity_summary.csv" in payload["reports"], payload
-            assert "report_sanity_issues.csv" in payload["reports"], payload
-            assert "candle_research_report.csv" in payload["reports"], payload
-            assert "candle_exit_diagnostics.csv" in payload["reports"], payload
-            assert "generated_trades.csv" in payload["reports"], payload
-            report_metrics = {row.get("metric") for row in payload["reports"]["candle_research_report.csv"]}
-            assert "avg_r" in report_metrics, payload
-            assert "best_setup_type" in report_metrics, payload
-
-            status, payload = request_json(port, "GET", f"/reports/latest?out_dir=results&run_id={run_id}")
-            assert status == 200, payload
-            assert payload["run_id"] == run_id, payload
-        finally:
-            server.shutdown()
-            thread.join(timeout=5)
+        run_open_server_check(root, candles)
+        run_auth_server_check(root)
     print("RESEARCH SERVER SMOKE TEST OK")
 
 
