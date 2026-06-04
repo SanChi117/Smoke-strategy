@@ -104,6 +104,12 @@ def main() -> None:
             assert payload["status"] == "ok", payload
             assert "pipeline_summary.csv" in payload["reports"], payload
             assert "end_to_end_summary.csv" in payload["reports"], payload
+            assert "candle_research_report.csv" in payload["reports"], payload
+            assert "candle_exit_diagnostics.csv" in payload["reports"], payload
+            assert "generated_trades.csv" in payload["reports"], payload
+            report_metrics = {row.get("metric") for row in payload["reports"]["candle_research_report.csv"]}
+            assert "avg_r" in report_metrics, payload
+            assert "best_setup_type" in report_metrics, payload
         finally:
             server.shutdown()
             thread.join(timeout=5)
