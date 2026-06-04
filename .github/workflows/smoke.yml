@@ -55,6 +55,10 @@ jobs:
         run: |
           python -m strategy_lab.candle_pipeline_smoke_test
 
+      - name: Run data quality CLI smoke test
+        run: |
+          python -m strategy_lab.data_quality_cli_smoke_test
+
       - name: Run local demo smoke test
         run: |
           python -m strategy_lab.local_demo_smoke_test
