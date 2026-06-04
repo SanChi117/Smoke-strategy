@@ -6,6 +6,8 @@ __all__ = [
     "market_data",
     "data_quality",
     "data_quality_cli_smoke_test",
+    "universe_input",
+    "universe_input_smoke_test",
     "feature_builder",
     "setup_generator",
     "risk_model",
