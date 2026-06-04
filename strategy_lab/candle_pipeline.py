@@ -3,7 +3,7 @@
 
 This is the first executable skeleton for the missing chain:
 
-candles CSV -> features -> candidate setups -> risk plans -> candle exits -> generated trades CSV
+candles CSV -> data quality -> features -> candidate setups -> risk plans -> candle exits -> generated trades CSV
 
 It does not prove profitability and does not connect to an exchange. It only
 creates normalized research artifacts that can be fed into the integrated
@@ -18,6 +18,7 @@ from pathlib import Path
 
 from strategy_lab.candle_exit_simulator import SimulatedExit, exit_to_trade, rows_as_dicts as exit_rows_as_dicts, simulate_plan_exits
 from strategy_lab.candle_research_report import build_candle_research_report, rows_as_dicts as candle_report_rows_as_dicts
+from strategy_lab.data_quality import DataQualityConfig, analyze_data_quality, rows_as_dicts as data_quality_rows_as_dicts
 from strategy_lab.exit_diagnostics import build_exit_diagnostics, rows_as_dicts as exit_diagnostic_rows_as_dicts
 from strategy_lab.feature_builder import build_features, rows_as_dicts as feature_rows_as_dicts
 from strategy_lab.market_data import read_candles_csv, validate_candles
@@ -71,6 +72,11 @@ def run_candle_pipeline(candles_csv: str | Path, out_dir: str | Path = "results"
     out.mkdir(parents=True, exist_ok=True)
 
     candles = read_candles_csv(candles_csv)
+    quality_summary, quality_coverage, quality_issues = analyze_data_quality(candles, DataQualityConfig())
+    write_dict_csv(out / "data_quality_summary.csv", data_quality_rows_as_dicts([quality_summary]))
+    write_dict_csv(out / "data_quality_report.csv", data_quality_rows_as_dicts(quality_coverage))
+    write_dict_csv(out / "data_quality_issues.csv", data_quality_rows_as_dicts(quality_issues))
+
     validate_candles(candles)
     features = build_features(candles)
     candidates = generate_candidate_setups(features, min_confidence=min_confidence)
@@ -97,6 +103,9 @@ def run_candle_pipeline(candles_csv: str | Path, out_dir: str | Path = "results"
 
     return {
         "candles": len(candles),
+        "data_quality_status": quality_summary.status,
+        "data_quality_errors": quality_summary.errors,
+        "data_quality_warnings": quality_summary.warnings,
         "features": len(features),
         "candidates": len(candidates),
         "risk_plans": len(plans),
