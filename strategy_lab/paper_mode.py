@@ -93,6 +93,22 @@ def to_float(value: str | None, default: float = 0.0) -> float:
         return default
 
 
+def first_float(row: dict[str, str], keys: list[str], default: float = 0.0) -> float:
+    for key in keys:
+        value = to_float(row.get(key), 0.0)
+        if value > 0:
+            return value
+    return default
+
+
+def first_text(row: dict[str, str], keys: list[str], default: str = "") -> str:
+    for key in keys:
+        value = str(row.get(key, "")).strip()
+        if value:
+            return value
+    return default
+
+
 def pnl_pct(side: str, entry: float, exit_price: float) -> float:
     if entry <= 0:
         return 0.0
@@ -112,40 +128,65 @@ def close_reason_from_row(row: dict[str, str], exit_price: float, stop: float, t
     return "research_exit"
 
 
+def target_from_row(row: dict[str, str], entry: float, stop: float, exit_price: float) -> float:
+    target = first_float(row, ["target", "tp", "take_profit", "target_price"])
+    if target > 0:
+        return target
+    if exit_price > 0:
+        return exit_price
+    r_mult = to_float(row.get("r_mult"), 0.0)
+    risk = abs(entry - stop)
+    side = str(row.get("side", "long")).strip().lower() or "long"
+    if risk > 0 and r_mult > 0:
+        return round(entry - risk * r_mult, 8) if side == "short" else round(entry + risk * r_mult, 8)
+    return entry
+
+
+def signal_from_row(row: dict[str, str], idx: int, source: str = "generated_trades") -> PaperSignal | None:
+    symbol = str(row.get("symbol", "")).strip().upper()
+    side = str(row.get("side", "long")).strip().lower() or "long"
+    entry = first_float(row, ["entry", "entry_price", "open_price"])
+    stop = first_float(row, ["stop", "sl", "stop_loss", "stop_price"])
+    exit_price = first_float(row, ["exit", "exit_price", "close_price"])
+    target = target_from_row(row, entry, stop, exit_price)
+    if not symbol or entry <= 0 or stop <= 0 or target <= 0:
+        return None
+    return PaperSignal(
+        paper_id=f"PAPER-{idx:06d}",
+        symbol=symbol,
+        side=side,
+        entry_time=first_text(row, ["entry_time", "time", "timestamp"]),
+        entry=entry,
+        stop=stop,
+        target=target,
+        setup_type=first_text(row, ["setup_type", "kind", "strategy"]),
+        risk_grade=first_text(row, ["risk_grade", "quality_grade"]),
+        target_policy=first_text(row, ["target_policy", "tp_policy"]),
+        status="OPEN_SIGNAL",
+        source=source,
+    )
+
+
 def make_paper_signals(rows: list[dict[str, str]], source: str = "generated_trades") -> list[PaperSignal]:
     signals: list[PaperSignal] = []
     for idx, row in enumerate(rows, start=1):
-        symbol = str(row.get("symbol", "")).strip().upper()
-        side = str(row.get("side", "long")).strip().lower() or "long"
-        entry = to_float(row.get("entry"))
-        stop = to_float(row.get("stop"))
-        target = to_float(row.get("target"))
-        if not symbol or entry <= 0 or stop <= 0 or target <= 0:
-            continue
-        signals.append(PaperSignal(
-            paper_id=f"PAPER-{idx:06d}",
-            symbol=symbol,
-            side=side,
-            entry_time=str(row.get("entry_time", "")),
-            entry=entry,
-            stop=stop,
-            target=target,
-            setup_type=str(row.get("setup_type", "")),
-            risk_grade=str(row.get("risk_grade", "")),
-            target_policy=str(row.get("target_policy", "")),
-            status="OPEN_SIGNAL",
-            source=source,
-        ))
+        signal = signal_from_row(row, idx, source=source)
+        if signal is not None:
+            signals.append(signal)
     return signals
 
 
 def build_lifecycle(rows: list[dict[str, str]], signals: list[PaperSignal]) -> tuple[list[PaperJournalEvent], list[PaperPosition]]:
     events: list[PaperJournalEvent] = []
     positions: list[PaperPosition] = []
-    valid_rows = [row for row in rows if str(row.get("symbol", "")).strip()]
-    for signal, row in zip(signals, valid_rows):
-        exit_price = to_float(row.get("exit"), signal.entry)
-        exit_time = str(row.get("exit_time", signal.entry_time))
+    signal_by_id = {signal.paper_id: signal for signal in signals}
+    for idx, row in enumerate(rows, start=1):
+        paper_id = f"PAPER-{idx:06d}"
+        signal = signal_by_id.get(paper_id)
+        if signal is None:
+            continue
+        exit_price = first_float(row, ["exit", "exit_price", "close_price"], signal.target)
+        exit_time = first_text(row, ["exit_time", "close_time"], signal.entry_time)
         reason = close_reason_from_row(row, exit_price, signal.stop, signal.target)
         events.append(PaperJournalEvent(signal.paper_id, 1, "OPEN_SIGNAL", signal.entry_time, signal.symbol, signal.side, signal.entry, "OPEN_SIGNAL", "Paper signal created from research trade."))
         events.append(PaperJournalEvent(signal.paper_id, 2, "FILLED_PAPER", signal.entry_time, signal.symbol, signal.side, signal.entry, "FILLED_PAPER", "Paper fill at research entry price."))
