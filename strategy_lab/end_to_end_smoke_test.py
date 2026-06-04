@@ -79,9 +79,20 @@ def main() -> None:
             if name != "report_sanity_issues.csv":
                 assert count_rows(path) > 0, f"empty output: {name}"
 
+        paper_required = ["paper_signals.csv", "paper_journal.csv", "paper_positions.csv", "paper_summary.csv"]
+        for name in paper_required:
+            path = out / "paper" / name
+            assert path.exists(), f"missing paper output: {name}"
+            assert count_rows(path) > 0, f"empty paper output: {name}"
+
         sanity_summary = read_rows(out / "report_sanity_summary.csv")[0]
+        end_summary = read_rows(out / "end_to_end_summary.csv")[0]
+        paper_summary = read_rows(out / "paper" / "paper_summary.csv")[0]
         assert sanity_summary["status"] in {"OK", "WARN", "FAIL"}, sanity_summary
-        assert "sanity_status" in read_rows(out / "end_to_end_summary.csv")[0], "end_to_end summary must include sanity status"
+        assert "sanity_status" in end_summary, "end_to_end summary must include sanity status"
+        assert "paper_signals" in end_summary, "end_to_end summary must include paper_signals"
+        assert int(float(end_summary["paper_signals"])) > 0, end_summary
+        assert int(float(paper_summary["paper_signals"])) == int(float(end_summary["paper_signals"])), paper_summary
 
         assert summary.candles > 0, "expected candles"
         assert summary.features > 0, "expected features"
@@ -90,6 +101,8 @@ def main() -> None:
         assert summary.allowed_candidates > 0, "rolling selector should allow candidates after lookback"
         assert summary.executed_trades > 0, "dynamic portfolio should execute trades"
         assert summary.avg_risk_pct > 0, "dynamic risk should be applied"
+        assert summary.paper_signals > 0, "paper mode should create signals"
+        assert summary.paper_closed > 0, "paper mode should close paper positions"
         assert summary.final_cash > 0, "final cash must stay positive"
 
     print("END-TO-END SMOKE TEST OK")
