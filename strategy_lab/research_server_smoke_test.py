@@ -100,27 +100,45 @@ def run_open_server_check(root: Path, candles: Path) -> None:
         assert payload["summary"]["paper_signals"] > 0, payload
         assert payload["summary"]["paper_closed"] > 0, payload
         assert payload["summary"]["sanity_status"] in {"OK", "WARN", "FAIL"}, payload
+        generated_path = root / "results" / "runs" / run_id / "generated_trades.csv"
+        assert generated_path.exists(), "missing generated trades for paper run"
         assert (root / "results" / "runs" / run_id / "run_metadata.json").exists(), "missing run metadata"
+
+        status, payload = request_json(port, "POST", "/run/paper", {
+            "generated_trades_csv": str(generated_path.relative_to(root)),
+            "out_dir": "results",
+        })
+        assert status == 200, payload
+        assert payload["status"] == "ok", payload
+        assert payload["run_id"], payload
+        paper_run_id = payload["run_id"]
+        assert paper_run_id.startswith("paper-"), payload
+        assert payload["summary"]["paper_signals"] > 0, payload
+        assert payload["summary"]["closed_paper"] > 0, payload
+        assert (root / "results" / "runs" / paper_run_id / "paper" / "paper_summary.csv").exists(), "missing standalone paper summary"
+        assert (root / "results" / "runs" / paper_run_id / "run_metadata.json").exists(), "missing standalone paper metadata"
 
         status, payload = request_json(port, "GET", "/runs/list?runs_dir=results/runs&limit=5")
         assert status == 200, payload
         assert payload["status"] == "ok", payload
-        assert payload["count"] >= 1, payload
-        assert payload["runs"][0]["run_id"] == run_id, payload
-        assert payload["runs"][0]["type"] == "end-to-end", payload
-        assert payload["runs"][0]["generated_trades"] != "", payload
+        assert payload["count"] >= 2, payload
+        assert payload["runs"][0]["run_id"] == paper_run_id, payload
+        assert payload["runs"][0]["type"] == "paper", payload
         assert payload["runs"][0]["paper_signals"] != "", payload
         assert payload["runs"][0]["paper_closed"] != "", payload
-
-        status, payload = request_json(port, "GET", "/runs/latest?runs_dir=results/runs")
-        assert status == 200, payload
-        assert payload["status"] == "ok", payload
-        assert payload["run_id"] == run_id, payload
-        assert payload["metadata"]["type"] == "end-to-end", payload
 
         status, payload = request_json(port, "GET", "/reports/latest?out_dir=results")
         assert status == 200, payload
         assert payload["status"] == "ok", payload
+        assert payload["run_id"] == paper_run_id, payload
+        assert "paper/paper_signals.csv" in payload["reports"], payload
+        assert "paper/paper_journal.csv" in payload["reports"], payload
+        assert "paper/paper_positions.csv" in payload["reports"], payload
+        assert "paper/paper_summary.csv" in payload["reports"], payload
+        assert len(payload["reports"]["paper/paper_positions.csv"]) > 0, payload
+
+        status, payload = request_json(port, "GET", f"/reports/latest?out_dir=results&run_id={run_id}")
+        assert status == 200, payload
         assert payload["run_id"] == run_id, payload
         assert "pipeline_summary.csv" in payload["reports"], payload
         assert "end_to_end_summary.csv" in payload["reports"], payload
@@ -129,19 +147,10 @@ def run_open_server_check(root: Path, candles: Path) -> None:
         assert "candle_research_report.csv" in payload["reports"], payload
         assert "candle_exit_diagnostics.csv" in payload["reports"], payload
         assert "generated_trades.csv" in payload["reports"], payload
-        assert "paper/paper_signals.csv" in payload["reports"], payload
-        assert "paper/paper_journal.csv" in payload["reports"], payload
-        assert "paper/paper_positions.csv" in payload["reports"], payload
         assert "paper/paper_summary.csv" in payload["reports"], payload
         report_metrics = {row.get("metric") for row in payload["reports"]["candle_research_report.csv"]}
         assert "avg_r" in report_metrics, payload
         assert "best_setup_type" in report_metrics, payload
-        assert len(payload["reports"]["paper/paper_positions.csv"]) > 0, payload
-
-        status, payload = request_json(port, "GET", f"/reports/latest?out_dir=results&run_id={run_id}")
-        assert status == 200, payload
-        assert payload["run_id"] == run_id, payload
-        assert "paper/paper_summary.csv" in payload["reports"], payload
     finally:
         server.shutdown()
         thread.join(timeout=5)
@@ -160,6 +169,10 @@ def run_auth_server_check(root: Path) -> None:
         assert payload["auth_enabled"] is True, payload
 
         status, payload = request_json(port, "GET", "/runs/list?runs_dir=results/runs")
+        assert status == 401, payload
+        assert payload["error"] == "unauthorized", payload
+
+        status, payload = request_json(port, "POST", "/run/paper", {"generated_trades_csv": "results/generated_trades.csv"})
         assert status == 401, payload
         assert payload["error"] == "unauthorized", payload
 
