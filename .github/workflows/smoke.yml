@@ -67,6 +67,10 @@ jobs:
         run: |
           python -m strategy_lab.universe_input_smoke_test
 
+      - name: Run paper mode smoke test
+        run: |
+          python -m strategy_lab.paper_mode_smoke_test
+
       - name: Run regime samples smoke test
         run: |
           python -m strategy_lab.regime_samples_smoke_test
