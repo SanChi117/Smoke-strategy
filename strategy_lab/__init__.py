@@ -4,6 +4,7 @@ __all__ = [
     "config",
     "schemas",
     "market_data",
+    "data_quality",
     "feature_builder",
     "setup_generator",
     "risk_model",
