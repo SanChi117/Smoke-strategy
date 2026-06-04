@@ -59,6 +59,42 @@ worst_symbol
 most_common_exit
 ```
 
+## Compare market regimes
+
+Generate deterministic trend/range/high-volatility samples:
+
+```bash
+python scripts/generate_regime_samples.py
+```
+
+Run all regimes through the full end-to-end pipeline:
+
+```bash
+python scripts/run_regime_batch.py
+```
+
+Main comparison file:
+
+```text
+results/regime_batch/regime_batch_summary.csv
+```
+
+Use it to compare:
+
+```text
+trend vs range vs high_vol vs mixed
+generated_trades
+executed_trades
+ret_pct
+max_dd_pct
+candle_avg_r
+best_setup_type
+worst_setup_type
+most_common_exit
+```
+
+Important: a weak or empty regime is information, not a code failure. It means the current setup/risk logic did not find enough valid opportunities in that market type.
+
 ## Run on your own candles
 
 Input format:
@@ -75,6 +111,16 @@ python scripts/run_end_to_end_pipeline.py \
   --out-dir results \
   --profile growth_100_20x \
   --min-confidence 40
+```
+
+Check candle quality only:
+
+```bash
+python scripts/check_candles_quality.py \
+  --candles data/candles.csv \
+  --out-dir results/data_quality \
+  --min-candles 100 \
+  --min-symbols 1
 ```
 
 ## Current risk profile
@@ -133,6 +179,7 @@ curl http://127.0.0.1:8080/reports/latest?out_dir=results
 
 ```text
 strategy_lab/market_data.py
+strategy_lab/data_quality.py
 strategy_lab/feature_builder.py
 strategy_lab/setup_generator.py
 strategy_lab/risk_model.py
@@ -155,20 +202,24 @@ Fast checks:
 python -m strategy_lab.smoke_test
 python -m strategy_lab.pipeline_smoke_test
 python -m strategy_lab.candle_pipeline_smoke_test
+python -m strategy_lab.data_quality_cli_smoke_test
+python -m strategy_lab.regime_samples_smoke_test
 python -m strategy_lab.local_demo_smoke_test
 ```
 
-Full checks also include:
+Full/heavier checks also include:
 
 ```bash
 python -m strategy_lab.end_to_end_smoke_test
 python -m strategy_lab.research_server_smoke_test
+python -m strategy_lab.regime_batch_smoke_test
 ```
 
 ## Docs
 
 ```text
 QUICKSTART.md
+ROADMAP.md
 docs/PROJECT_ARCHITECTURE.md
 docs/UNIVERSE_AND_MONEY_MANAGEMENT.md
 docs/TRADING_PLAYBOOK.md
@@ -183,6 +234,9 @@ Implemented:
 ```text
 one-command local demo
 market data CSV layer
+data quality validation
+regime sample generator
+regime batch comparison
 feature builder
 setup generator
 setup-aware risk model
