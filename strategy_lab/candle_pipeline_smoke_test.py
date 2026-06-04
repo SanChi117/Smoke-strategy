@@ -3,7 +3,7 @@
 
 Checks the missing execution chain:
 
-candles -> features -> candidate setups -> risk plans -> candle exits -> exit diagnostics -> candle report -> generated trades
+candles -> data quality -> features -> candidate setups -> risk plans -> candle exits -> exit diagnostics -> candle report -> generated trades
 
 Research only. No live trading. No API keys.
 """
@@ -68,6 +68,8 @@ def main() -> None:
         print(summary)
 
         assert summary["candles"] > 0, "expected candles"
+        assert summary["data_quality_status"] in {"OK", "WARN"}, "expected non-failing data quality"
+        assert summary["data_quality_errors"] == 0, "expected no data quality errors in clean sample"
         assert summary["features"] > 0, "expected features"
         assert summary["candidates"] > 0, "expected candidate setups"
         assert summary["risk_plans"] == summary["candidates"], "risk plan count must match candidates"
@@ -76,10 +78,22 @@ def main() -> None:
         assert summary["candle_research_report"] > 0, "expected candle research report"
         assert summary["generated_trades"] == summary["risk_plans"], "generated trade count must match risk plans"
 
-        for name in ["candle_features.csv", "candidate_setups.csv", "risk_plans.csv", "candle_exit_results.csv", "candle_exit_diagnostics.csv", "candle_research_report.csv", "generated_trades.csv"]:
+        for name in ["data_quality_summary.csv", "data_quality_report.csv", "data_quality_issues.csv", "candle_features.csv", "candidate_setups.csv", "risk_plans.csv", "candle_exit_results.csv", "candle_exit_diagnostics.csv", "candle_research_report.csv", "generated_trades.csv"]:
             path = out / name
             assert path.exists(), f"missing output: {name}"
-            assert count_rows(path) > 0, f"empty output: {name}"
+            if name != "data_quality_issues.csv":
+                assert count_rows(path) > 0, f"empty output: {name}"
+
+        quality_summary = read_rows(out / "data_quality_summary.csv")
+        quality_columns = set(quality_summary[0])
+        for column in ["symbols", "candles", "errors", "warnings", "duplicate_candles", "missing_gaps", "invalid_ohlcv", "status"]:
+            assert column in quality_columns, f"missing data quality summary column: {column}"
+        assert quality_summary[0]["status"] in {"OK", "WARN"}, "clean sample should not fail data quality"
+
+        quality_report = read_rows(out / "data_quality_report.csv")
+        quality_report_columns = set(quality_report[0])
+        for column in ["symbol", "candles", "start_time", "end_time", "inferred_interval_seconds", "duplicate_candles", "missing_gaps", "invalid_ohlcv", "status"]:
+            assert column in quality_report_columns, f"missing data quality report column: {column}"
 
         feature_rows = read_rows(out / "candle_features.csv")
         feature_columns = set(feature_rows[0])
