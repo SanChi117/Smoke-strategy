@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-"""Paper mode review report.
+"""Paper mode review and decision report.
 
-Reads paper_positions.csv and creates a compact manual-review report.
+Reads paper_positions.csv and creates compact manual-review outputs:
+- paper_review.csv
+- paper_review_summary.csv
+- paper_decision_summary.csv
 
 Research only. No live trading. No exchange calls.
 """
@@ -35,6 +38,19 @@ class PaperReviewSummary:
     rejected: int
     avg_pnl_pct: float
     status: str
+
+
+@dataclass(frozen=True)
+class PaperDecisionSummary:
+    decision: str
+    positions: int
+    approved: int
+    watch: int
+    rejected: int
+    approved_pct: float
+    rejected_pct: float
+    avg_pnl_pct: float
+    reason: str
 
 
 def read_rows(path: str | Path) -> list[dict[str, str]]:
@@ -98,6 +114,40 @@ def review_position(row: dict[str, str]) -> PaperReviewRow:
     )
 
 
+def build_decision(summary: PaperReviewSummary) -> PaperDecisionSummary:
+    positions = max(0, summary.positions)
+    approved_pct = round(summary.approved / positions * 100.0, 4) if positions else 0.0
+    rejected_pct = round(summary.rejected / positions * 100.0, 4) if positions else 0.0
+
+    if positions == 0:
+        decision = "BLOCK"
+        reason = "no_paper_positions"
+    elif summary.rejected > 0:
+        decision = "BLOCK"
+        reason = "rejected_paper_trades_present"
+    elif summary.watch > 0:
+        decision = "WATCH"
+        reason = "watch_paper_trades_present"
+    elif summary.avg_pnl_pct <= 0:
+        decision = "WATCH"
+        reason = "non_positive_avg_pnl"
+    else:
+        decision = "PASS"
+        reason = "all_paper_trades_approved"
+
+    return PaperDecisionSummary(
+        decision=decision,
+        positions=summary.positions,
+        approved=summary.approved,
+        watch=summary.watch,
+        rejected=summary.rejected,
+        approved_pct=approved_pct,
+        rejected_pct=rejected_pct,
+        avg_pnl_pct=summary.avg_pnl_pct,
+        reason=reason,
+    )
+
+
 def write_dict_csv(path: str | Path, rows: list[dict]) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -130,7 +180,9 @@ def run_paper_review(paper_positions_csv: str | Path, out_dir: str | Path) -> Pa
         avg_pnl_pct=avg_pnl,
         status=status,
     )
+    decision = build_decision(summary)
     out = Path(out_dir)
     write_dict_csv(out / "paper_review.csv", rows_as_dicts(reviewed))
     write_dict_csv(out / "paper_review_summary.csv", rows_as_dicts([summary]))
+    write_dict_csv(out / "paper_decision_summary.csv", rows_as_dicts([decision]))
     return summary
