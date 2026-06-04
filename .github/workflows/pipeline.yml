@@ -21,6 +21,8 @@ on:
       - 'strategy_lab/end_to_end_smoke_test.py'
       - 'strategy_lab/walk_forward.py'
       - 'strategy_lab/walk_forward_smoke_test.py'
+      - 'strategy_lab/parameter_grid.py'
+      - 'strategy_lab/parameter_grid_smoke_test.py'
       - 'strategy_lab/research_server.py'
       - 'strategy_lab/research_server_smoke_test.py'
       - 'strategy_lab/universe_selector.py'
@@ -36,6 +38,7 @@ on:
       - 'scripts/run_candle_pipeline.py'
       - 'scripts/run_end_to_end_pipeline.py'
       - 'scripts/run_walk_forward.py'
+      - 'scripts/run_parameter_grid.py'
       - 'scripts/run_research_server.py'
       - 'scripts/generate_sample_runner_trades.py'
       - '.github/workflows/pipeline.yml'
@@ -83,6 +86,10 @@ jobs:
       - name: Run walk-forward smoke test
         run: |
           python -m strategy_lab.walk_forward_smoke_test
+
+      - name: Run parameter grid smoke test
+        run: |
+          python -m strategy_lab.parameter_grid_smoke_test
 
       - name: Run research server smoke test
         run: |
