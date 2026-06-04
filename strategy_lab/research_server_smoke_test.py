@@ -98,12 +98,15 @@ def main() -> None:
             assert payload["summary"]["allowed_candidates"] > 0, payload
             assert payload["summary"]["executed_trades"] > 0, payload
             assert payload["summary"]["avg_risk_pct"] > 0, payload
+            assert payload["summary"]["sanity_status"] in {"OK", "WARN", "FAIL"}, payload
 
             status, payload = request_json(port, "GET", "/reports/latest?out_dir=results")
             assert status == 200, payload
             assert payload["status"] == "ok", payload
             assert "pipeline_summary.csv" in payload["reports"], payload
             assert "end_to_end_summary.csv" in payload["reports"], payload
+            assert "report_sanity_summary.csv" in payload["reports"], payload
+            assert "report_sanity_issues.csv" in payload["reports"], payload
             assert "candle_research_report.csv" in payload["reports"], payload
             assert "candle_exit_diagnostics.csv" in payload["reports"], payload
             assert "generated_trades.csv" in payload["reports"], payload
