@@ -5,7 +5,8 @@ Non-live server wrapper around the research pipeline.
 
 Endpoints:
 - GET  /health
-- GET  /reports/latest?out_dir=results
+- GET  /runs/latest?runs_dir=results/runs
+- GET  /reports/latest?out_dir=results&run_id=<optional>
 - POST /run/pipeline
 - POST /run/end-to-end
 
@@ -17,6 +18,7 @@ from __future__ import annotations
 import csv
 import json
 from dataclasses import asdict
+from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
@@ -78,6 +80,46 @@ def make_safe_path(base_dir: Path, value: str | None, default: str) -> Path:
     return path
 
 
+def make_run_id(prefix: str) -> str:
+    stamp = datetime.utcnow().strftime("%Y%m%dT%H%M%S%fZ")
+    safe_prefix = "".join(ch if ch.isalnum() or ch in {"-", "_"} else "-" for ch in prefix).strip("-") or "run"
+    return f"{safe_prefix}-{stamp}"
+
+
+def resolve_run_out_dir(root: Path, body: dict[str, Any], default_out_dir: str, run_prefix: str) -> tuple[Path, str | None]:
+    if body.get("run_id"):
+        run_id = str(body["run_id"])
+        out_dir = make_safe_path(root, body.get("out_dir"), default_out_dir) / "runs" / run_id
+        return out_dir, run_id
+    if bool(body.get("per_run", True)):
+        run_id = make_run_id(run_prefix)
+        out_dir = make_safe_path(root, body.get("out_dir"), default_out_dir) / "runs" / run_id
+        return out_dir, run_id
+    out_dir = make_safe_path(root, body.get("out_dir"), default_out_dir)
+    return out_dir, None
+
+
+def write_run_metadata(out_dir: Path, payload: dict[str, Any]) -> None:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    data = json.dumps(payload, ensure_ascii=False, indent=2, default=str).encode("utf-8")
+    (out_dir / "run_metadata.json").write_bytes(data)
+
+
+def read_json_file(path: Path) -> dict[str, Any]:
+    if not path.exists() or path.stat().st_size == 0:
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def latest_run_dir(runs_dir: Path) -> Path | None:
+    if not runs_dir.exists():
+        return None
+    dirs = [p for p in runs_dir.iterdir() if p.is_dir()]
+    if not dirs:
+        return None
+    return sorted(dirs, key=lambda p: p.name)[-1]
+
+
 def json_response(handler: BaseHTTPRequestHandler, status: int, payload: dict[str, Any]) -> None:
     data = json.dumps(payload, ensure_ascii=False, indent=2, default=str).encode("utf-8")
     handler.send_response(status)
@@ -91,23 +133,37 @@ def create_handler(base_dir: str | Path = "."):
     root = Path(base_dir).resolve()
 
     class ResearchHandler(BaseHTTPRequestHandler):
-        server_version = "SmokeResearchServer/0.1"
+        server_version = "SmokeResearchServer/0.2"
 
         def log_message(self, fmt: str, *args: Any) -> None:  # noqa: A003
-            # Keep stdout clean for scripts/tests. Reverse this if VPS logging is needed.
             return
 
         def do_GET(self) -> None:  # noqa: N802
             parsed = urlparse(self.path)
             try:
+                query = parse_qs(parsed.query)
                 if parsed.path == "/health":
-                    json_response(self, 200, {"status": "ok", "mode": "research", "base_dir": str(root)})
+                    json_response(self, 200, {"status": "ok", "mode": "research", "base_dir": str(root), "server_version": self.server_version})
+                    return
+                if parsed.path == "/runs/latest":
+                    runs_dir = make_safe_path(root, query.get("runs_dir", ["results/runs"])[0], "results/runs")
+                    run_dir = latest_run_dir(runs_dir)
+                    if not run_dir:
+                        json_response(self, 404, {"status": "error", "error": "no_runs_found", "runs_dir": str(runs_dir)})
+                        return
+                    json_response(self, 200, {"status": "ok", "run_id": run_dir.name, "out_dir": str(run_dir), "metadata": read_json_file(run_dir / "run_metadata.json")})
                     return
                 if parsed.path == "/reports/latest":
-                    query = parse_qs(parsed.query)
-                    out_dir = make_safe_path(root, query.get("out_dir", ["results"])[0], "results")
+                    base_out = make_safe_path(root, query.get("out_dir", ["results"])[0], "results")
+                    run_id = query.get("run_id", [None])[0]
+                    if run_id:
+                        out_dir = make_safe_path(root, f"{base_out.relative_to(root)}/runs/{run_id}", "results")
+                    elif (base_out / "runs").exists():
+                        out_dir = latest_run_dir(base_out / "runs") or base_out
+                    else:
+                        out_dir = base_out
                     reports = {name: read_csv_rows(out_dir / name) for name in REPORT_FILES if (out_dir / name).exists()}
-                    json_response(self, 200, {"status": "ok", "out_dir": str(out_dir), "reports": reports})
+                    json_response(self, 200, {"status": "ok", "out_dir": str(out_dir), "run_id": out_dir.name if out_dir.parent.name == "runs" else None, "reports": reports})
                     return
                 json_response(self, 404, {"status": "error", "error": "not_found", "path": parsed.path})
             except Exception as exc:  # pragma: no cover - defensive server boundary
@@ -119,18 +175,24 @@ def create_handler(base_dir: str | Path = "."):
                 body = read_json_body(self)
                 if parsed.path == "/run/pipeline":
                     input_csv = make_safe_path(root, body.get("input_csv"), "data/sample_runner_trades.csv")
-                    out_dir = make_safe_path(root, body.get("out_dir"), "results")
+                    out_dir, run_id = resolve_run_out_dir(root, body, "results", "pipeline")
                     profile = str(body.get("profile", "growth_100_20x"))
+                    started_at = datetime.utcnow().isoformat(timespec="seconds") + "Z"
                     summary = run_pipeline(input_csv=input_csv, out_dir=out_dir, profile_name=profile)
-                    json_response(self, 200, {"status": "ok", "summary": asdict(summary), "out_dir": str(out_dir)})
+                    metadata = {"run_id": run_id, "type": "pipeline", "started_at": started_at, "completed_at": datetime.utcnow().isoformat(timespec="seconds") + "Z", "input_csv": str(input_csv), "profile": profile, "summary": asdict(summary)}
+                    write_run_metadata(out_dir, metadata)
+                    json_response(self, 200, {"status": "ok", "run_id": run_id, "summary": asdict(summary), "out_dir": str(out_dir)})
                     return
                 if parsed.path == "/run/end-to-end":
                     candles_csv = make_safe_path(root, body.get("candles_csv"), "data/candles.csv")
-                    out_dir = make_safe_path(root, body.get("out_dir"), "results")
+                    out_dir, run_id = resolve_run_out_dir(root, body, "results", "end-to-end")
                     profile = str(body.get("profile", "growth_100_20x"))
                     min_confidence = float(body.get("min_confidence", 50.0))
+                    started_at = datetime.utcnow().isoformat(timespec="seconds") + "Z"
                     summary = run_end_to_end_pipeline(candles_csv=candles_csv, out_dir=out_dir, profile=profile, min_confidence=min_confidence)
-                    json_response(self, 200, {"status": "ok", "summary": asdict(summary), "out_dir": str(out_dir)})
+                    metadata = {"run_id": run_id, "type": "end-to-end", "started_at": started_at, "completed_at": datetime.utcnow().isoformat(timespec="seconds") + "Z", "candles_csv": str(candles_csv), "profile": profile, "min_confidence": min_confidence, "summary": asdict(summary)}
+                    write_run_metadata(out_dir, metadata)
+                    json_response(self, 200, {"status": "ok", "run_id": run_id, "summary": asdict(summary), "out_dir": str(out_dir)})
                     return
                 json_response(self, 404, {"status": "error", "error": "not_found", "path": parsed.path})
             except Exception as exc:  # pragma: no cover - defensive server boundary
