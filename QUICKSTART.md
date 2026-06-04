@@ -160,7 +160,63 @@ most_common_exit
 
 A weak or empty regime is useful information. It means the current logic did not find enough valid trades there.
 
-## 5. Run with custom output
+## 5. Walk-forward check
+
+Run rolling windows on your candle dataset:
+
+```bash
+python scripts/run_walk_forward.py \
+  --candles data/candles.csv \
+  --out-dir results/walk_forward \
+  --window-days 30 \
+  --step-days 15 \
+  --min-confidence 40
+```
+
+Main files:
+
+```text
+results/walk_forward/walk_forward_windows.csv
+results/walk_forward/walk_forward_summary.csv
+results/walk_forward/walk_forward_report.csv
+```
+
+Open this first:
+
+```text
+results/walk_forward/walk_forward_report.csv
+```
+
+It answers:
+
+```text
+How many windows completed successfully?
+How many windows were profitable or losing?
+What was average ret_pct and max_dd_pct?
+Which window was best/worst?
+What is the stability_score and stability_status?
+```
+
+Important metrics:
+
+```text
+windows_total
+windows_ok
+windows_error
+profitable_windows
+losing_windows
+executed_windows
+avg_ret_pct
+avg_max_dd_pct
+stability_score
+stability_status
+best_window
+worst_window
+```
+
+This is not parameter optimization yet. It checks whether the current logic survives multiple time windows.
+
+## 6. Run with custom output
 
 ```bash
 python scripts/run_local_demo.py \
@@ -172,7 +228,7 @@ python scripts/run_local_demo.py \
   --min-confidence 40
 ```
 
-## 6. Run candle pipeline on your own candles
+## 7. Run candle pipeline on your own candles
 
 Your CSV must contain:
 
@@ -200,7 +256,7 @@ python scripts/check_candles_quality.py \
   --min-symbols 1
 ```
 
-## 7. Start research server
+## 8. Start research server
 
 ```bash
 python scripts/run_research_server.py \
@@ -221,7 +277,7 @@ Or:
 curl http://127.0.0.1:8080/health
 ```
 
-## 8. Run through research server
+## 9. Run through research server
 
 ### Run full candle-to-pipeline flow
 
@@ -237,7 +293,7 @@ curl -X POST http://127.0.0.1:8080/run/end-to-end \
 curl http://127.0.0.1:8080/reports/latest?out_dir=results
 ```
 
-## 9. Current project status
+## 10. Current project status
 
 The current project is a research platform, not a live bot.
 
@@ -248,6 +304,8 @@ market data CSV layer
 data quality validation
 regime sample generator
 regime batch comparison
+walk-forward research skeleton
+compact walk-forward report
 feature builder
 setup generator
 risk model
@@ -267,12 +325,12 @@ Not live yet:
 ```text
 real exchange data loader
 real market universe feed
-walk-forward optimization
+walk-forward parameter optimization
 production authentication
 live alert/execution layer
 ```
 
-## 10. Safety rule
+## 11. Safety rule
 
 Do not add exchange API keys to this project yet.
 
