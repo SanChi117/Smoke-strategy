@@ -42,9 +42,13 @@ def make_candles_csv(path: Path) -> None:
         writer.writerows(rows)
 
 
-def count_rows(path: Path) -> int:
+def read_rows(path: Path) -> list[dict[str, str]]:
     with path.open("r", newline="", encoding="utf-8") as f:
-        return max(0, sum(1 for _ in csv.DictReader(f)))
+        return list(csv.DictReader(f))
+
+
+def count_rows(path: Path) -> int:
+    return len(read_rows(path))
 
 
 def main() -> None:
@@ -65,12 +69,19 @@ def main() -> None:
             "pipeline_decisions.csv",
             "pipeline_risk_diagnostics.csv",
             "pipeline_validation_summary.csv",
+            "report_sanity_summary.csv",
+            "report_sanity_issues.csv",
             "end_to_end_summary.csv",
         ]
         for name in required:
             path = out / name
             assert path.exists(), f"missing output: {name}"
-            assert count_rows(path) > 0, f"empty output: {name}"
+            if name != "report_sanity_issues.csv":
+                assert count_rows(path) > 0, f"empty output: {name}"
+
+        sanity_summary = read_rows(out / "report_sanity_summary.csv")[0]
+        assert sanity_summary["status"] in {"OK", "WARN", "FAIL"}, sanity_summary
+        assert "sanity_status" in read_rows(out / "end_to_end_summary.csv")[0], "end_to_end summary must include sanity status"
 
         assert summary.candles > 0, "expected candles"
         assert summary.features > 0, "expected features"
