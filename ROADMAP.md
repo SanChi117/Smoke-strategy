@@ -10,6 +10,7 @@ The project currently has a working research chain:
 
 ```text
 synthetic or user candles
+→ data quality validation
 → feature builder
 → setup generator
 → risk model
@@ -41,6 +42,7 @@ Done:
 
 ```text
 market data CSV layer
+data quality validation
 feature builder
 setup generator
 setup-aware risk model
@@ -52,6 +54,10 @@ portfolio simulator
 risk diagnostics
 research server
 local demo
+deterministic regime samples
+regime batch comparison
+walk-forward research skeleton
+compact walk-forward report
 VPS research skeleton
 GitHub smoke checks
 ```
@@ -59,10 +65,10 @@ GitHub smoke checks
 Next:
 
 ```text
-add real candle CSV adapter format checks
-add stronger validation of candle gaps / duplicate candles / symbol coverage
-add report sanity rules for too few trades / too many time-stops / weak avg R
-add deterministic sample datasets for trend/range/high-vol regimes
+add stronger report sanity rules for too few trades / too many time-stops / weak avg R
+add parameter grid for min_confidence / RR / stop settings
+add real market data adapter
+add real universe input/feed
 ```
 
 Exit criteria:
@@ -72,6 +78,7 @@ all smoke checks green
 local demo works with one command
 server reports are readable
 pipeline never silently produces empty outputs
+walk_forward_report.csv exists and is readable
 ```
 
 ## Phase 2 — Real market data loader
@@ -90,6 +97,15 @@ minimum history check
 per-symbol coverage report
 ```
 
+Already started:
+
+```text
+scripts/check_candles_quality.py
+data_quality_summary.csv
+data_quality_report.csv
+data_quality_issues.csv
+```
+
 Important:
 
 ```text
@@ -105,6 +121,7 @@ Exit criteria:
 can run end-to-end on real candles.csv
 candle_research_report.csv is produced
 pipeline_summary.csv is produced
+walk_forward_report.csv is produced
 reports identify weak/strong symbols
 ```
 
@@ -112,15 +129,26 @@ reports identify weak/strong symbols
 
 Goal: avoid tuning the strategy only on one fixed sample.
 
-Planned:
+Already implemented:
+
+```text
+rolling walk-forward windows
+walk_forward_windows.csv
+walk_forward_summary.csv
+walk_forward_report.csv
+stability_score
+best/worst window tracking
+```
+
+Next planned:
 
 ```text
 train/test window splitting
-rolling walk-forward runs
 parameter grid for min_confidence / RR / stop settings
 setup-family performance comparison
 regime performance comparison
 out-of-sample report
+best-parameter stability report
 ```
 
 Main questions:
@@ -130,6 +158,7 @@ Which setup types survive out-of-sample?
 Which coins should be ignored by the strategy itself?
 Does risk_grade actually predict better outcomes?
 Does the rolling selector improve or over-filter?
+Do parameters remain stable across multiple windows?
 ```
 
 Exit criteria:
@@ -138,6 +167,7 @@ Exit criteria:
 walk-forward report exists
 best parameters are not chosen from one window only
 strategy remains stable across multiple periods
+parameter optimization does not overfit one regime
 ```
 
 ## Phase 4 — Real universe feed
@@ -231,6 +261,8 @@ candle_research_report.csv
 candle_exit_diagnostics.csv
 pipeline_risk_diagnostics.csv
 pipeline_decisions.csv
+regime_batch_summary.csv
+walk_forward_report.csv
 ```
 
 Exit criteria:
@@ -240,6 +272,7 @@ setup types have distinct behavior
 bad setup families are filtered or downgraded
 risk grades correlate with better outcomes
 strategy does not depend on one symbol or one regime
+walk-forward stability improves, not just one-window performance
 ```
 
 ## Phase 7 — Pre-live paper mode
@@ -305,14 +338,13 @@ live risk guardrails
 ## Current priority order
 
 ```text
-1. Real candle CSV/data loader validation
-2. Stronger report sanity checks
-3. Deterministic regime sample datasets
-4. Walk-forward optimization
-5. Real universe feed
-6. Server hardening
-7. Paper mode
-8. Live layer decision gate
+1. Stronger report sanity checks
+2. Walk-forward parameter optimization
+3. Real market data adapter
+4. Real universe feed
+5. Server hardening
+6. Paper mode
+7. Live layer decision gate
 ```
 
 ## Hard safety rules
