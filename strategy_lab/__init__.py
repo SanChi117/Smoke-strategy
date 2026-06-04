@@ -19,6 +19,7 @@ __all__ = [
     "research_server",
     "research_server_smoke_test",
     "regime_samples_smoke_test",
+    "regime_batch_smoke_test",
     "local_demo_smoke_test",
     "rolling_symbol_strength",
     "trade_quality_score",
