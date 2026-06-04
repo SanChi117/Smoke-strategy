@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-"""Paper mode skeleton.
+"""Paper mode skeleton with lifecycle journal.
 
-Converts generated research trades into paper signals and a paper journal.
+Converts generated research trades into paper signals and simulates a paper-only
+lifecycle:
+
+OPEN_SIGNAL -> FILLED_PAPER -> CLOSED_PAPER
 
 Research only. No exchange calls. No order execution.
 """
@@ -31,11 +34,47 @@ class PaperSignal:
 
 
 @dataclass(frozen=True)
+class PaperJournalEvent:
+    paper_id: str
+    event_order: int
+    event: str
+    event_time: str
+    symbol: str
+    side: str
+    price: float
+    status_after: str
+    note: str
+
+
+@dataclass(frozen=True)
+class PaperPosition:
+    paper_id: str
+    symbol: str
+    side: str
+    entry_time: str
+    exit_time: str
+    entry: float
+    exit: float
+    stop: float
+    target: float
+    status: str
+    close_reason: str
+    pnl_pct: float
+    setup_type: str
+    risk_grade: str
+
+
+@dataclass(frozen=True)
 class PaperSummary:
     source_rows: int
     paper_signals: int
+    filled_paper: int
+    closed_paper: int
     long_signals: int
     short_signals: int
+    winners: int
+    losers: int
+    avg_pnl_pct: float
     status: str
 
 
@@ -52,6 +91,25 @@ def to_float(value: str | None, default: float = 0.0) -> float:
         return float(value or default)
     except (TypeError, ValueError):
         return default
+
+
+def pnl_pct(side: str, entry: float, exit_price: float) -> float:
+    if entry <= 0:
+        return 0.0
+    if side == "short":
+        return round((entry - exit_price) / entry * 100.0, 6)
+    return round((exit_price - entry) / entry * 100.0, 6)
+
+
+def close_reason_from_row(row: dict[str, str], exit_price: float, stop: float, target: float) -> str:
+    reason = str(row.get("exit_reason", "")).strip()
+    if reason:
+        return reason
+    if target > 0 and abs(exit_price - target) / target < 0.000001:
+        return "take_profit"
+    if stop > 0 and abs(exit_price - stop) / stop < 0.000001:
+        return "stop_loss"
+    return "research_exit"
 
 
 def make_paper_signals(rows: list[dict[str, str]], source: str = "generated_trades") -> list[PaperSignal]:
@@ -81,6 +139,36 @@ def make_paper_signals(rows: list[dict[str, str]], source: str = "generated_trad
     return signals
 
 
+def build_lifecycle(rows: list[dict[str, str]], signals: list[PaperSignal]) -> tuple[list[PaperJournalEvent], list[PaperPosition]]:
+    events: list[PaperJournalEvent] = []
+    positions: list[PaperPosition] = []
+    valid_rows = [row for row in rows if str(row.get("symbol", "")).strip()]
+    for signal, row in zip(signals, valid_rows):
+        exit_price = to_float(row.get("exit"), signal.entry)
+        exit_time = str(row.get("exit_time", signal.entry_time))
+        reason = close_reason_from_row(row, exit_price, signal.stop, signal.target)
+        events.append(PaperJournalEvent(signal.paper_id, 1, "OPEN_SIGNAL", signal.entry_time, signal.symbol, signal.side, signal.entry, "OPEN_SIGNAL", "Paper signal created from research trade."))
+        events.append(PaperJournalEvent(signal.paper_id, 2, "FILLED_PAPER", signal.entry_time, signal.symbol, signal.side, signal.entry, "FILLED_PAPER", "Paper fill at research entry price."))
+        events.append(PaperJournalEvent(signal.paper_id, 3, "CLOSED_PAPER", exit_time, signal.symbol, signal.side, exit_price, "CLOSED_PAPER", f"Paper close reason: {reason}."))
+        positions.append(PaperPosition(
+            paper_id=signal.paper_id,
+            symbol=signal.symbol,
+            side=signal.side,
+            entry_time=signal.entry_time,
+            exit_time=exit_time,
+            entry=signal.entry,
+            exit=exit_price,
+            stop=signal.stop,
+            target=signal.target,
+            status="CLOSED_PAPER",
+            close_reason=reason,
+            pnl_pct=pnl_pct(signal.side, signal.entry, exit_price),
+            setup_type=signal.setup_type,
+            risk_grade=signal.risk_grade,
+        ))
+    return events, positions
+
+
 def write_dict_csv(path: str | Path, rows: list[dict]) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -100,16 +188,27 @@ def rows_as_dicts(rows: Iterable[object]) -> list[dict]:
 def run_paper_mode(generated_trades_csv: str | Path, out_dir: str | Path = "results/paper") -> PaperSummary:
     rows = read_generated_trades(generated_trades_csv)
     signals = make_paper_signals(rows)
+    events, positions = build_lifecycle(rows, signals)
     out = Path(out_dir)
     long_count = sum(1 for signal in signals if signal.side == "long")
     short_count = sum(1 for signal in signals if signal.side == "short")
+    winners = sum(1 for position in positions if position.pnl_pct > 0)
+    losers = sum(1 for position in positions if position.pnl_pct < 0)
+    avg_pnl = round(sum(p.pnl_pct for p in positions) / len(positions), 6) if positions else 0.0
     summary = PaperSummary(
         source_rows=len(rows),
         paper_signals=len(signals),
+        filled_paper=len(positions),
+        closed_paper=len(positions),
         long_signals=long_count,
         short_signals=short_count,
+        winners=winners,
+        losers=losers,
+        avg_pnl_pct=avg_pnl,
         status="OK" if signals else "EMPTY",
     )
     write_dict_csv(out / "paper_signals.csv", rows_as_dicts(signals))
+    write_dict_csv(out / "paper_journal.csv", rows_as_dicts(events))
+    write_dict_csv(out / "paper_positions.csv", rows_as_dicts(positions))
     write_dict_csv(out / "paper_summary.csv", rows_as_dicts([summary]))
     return summary
