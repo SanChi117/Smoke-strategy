@@ -4,6 +4,7 @@ __all__ = [
     "config",
     "schemas",
     "market_data",
+    "market_data_adapter",
     "data_quality",
     "data_quality_cli_smoke_test",
     "universe_input",
