@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Smoke test for paper mode skeleton."""
+"""Smoke test for paper mode lifecycle."""
 
 from __future__ import annotations
 
@@ -12,8 +12,8 @@ from pathlib import Path
 
 def write_trades(path: Path) -> None:
     rows = [
-        {"symbol": "AAAUSDT", "side": "long", "entry_time": "2025-01-01T00:00:00", "entry": 100, "stop": 98, "target": 104, "setup_type": "breakout", "risk_grade": "A", "target_policy": "rr"},
-        {"symbol": "BBBUSDT", "side": "long", "entry_time": "2025-01-01T01:00:00", "entry": 80, "stop": 78, "target": 84, "setup_type": "pullback", "risk_grade": "B", "target_policy": "rr"},
+        {"symbol": "AAAUSDT", "side": "long", "entry_time": "2025-01-01T00:00:00", "exit_time": "2025-01-01T02:00:00", "entry": 100, "exit": 104, "stop": 98, "target": 104, "setup_type": "breakout", "risk_grade": "A", "target_policy": "rr", "exit_reason": "take_profit"},
+        {"symbol": "BBBUSDT", "side": "long", "entry_time": "2025-01-01T01:00:00", "exit_time": "2025-01-01T03:00:00", "entry": 80, "exit": 78, "stop": 78, "target": 84, "setup_type": "pullback", "risk_grade": "B", "target_policy": "rr", "exit_reason": "stop_loss"},
     ]
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as f:
@@ -38,10 +38,22 @@ def main() -> None:
         print(result.stdout)
         assert result.returncode == 0, result.stderr
         signals = read_rows(out / "paper_signals.csv")
+        journal = read_rows(out / "paper_journal.csv")
+        positions = read_rows(out / "paper_positions.csv")
         summary = read_rows(out / "paper_summary.csv")[0]
         assert len(signals) == 2, signals
+        assert len(journal) == 6, journal
+        assert len(positions) == 2, positions
         assert signals[0]["status"] == "OPEN_SIGNAL", signals
+        assert {row["event"] for row in journal} == {"OPEN_SIGNAL", "FILLED_PAPER", "CLOSED_PAPER"}, journal
+        assert {row["status"] for row in positions} == {"CLOSED_PAPER"}, positions
+        assert positions[0]["close_reason"] == "take_profit", positions
+        assert positions[1]["close_reason"] == "stop_loss", positions
         assert summary["paper_signals"] == "2", summary
+        assert summary["filled_paper"] == "2", summary
+        assert summary["closed_paper"] == "2", summary
+        assert summary["winners"] == "1", summary
+        assert summary["losers"] == "1", summary
         assert summary["status"] == "OK", summary
     print("PAPER MODE SMOKE TEST OK")
 
