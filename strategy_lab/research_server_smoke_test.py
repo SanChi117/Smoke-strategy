@@ -100,6 +100,14 @@ def run_open_server_check(root: Path, candles: Path) -> None:
         assert payload["summary"]["sanity_status"] in {"OK", "WARN", "FAIL"}, payload
         assert (root / "results" / "runs" / run_id / "run_metadata.json").exists(), "missing run metadata"
 
+        status, payload = request_json(port, "GET", "/runs/list?runs_dir=results/runs&limit=5")
+        assert status == 200, payload
+        assert payload["status"] == "ok", payload
+        assert payload["count"] >= 1, payload
+        assert payload["runs"][0]["run_id"] == run_id, payload
+        assert payload["runs"][0]["type"] == "end-to-end", payload
+        assert payload["runs"][0]["generated_trades"] != "", payload
+
         status, payload = request_json(port, "GET", "/runs/latest?runs_dir=results/runs")
         assert status == 200, payload
         assert payload["status"] == "ok", payload
@@ -141,6 +149,10 @@ def run_auth_server_check(root: Path) -> None:
         assert status == 200, payload
         assert payload["auth_enabled"] is True, payload
 
+        status, payload = request_json(port, "GET", "/runs/list?runs_dir=results/runs")
+        assert status == 401, payload
+        assert payload["error"] == "unauthorized", payload
+
         status, payload = request_json(port, "GET", "/reports/latest?out_dir=results")
         assert status == 401, payload
         assert payload["error"] == "unauthorized", payload
@@ -149,6 +161,10 @@ def run_auth_server_check(root: Path) -> None:
         assert status == 401, payload
 
         status, payload = request_json(port, "GET", "/reports/latest?out_dir=results", token="test-token")
+        assert status == 200, payload
+        assert payload["status"] == "ok", payload
+
+        status, payload = request_json(port, "GET", "/runs/list?runs_dir=results/runs", token="test-token")
         assert status == 200, payload
         assert payload["status"] == "ok", payload
     finally:
