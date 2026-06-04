@@ -10,6 +10,7 @@ The current project is a modular research platform for testing whether a wide cr
 
 ```text
 candles.csv
+→ data quality validation
 → market features
 → candidate setups
 → risk plans
@@ -17,6 +18,7 @@ candles.csv
 → generated trades
 → universe / quality / structure gates
 → dynamic portfolio simulation
+→ report sanity checks
 → reports
 ```
 
@@ -37,6 +39,8 @@ results/demo/
 ## First reports to read
 
 ```text
+results/demo/report_sanity_summary.csv
+results/demo/report_sanity_issues.csv
 results/demo/candle_research_report.csv
 results/demo/candle_exit_diagnostics.csv
 results/demo/generated_trades.csv
@@ -44,7 +48,9 @@ results/demo/pipeline_summary.csv
 results/demo/pipeline_risk_diagnostics.csv
 ```
 
-Use `candle_research_report.csv` first. It gives the compact view:
+Use `report_sanity_summary.csv` first. It shows whether the generated research result is clean, suspicious, or failing basic sanity checks.
+
+Then open `candle_research_report.csv`. It gives the compact strategy view:
 
 ```text
 winrate_pct
@@ -58,6 +64,47 @@ best_symbol
 worst_symbol
 most_common_exit
 ```
+
+## Report sanity checks
+
+Sanity checks are created automatically after the end-to-end run:
+
+```text
+report_sanity_summary.csv
+report_sanity_issues.csv
+```
+
+They flag suspicious results such as:
+
+```text
+data quality errors
+too few generated_trades
+too few executed_trades
+weak candle avg_r
+too many time-stop exits
+weak walk-forward stability_score
+missing report files
+```
+
+Check an existing reports folder without rerunning the strategy:
+
+```bash
+python scripts/check_report_sanity.py --out-dir results
+```
+
+Stricter example:
+
+```bash
+python scripts/check_report_sanity.py \
+  --out-dir results \
+  --min-generated-trades 10 \
+  --min-executed-trades 2 \
+  --min-candle-avg-r 0.0 \
+  --max-time-stop-pct 50 \
+  --min-wfo-stability-score 60
+```
+
+`WARN` does not mean the code failed. It means the result should be reviewed before trusting it.
 
 ## Compare market regimes
 
@@ -94,6 +141,39 @@ most_common_exit
 ```
 
 Important: a weak or empty regime is information, not a code failure. It means the current setup/risk logic did not find enough valid opportunities in that market type.
+
+## Walk-forward check
+
+Run walk-forward windows on a candle dataset:
+
+```bash
+python scripts/run_walk_forward.py \
+  --candles data/candles.csv \
+  --out-dir results/walk_forward \
+  --window-days 30 \
+  --step-days 15 \
+  --min-confidence 40
+```
+
+Main files:
+
+```text
+results/walk_forward/walk_forward_windows.csv
+results/walk_forward/walk_forward_summary.csv
+results/walk_forward/walk_forward_report.csv
+```
+
+Open `walk_forward_report.csv` first. It answers:
+
+```text
+How many windows passed?
+How many windows were profitable or losing?
+What was average ret_pct and max_dd_pct?
+Which window was best/worst?
+What is the stability_score and stability_status?
+```
+
+This is still a research skeleton. It does not optimize parameters yet; it checks whether the current logic survives multiple time windows.
 
 ## Run on your own candles
 
@@ -187,7 +267,9 @@ strategy_lab/candle_exit_simulator.py
 strategy_lab/exit_diagnostics.py
 strategy_lab/candle_research_report.py
 strategy_lab/candle_pipeline.py
+strategy_lab/report_sanity.py
 strategy_lab/end_to_end_pipeline.py
+strategy_lab/walk_forward.py
 strategy_lab/universe_selector.py
 strategy_lab/portfolio_simulator.py
 strategy_lab/risk_diagnostics.py
@@ -203,6 +285,7 @@ python -m strategy_lab.smoke_test
 python -m strategy_lab.pipeline_smoke_test
 python -m strategy_lab.candle_pipeline_smoke_test
 python -m strategy_lab.data_quality_cli_smoke_test
+python -m strategy_lab.report_sanity_cli_smoke_test
 python -m strategy_lab.regime_samples_smoke_test
 python -m strategy_lab.local_demo_smoke_test
 ```
@@ -211,6 +294,7 @@ Full/heavier checks also include:
 
 ```bash
 python -m strategy_lab.end_to_end_smoke_test
+python -m strategy_lab.walk_forward_smoke_test
 python -m strategy_lab.research_server_smoke_test
 python -m strategy_lab.regime_batch_smoke_test
 ```
@@ -235,8 +319,11 @@ Implemented:
 one-command local demo
 market data CSV layer
 data quality validation
+report sanity checks
 regime sample generator
 regime batch comparison
+walk-forward research skeleton
+compact walk-forward report
 feature builder
 setup generator
 setup-aware risk model
@@ -256,7 +343,7 @@ Not implemented yet:
 ```text
 real exchange market data loader
 real live universe feed
-walk-forward optimization
+walk-forward parameter optimization
 production authentication
 live alert/execution layer
 ```
