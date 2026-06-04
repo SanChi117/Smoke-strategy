@@ -35,6 +35,8 @@ REPORT_FILES = [
     "pipeline_risk_policy.csv",
     "pipeline_decisions.csv",
     "end_to_end_summary.csv",
+    "report_sanity_summary.csv",
+    "report_sanity_issues.csv",
     "data_quality_summary.csv",
     "data_quality_report.csv",
     "data_quality_issues.csv",
