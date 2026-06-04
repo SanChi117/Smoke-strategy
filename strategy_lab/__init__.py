@@ -16,6 +16,7 @@ __all__ = [
     "end_to_end_smoke_test",
     "research_server",
     "research_server_smoke_test",
+    "local_demo_smoke_test",
     "rolling_symbol_strength",
     "trade_quality_score",
     "structure_learning",
