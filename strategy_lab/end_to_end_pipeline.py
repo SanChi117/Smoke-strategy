@@ -9,6 +9,7 @@ candles.csv
 -> risk_plans.csv
 -> generated_trades.csv
 -> integrated pipeline reports
+-> report sanity checks
 
 Research only. No live trading. No API keys.
 """
@@ -21,6 +22,7 @@ from pathlib import Path
 
 from strategy_lab.candle_pipeline import run_candle_pipeline
 from strategy_lab.pipeline import run_pipeline
+from strategy_lab.report_sanity import write_report_sanity
 
 
 @dataclass(frozen=True)
@@ -40,6 +42,9 @@ class EndToEndSummary:
     pf: float
     winrate: float
     avg_risk_pct: float
+    sanity_status: str
+    sanity_errors: int
+    sanity_warnings: int
 
 
 def write_summary(path: str | Path, summary: EndToEndSummary) -> None:
@@ -61,6 +66,7 @@ def run_end_to_end_pipeline(candles_csv: str | Path, out_dir: str | Path = "resu
         raise RuntimeError("Candle pipeline did not create generated_trades.csv")
 
     pipeline_summary = run_pipeline(input_csv=generated_trades, out_dir=out, profile_name=profile)
+    sanity = write_report_sanity(out)
     summary = EndToEndSummary(
         profile=profile,
         candles=candle_summary["candles"],
@@ -77,6 +83,9 @@ def run_end_to_end_pipeline(candles_csv: str | Path, out_dir: str | Path = "resu
         pf=pipeline_summary.pf,
         winrate=pipeline_summary.winrate,
         avg_risk_pct=pipeline_summary.avg_risk_pct,
+        sanity_status=sanity.status,
+        sanity_errors=sanity.errors,
+        sanity_warnings=sanity.warnings,
     )
     write_summary(out / "end_to_end_summary.csv", summary)
     return summary
