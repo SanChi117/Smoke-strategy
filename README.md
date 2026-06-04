@@ -1,75 +1,214 @@
 # Smoke Strategy Lab
 
-Clean isolated crypto strategy research repository.
+Research-only crypto strategy lab.
 
-This repo is separate from the old Telegram bot project. It is for strategy research only:
+No Telegram bot. No 3Commas. No exchange API keys. No live trading.
 
-```text
-trade CSV -> rolling symbol selection -> capital simulation -> report
-```
+The current project is a modular research platform for testing whether a wide crypto universe can be filtered into tradable setups by the strategy itself.
 
-No Telegram bot. No 3Commas. No API keys. No live trading.
-
-## Current stage
+## Current research chain
 
 ```text
-v2.4 Rolling Symbol Strength
+candles.csv
+→ market features
+→ candidate setups
+→ risk plans
+→ candle exit simulation
+→ generated trades
+→ universe / quality / structure gates
+→ dynamic portfolio simulation
+→ reports
 ```
 
-Goal: check whether a wide universe can be stabilized by selecting only the strongest symbols using past data.
+## Fastest start
 
-## Input CSV format
+```bash
+python -m pip install --upgrade pip
+pip install -e .
+python scripts/run_local_demo.py
+```
 
-Required columns:
+The demo creates synthetic candles and writes reports to:
 
 ```text
-symbol,side,entry_time,exit_time,entry,stop,exit,r_mult
+results/demo/
 ```
 
-Optional columns:
+## First reports to read
 
 ```text
-kind,source
+results/demo/candle_research_report.csv
+results/demo/candle_exit_diagnostics.csv
+results/demo/generated_trades.csv
+results/demo/pipeline_summary.csv
+results/demo/pipeline_risk_diagnostics.csv
 ```
 
-Example time format:
+Use `candle_research_report.csv` first. It gives the compact view:
 
 ```text
-2026-01-01T12:00:00
+winrate_pct
+avg_r
+total_r
+best_setup_type
+worst_setup_type
+best_risk_grade
+best_target_policy
+best_symbol
+worst_symbol
+most_common_exit
 ```
 
-## Smoke test
+## Run on your own candles
+
+Input format:
+
+```text
+symbol,time,open,high,low,close,volume
+```
+
+Command:
+
+```bash
+python scripts/run_end_to_end_pipeline.py \
+  --candles data/candles.csv \
+  --out-dir results \
+  --profile growth_100_20x \
+  --min-confidence 40
+```
+
+## Current risk profile
+
+Default profile:
+
+```text
+growth_100_20x
+balance: $100
+leverage: 20x
+base risk: 0.75%
+max risk: 1.00%
+max positions: 2
+```
+
+The simulator uses dynamic risk per trade:
+
+```text
+TAKE + TAKE = full risk
+WATCH combinations = reduced risk
+Any SKIP = blocked
+```
+
+## Research server
+
+Start server locally:
+
+```bash
+python scripts/run_research_server.py \
+  --host 127.0.0.1 \
+  --port 8080 \
+  --base-dir .
+```
+
+Health-check:
+
+```bash
+python scripts/health_check.py --host 127.0.0.1 --port 8080
+```
+
+Run end-to-end through server:
+
+```bash
+curl -X POST http://127.0.0.1:8080/run/end-to-end \
+  -H 'Content-Type: application/json' \
+  -d '{"candles_csv":"data/candles.csv","out_dir":"results","profile":"growth_100_20x","min_confidence":40}'
+```
+
+Read reports:
+
+```bash
+curl http://127.0.0.1:8080/reports/latest?out_dir=results
+```
+
+## Main modules
+
+```text
+strategy_lab/market_data.py
+strategy_lab/feature_builder.py
+strategy_lab/setup_generator.py
+strategy_lab/risk_model.py
+strategy_lab/candle_exit_simulator.py
+strategy_lab/exit_diagnostics.py
+strategy_lab/candle_research_report.py
+strategy_lab/candle_pipeline.py
+strategy_lab/end_to_end_pipeline.py
+strategy_lab/universe_selector.py
+strategy_lab/portfolio_simulator.py
+strategy_lab/risk_diagnostics.py
+strategy_lab/research_server.py
+```
+
+## Smoke checks
+
+Fast checks:
 
 ```bash
 python -m strategy_lab.smoke_test
+python -m strategy_lab.pipeline_smoke_test
+python -m strategy_lab.candle_pipeline_smoke_test
+python -m strategy_lab.local_demo_smoke_test
 ```
 
-Expected:
-
-```text
-SMOKE TEST OK
-```
-
-## Rolling symbol strength run
+Full checks also include:
 
 ```bash
-python -m strategy_lab.rolling_symbol_strength \
-  --trades-csv data/trades.csv \
-  --start 2026-01-01 \
-  --end 2026-05-31 \
-  --lookback-days 30 \
-  --rebalance-days 7 \
-  --top-n 8 \
-  --initial-cash 500 \
-  --risk-pct 0.02 \
-  --leverage 20 \
-  --max-positions 2
+python -m strategy_lab.end_to_end_smoke_test
+python -m strategy_lab.research_server_smoke_test
 ```
 
-## Rules
+## Docs
 
-1. First make the research core stable.
-2. No live trading logic in this repository.
-3. No secrets or API keys.
-4. GitHub Actions only for smoke tests at first.
-5. Real market-data adapters are added only after local smoke tests pass.
+```text
+QUICKSTART.md
+docs/PROJECT_ARCHITECTURE.md
+docs/UNIVERSE_AND_MONEY_MANAGEMENT.md
+docs/TRADING_PLAYBOOK.md
+docs/DEPLOY_RESEARCH_SERVER.md
+PROJECT_STATUS.md
+```
+
+## Current status
+
+Implemented:
+
+```text
+one-command local demo
+market data CSV layer
+feature builder
+setup generator
+setup-aware risk model
+candle exit simulator
+exit diagnostics
+compact candle research report
+integrated pipeline
+dynamic portfolio simulator
+risk diagnostics
+research server
+VPS research deployment skeleton
+GitHub smoke checks
+```
+
+Not implemented yet:
+
+```text
+real exchange market data loader
+real live universe feed
+walk-forward optimization
+production authentication
+live alert/execution layer
+```
+
+## Safety rule
+
+This repository stays research-only until validation proves the strategy is stable.
+
+Do not add exchange API keys here yet.
