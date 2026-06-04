@@ -47,9 +47,28 @@ SMOKE_RESEARCH_MODE=research
 SMOKE_RESEARCH_HOST=127.0.0.1
 SMOKE_RESEARCH_PORT=8080
 SMOKE_RESEARCH_BASE_DIR=/opt/smoke-strategy
+RESEARCH_SERVER_TOKEN=
 ```
 
 Keep `127.0.0.1` unless nginx/reverse proxy and firewall are configured.
+
+For VPS use, set a token before exposing any endpoint:
+
+```bash
+nano .env
+```
+
+Example:
+
+```bash
+RESEARCH_SERVER_TOKEN=change-this-long-random-token
+```
+
+When `RESEARCH_SERVER_TOKEN` is set, all non-`/health` endpoints require:
+
+```text
+X-Research-Token: change-this-long-random-token
+```
 
 ## 6. Run smoke tests before service install
 
@@ -96,9 +115,12 @@ Expected:
 ```json
 {
   "status": "ok",
-  "mode": "research"
+  "mode": "research",
+  "auth_enabled": true
 }
 ```
+
+If `RESEARCH_SERVER_TOKEN` is empty, `auth_enabled` will be `false`.
 
 ## 9. Run pipeline through server
 
@@ -107,6 +129,7 @@ Expected:
 ```bash
 curl -X POST http://127.0.0.1:8080/run/pipeline \
   -H 'Content-Type: application/json' \
+  -H 'X-Research-Token: change-this-long-random-token' \
   -d '{"input_csv":"data/sample_runner_trades.csv","out_dir":"results","profile":"growth_100_20x"}'
 ```
 
@@ -117,13 +140,47 @@ Requires `data/candles.csv`.
 ```bash
 curl -X POST http://127.0.0.1:8080/run/end-to-end \
   -H 'Content-Type: application/json' \
+  -H 'X-Research-Token: change-this-long-random-token' \
   -d '{"candles_csv":"data/candles.csv","out_dir":"results","profile":"growth_100_20x","min_confidence":50}'
 ```
 
-### Read reports
+Each server run now creates a separate folder:
+
+```text
+results/runs/<run_id>/
+```
+
+Inside it:
+
+```text
+run_metadata.json
+end_to_end_summary.csv
+report_sanity_summary.csv
+report_sanity_issues.csv
+candle_research_report.csv
+pipeline_summary.csv
+...
+```
+
+### Read latest run metadata
 
 ```bash
-curl http://127.0.0.1:8080/reports/latest?out_dir=results
+curl http://127.0.0.1:8080/runs/latest?runs_dir=results/runs \
+  -H 'X-Research-Token: change-this-long-random-token'
+```
+
+### Read latest reports
+
+```bash
+curl http://127.0.0.1:8080/reports/latest?out_dir=results \
+  -H 'X-Research-Token: change-this-long-random-token'
+```
+
+### Read a specific run
+
+```bash
+curl "http://127.0.0.1:8080/reports/latest?out_dir=results&run_id=<run_id>" \
+  -H 'X-Research-Token: change-this-long-random-token'
 ```
 
 ## 10. Logs
@@ -144,4 +201,4 @@ This service must stay research-only.
 
 Do not add exchange API keys.
 Do not add order execution.
-Do not expose port 8080 publicly until authentication/reverse proxy is added.
+Do not expose port 8080 publicly without `RESEARCH_SERVER_TOKEN`, firewall and reverse proxy rules.
