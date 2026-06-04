@@ -20,6 +20,8 @@ __all__ = [
     "end_to_end_smoke_test",
     "walk_forward",
     "walk_forward_smoke_test",
+    "parameter_grid",
+    "parameter_grid_smoke_test",
     "research_server",
     "research_server_smoke_test",
     "regime_samples_smoke_test",
