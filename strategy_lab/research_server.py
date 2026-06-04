@@ -10,6 +10,7 @@ Endpoints:
 - GET  /reports/latest?out_dir=results&run_id=<optional>
 - POST /run/pipeline
 - POST /run/end-to-end
+- POST /run/paper
 
 Optional auth:
 - Set RESEARCH_SERVER_TOKEN to protect all non-health endpoints.
@@ -31,6 +32,7 @@ from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from strategy_lab.end_to_end_pipeline import run_end_to_end_pipeline
+from strategy_lab.paper_mode import run_paper_mode
 from strategy_lab.pipeline import run_pipeline
 
 
@@ -148,8 +150,8 @@ def list_run_records(runs_dir: Path, limit: int = 20) -> list[dict[str, Any]]:
             "sanity_status": summary.get("sanity_status", "") if isinstance(summary, dict) else "",
             "generated_trades": summary.get("generated_trades", "") if isinstance(summary, dict) else "",
             "executed_trades": summary.get("executed_trades", "") if isinstance(summary, dict) else "",
-            "paper_signals": summary.get("paper_signals", "") if isinstance(summary, dict) else "",
-            "paper_closed": summary.get("paper_closed", "") if isinstance(summary, dict) else "",
+            "paper_signals": summary.get("paper_signals", summary.get("paper_signals", "")) if isinstance(summary, dict) else "",
+            "paper_closed": summary.get("paper_closed", summary.get("closed_paper", "")) if isinstance(summary, dict) else "",
             "ret_pct": summary.get("ret_pct", "") if isinstance(summary, dict) else "",
             "max_dd_pct": summary.get("max_dd_pct", "") if isinstance(summary, dict) else "",
         })
@@ -195,7 +197,7 @@ def create_handler(base_dir: str | Path = "."):
     root = Path(base_dir).resolve()
 
     class ResearchHandler(BaseHTTPRequestHandler):
-        server_version = "SmokeResearchServer/0.5"
+        server_version = "SmokeResearchServer/0.6"
 
         def log_message(self, fmt: str, *args: Any) -> None:  # noqa: A003
             return
@@ -265,6 +267,16 @@ def create_handler(base_dir: str | Path = "."):
                     started_at = datetime.utcnow().isoformat(timespec="seconds") + "Z"
                     summary = run_end_to_end_pipeline(candles_csv=candles_csv, out_dir=out_dir, profile=profile, min_confidence=min_confidence)
                     metadata = {"run_id": run_id, "type": "end-to-end", "started_at": started_at, "completed_at": datetime.utcnow().isoformat(timespec="seconds") + "Z", "candles_csv": str(candles_csv), "profile": profile, "min_confidence": min_confidence, "summary": asdict(summary)}
+                    write_run_metadata(out_dir, metadata)
+                    json_response(self, 200, {"status": "ok", "run_id": run_id, "summary": asdict(summary), "out_dir": str(out_dir)})
+                    return
+                if parsed.path == "/run/paper":
+                    generated_trades_csv = make_safe_path(root, body.get("generated_trades_csv"), "results/generated_trades.csv")
+                    out_dir, run_id = resolve_run_out_dir(root, body, "results", "paper")
+                    paper_out = out_dir / "paper"
+                    started_at = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+                    summary = run_paper_mode(generated_trades_csv=generated_trades_csv, out_dir=paper_out)
+                    metadata = {"run_id": run_id, "type": "paper", "started_at": started_at, "completed_at": datetime.utcnow().isoformat(timespec="seconds") + "Z", "generated_trades_csv": str(generated_trades_csv), "summary": asdict(summary)}
                     write_run_metadata(out_dir, metadata)
                     json_response(self, 200, {"status": "ok", "run_id": run_id, "summary": asdict(summary), "out_dir": str(out_dir)})
                     return
