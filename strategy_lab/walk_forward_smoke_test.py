@@ -41,10 +41,13 @@ def main() -> None:
         assert result.returncode == 0, result.stderr
         windows_path = out / "walk_forward_windows.csv"
         summary_path = out / "walk_forward_summary.csv"
+        report_path = out / "walk_forward_report.csv"
         assert windows_path.exists(), "missing walk_forward_windows.csv"
         assert summary_path.exists(), "missing walk_forward_summary.csv"
+        assert report_path.exists(), "missing walk_forward_report.csv"
         windows = read_rows(windows_path)
         summary = read_rows(summary_path)
+        report = read_rows(report_path)
         assert len(windows) > 0, "expected at least one WFO window"
         assert len(summary) == len(windows), "summary rows must match windows"
         assert any(row["status"] == "OK" for row in summary), summary
@@ -52,6 +55,9 @@ def main() -> None:
             assert int(float(row["candles"])) > 0, row
             assert int(float(row["symbols"])) > 0, row
             assert row["reports_dir"], row
+        metrics = {row["metric"] for row in report}
+        for metric in ["windows_total", "windows_ok", "profitable_windows", "avg_ret_pct", "avg_max_dd_pct", "stability_score", "stability_status"]:
+            assert metric in metrics, f"missing WFO report metric: {metric}"
     print("WALK-FORWARD SMOKE TEST OK")
 
 
