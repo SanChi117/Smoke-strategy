@@ -26,6 +26,7 @@ __all__ = [
     "parameter_grid",
     "parameter_grid_smoke_test",
     "paper_mode",
+    "paper_review",
     "paper_mode_smoke_test",
     "research_server",
     "research_server_smoke_test",
