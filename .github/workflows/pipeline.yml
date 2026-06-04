@@ -12,6 +12,7 @@ on:
       - 'strategy_lab/risk_model.py'
       - 'strategy_lab/candle_exit_simulator.py'
       - 'strategy_lab/exit_diagnostics.py'
+      - 'strategy_lab/candle_research_report.py'
       - 'strategy_lab/candle_pipeline.py'
       - 'strategy_lab/candle_pipeline_smoke_test.py'
       - 'strategy_lab/end_to_end_pipeline.py'
