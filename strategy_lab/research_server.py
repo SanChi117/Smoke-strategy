@@ -10,6 +10,10 @@ Endpoints:
 - POST /run/pipeline
 - POST /run/end-to-end
 
+Optional auth:
+- Set RESEARCH_SERVER_TOKEN to protect all non-health endpoints.
+- Pass token via X-Research-Token header or research_token JSON body field.
+
 Research only. No live trading. No exchange keys. No order execution.
 """
 
@@ -17,6 +21,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 from dataclasses import asdict
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -129,11 +134,37 @@ def json_response(handler: BaseHTTPRequestHandler, status: int, payload: dict[st
     handler.wfile.write(data)
 
 
+def expected_token() -> str:
+    return os.environ.get("RESEARCH_SERVER_TOKEN", "").strip()
+
+
+def token_from_request(handler: BaseHTTPRequestHandler, body: dict[str, Any] | None = None) -> str:
+    header = handler.headers.get("X-Research-Token", "")
+    if header:
+        return header.strip()
+    if body and body.get("research_token"):
+        return str(body.get("research_token", "")).strip()
+    parsed = urlparse(handler.path)
+    query = parse_qs(parsed.query)
+    return str(query.get("research_token", [""])[0]).strip()
+
+
+def is_authorized(handler: BaseHTTPRequestHandler, body: dict[str, Any] | None = None) -> bool:
+    required = expected_token()
+    if not required:
+        return True
+    return token_from_request(handler, body) == required
+
+
+def auth_error(handler: BaseHTTPRequestHandler) -> None:
+    json_response(handler, 401, {"status": "error", "error": "unauthorized", "message": "Missing or invalid research token."})
+
+
 def create_handler(base_dir: str | Path = "."):
     root = Path(base_dir).resolve()
 
     class ResearchHandler(BaseHTTPRequestHandler):
-        server_version = "SmokeResearchServer/0.2"
+        server_version = "SmokeResearchServer/0.3"
 
         def log_message(self, fmt: str, *args: Any) -> None:  # noqa: A003
             return
@@ -143,7 +174,10 @@ def create_handler(base_dir: str | Path = "."):
             try:
                 query = parse_qs(parsed.query)
                 if parsed.path == "/health":
-                    json_response(self, 200, {"status": "ok", "mode": "research", "base_dir": str(root), "server_version": self.server_version})
+                    json_response(self, 200, {"status": "ok", "mode": "research", "base_dir": str(root), "server_version": self.server_version, "auth_enabled": bool(expected_token())})
+                    return
+                if not is_authorized(self):
+                    auth_error(self)
                     return
                 if parsed.path == "/runs/latest":
                     runs_dir = make_safe_path(root, query.get("runs_dir", ["results/runs"])[0], "results/runs")
@@ -173,6 +207,9 @@ def create_handler(base_dir: str | Path = "."):
             parsed = urlparse(self.path)
             try:
                 body = read_json_body(self)
+                if not is_authorized(self, body):
+                    auth_error(self)
+                    return
                 if parsed.path == "/run/pipeline":
                     input_csv = make_safe_path(root, body.get("input_csv"), "data/sample_runner_trades.csv")
                     out_dir, run_id = resolve_run_out_dir(root, body, "results", "pipeline")
@@ -206,6 +243,7 @@ def run_server(host: str = "127.0.0.1", port: int = 8080, base_dir: str | Path =
     server = ThreadingHTTPServer((host, port), handler)
     print(f"Smoke research server running on http://{host}:{port}")
     print(f"Base directory: {Path(base_dir).resolve()}")
+    print(f"Auth enabled: {bool(expected_token())}")
     server.serve_forever()
 
 
