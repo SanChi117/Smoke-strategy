@@ -63,6 +63,10 @@ jobs:
         run: |
           python -m strategy_lab.regime_samples_smoke_test
 
+      - name: Run regime batch smoke test
+        run: |
+          python -m strategy_lab.regime_batch_smoke_test
+
       - name: Run local demo smoke test
         run: |
           python -m strategy_lab.local_demo_smoke_test
