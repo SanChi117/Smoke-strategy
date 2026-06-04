@@ -54,3 +54,7 @@ jobs:
       - name: Run candle pipeline smoke test
         run: |
           python -m strategy_lab.candle_pipeline_smoke_test
+
+      - name: Run local demo smoke test
+        run: |
+          python -m strategy_lab.local_demo_smoke_test
