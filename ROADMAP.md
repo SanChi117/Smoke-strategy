@@ -11,6 +11,7 @@ The project currently has a working research chain:
 ```text
 synthetic or user candles
 → data quality validation
+→ universe input validation/filtering
 → feature builder
 → setup generator
 → risk model
@@ -18,6 +19,7 @@ synthetic or user candles
 → generated trades
 → integrated pipeline
 → portfolio simulation
+→ report sanity checks
 → diagnostics/reports
 ```
 
@@ -43,6 +45,7 @@ Done:
 ```text
 market data CSV layer
 data quality validation
+report sanity checks
 feature builder
 setup generator
 setup-aware risk model
@@ -58,6 +61,9 @@ deterministic regime samples
 regime batch comparison
 walk-forward research skeleton
 compact walk-forward report
+walk-forward parameter grid skeleton
+universe input validation
+universe-filtered end-to-end runner
 VPS research skeleton
 GitHub smoke checks
 ```
@@ -65,10 +71,10 @@ GitHub smoke checks
 Next:
 
 ```text
-add stronger report sanity rules for too few trades / too many time-stops / weak avg R
-add parameter grid for min_confidence / RR / stop settings
-add real market data adapter
-add real universe input/feed
+real market data adapter
+real universe feed
+server hardening
+paper mode skeleton
 ```
 
 Exit criteria:
@@ -79,6 +85,8 @@ local demo works with one command
 server reports are readable
 pipeline never silently produces empty outputs
 walk_forward_report.csv exists and is readable
+parameter_grid_report.csv exists and is readable
+universe_input_report.csv explains missing/usable symbols
 ```
 
 ## Phase 2 — Real market data loader
@@ -104,6 +112,10 @@ scripts/check_candles_quality.py
 data_quality_summary.csv
 data_quality_report.csv
 data_quality_issues.csv
+scripts/check_universe_input.py
+universe_input_summary.csv
+universe_input_report.csv
+filtered_candles.csv
 ```
 
 Important:
@@ -119,9 +131,11 @@ Exit criteria:
 
 ```text
 can run end-to-end on real candles.csv
+can filter candles by universe.csv
 candle_research_report.csv is produced
 pipeline_summary.csv is produced
 walk_forward_report.csv is produced
+parameter_grid_report.csv is produced
 reports identify weak/strong symbols
 ```
 
@@ -138,13 +152,16 @@ walk_forward_summary.csv
 walk_forward_report.csv
 stability_score
 best/worst window tracking
+parameter_grid_summary.csv
+parameter_grid_report.csv
+min_confidence grid skeleton
 ```
 
 Next planned:
 
 ```text
 train/test window splitting
-parameter grid for min_confidence / RR / stop settings
+parameter grid for RR / stop settings
 setup-family performance comparison
 regime performance comparison
 out-of-sample report
@@ -174,13 +191,23 @@ parameter optimization does not overfit one regime
 
 Goal: let the system evaluate many symbols but trade only those that fit the current strategy logic.
 
-Planned:
+Already implemented:
 
 ```text
 universe input list
+requested vs available symbol report
+minimum history filter
+missing symbol report
+filtered_candles.csv
+universe-filtered strategy runner
+```
+
+Next planned:
+
+```text
+real exchange/public universe source
 liquidity filters
 minimum volume filters
-minimum history filters
 symbol quality ranking
 exclude weak/dirty markets automatically
 ```
@@ -189,7 +216,8 @@ Design rule:
 
 ```text
 The user may provide many symbols.
-The strategy decides which ones are currently tradable.
+The system filters the universe before research.
+The strategy decides which generated trades pass quality/risk gates.
 ```
 
 Exit criteria:
@@ -257,12 +285,15 @@ add setup-specific time-stop rules
 Main reports to use:
 
 ```text
+report_sanity_summary.csv
 candle_research_report.csv
 candle_exit_diagnostics.csv
 pipeline_risk_diagnostics.csv
 pipeline_decisions.csv
 regime_batch_summary.csv
 walk_forward_report.csv
+parameter_grid_report.csv
+universe_input_report.csv
 ```
 
 Exit criteria:
@@ -316,6 +347,7 @@ Before live trading, the project must pass:
 ```text
 real data validation
 walk-forward validation
+parameter grid validation
 paper mode validation
 server hardening
 authentication
@@ -338,13 +370,12 @@ live risk guardrails
 ## Current priority order
 
 ```text
-1. Stronger report sanity checks
-2. Walk-forward parameter optimization
-3. Real market data adapter
-4. Real universe feed
-5. Server hardening
-6. Paper mode
-7. Live layer decision gate
+1. Real market data adapter
+2. Real universe feed
+3. Server hardening
+4. Paper mode
+5. Strategy improvement by reports
+6. Live layer decision gate
 ```
 
 ## Hard safety rules
