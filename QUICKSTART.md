@@ -21,12 +21,14 @@ The demo creates synthetic candles and runs the full research chain:
 
 ```text
 synthetic candles
+→ data quality validation
 → candle features
 → candidate setups
 → risk plans
 → candle exits
 → generated trades
 → integrated pipeline
+→ report sanity checks
 → reports
 ```
 
@@ -39,13 +41,34 @@ results/demo/
 
 ## 3. Main reports to open first
 
-### 1. Candle summary
+### 1. Report sanity
+
+```text
+results/demo/report_sanity_summary.csv
+results/demo/report_sanity_issues.csv
+```
+
+Open this first.
+
+It answers:
+
+```text
+Did the result pass basic sanity checks?
+Are there data quality errors?
+Were there too few generated/executed trades?
+Is candle avg_r too weak?
+Are there too many time-stop exits?
+```
+
+`WARN` does not mean the code failed. It means the result should be reviewed before trusting it.
+
+### 2. Candle summary
 
 ```text
 results/demo/candle_research_report.csv
 ```
 
-Use this first.
+Use this after sanity checks.
 
 It answers:
 
@@ -57,7 +80,7 @@ Which risk grade worked best?
 What was the most common exit reason?
 ```
 
-### 2. Exit breakdown
+### 3. Exit breakdown
 
 ```text
 results/demo/candle_exit_diagnostics.csv
@@ -74,7 +97,7 @@ side
 exit_reason
 ```
 
-### 3. Generated trades
+### 4. Generated trades
 
 ```text
 results/demo/generated_trades.csv
@@ -84,7 +107,7 @@ This is the normalized trade CSV produced from candles.
 
 It feeds the integrated pipeline.
 
-### 4. Portfolio summary
+### 5. Portfolio summary
 
 ```text
 results/demo/pipeline_summary.csv
@@ -100,7 +123,7 @@ $100 balance
 1.00% max risk
 ```
 
-### 5. Risk diagnostics
+### 6. Risk diagnostics
 
 ```text
 results/demo/pipeline_risk_diagnostics.csv
@@ -115,7 +138,34 @@ structure_skip
 allowed_full_balanced
 ```
 
-## 4. Compare market regimes
+## 4. Check existing reports only
+
+Run sanity checks on an existing reports folder without rerunning the strategy:
+
+```bash
+python scripts/check_report_sanity.py --out-dir results
+```
+
+Stricter example:
+
+```bash
+python scripts/check_report_sanity.py \
+  --out-dir results \
+  --min-generated-trades 10 \
+  --min-executed-trades 2 \
+  --min-candle-avg-r 0.0 \
+  --max-time-stop-pct 50 \
+  --min-wfo-stability-score 60
+```
+
+Outputs:
+
+```text
+report_sanity_summary.csv
+report_sanity_issues.csv
+```
+
+## 5. Compare market regimes
 
 Generate deterministic trend/range/high-volatility samples:
 
@@ -160,7 +210,7 @@ most_common_exit
 
 A weak or empty regime is useful information. It means the current logic did not find enough valid trades there.
 
-## 5. Walk-forward check
+## 6. Walk-forward check
 
 Run rolling windows on your candle dataset:
 
@@ -216,7 +266,7 @@ worst_window
 
 This is not parameter optimization yet. It checks whether the current logic survives multiple time windows.
 
-## 6. Run with custom output
+## 7. Run with custom output
 
 ```bash
 python scripts/run_local_demo.py \
@@ -228,7 +278,7 @@ python scripts/run_local_demo.py \
   --min-confidence 40
 ```
 
-## 7. Run candle pipeline on your own candles
+## 8. Run candle pipeline on your own candles
 
 Your CSV must contain:
 
@@ -256,7 +306,7 @@ python scripts/check_candles_quality.py \
   --min-symbols 1
 ```
 
-## 8. Start research server
+## 9. Start research server
 
 ```bash
 python scripts/run_research_server.py \
@@ -277,7 +327,7 @@ Or:
 curl http://127.0.0.1:8080/health
 ```
 
-## 9. Run through research server
+## 10. Run through research server
 
 ### Run full candle-to-pipeline flow
 
@@ -293,7 +343,7 @@ curl -X POST http://127.0.0.1:8080/run/end-to-end \
 curl http://127.0.0.1:8080/reports/latest?out_dir=results
 ```
 
-## 10. Current project status
+## 11. Current project status
 
 The current project is a research platform, not a live bot.
 
@@ -302,6 +352,7 @@ Implemented:
 ```text
 market data CSV layer
 data quality validation
+report sanity checks
 regime sample generator
 regime batch comparison
 walk-forward research skeleton
@@ -330,7 +381,7 @@ production authentication
 live alert/execution layer
 ```
 
-## 11. Safety rule
+## 12. Safety rule
 
 Do not add exchange API keys to this project yet.
 
