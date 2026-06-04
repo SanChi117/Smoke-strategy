@@ -5,6 +5,7 @@ Non-live server wrapper around the research pipeline.
 
 Endpoints:
 - GET  /health
+- GET  /runs/list?runs_dir=results/runs&limit=20
 - GET  /runs/latest?runs_dir=results/runs
 - GET  /reports/latest?out_dir=results&run_id=<optional>
 - POST /run/pipeline
@@ -125,6 +126,30 @@ def latest_run_dir(runs_dir: Path) -> Path | None:
     return sorted(dirs, key=lambda p: p.name)[-1]
 
 
+def list_run_records(runs_dir: Path, limit: int = 20) -> list[dict[str, Any]]:
+    if not runs_dir.exists():
+        return []
+    dirs = sorted([p for p in runs_dir.iterdir() if p.is_dir()], key=lambda p: p.name, reverse=True)
+    records: list[dict[str, Any]] = []
+    for run_dir in dirs[: max(1, limit)]:
+        metadata = read_json_file(run_dir / "run_metadata.json")
+        summary = metadata.get("summary", {}) if isinstance(metadata, dict) else {}
+        records.append({
+            "run_id": run_dir.name,
+            "out_dir": str(run_dir),
+            "type": metadata.get("type", "unknown") if isinstance(metadata, dict) else "unknown",
+            "started_at": metadata.get("started_at", "") if isinstance(metadata, dict) else "",
+            "completed_at": metadata.get("completed_at", "") if isinstance(metadata, dict) else "",
+            "profile": metadata.get("profile", "") if isinstance(metadata, dict) else "",
+            "sanity_status": summary.get("sanity_status", "") if isinstance(summary, dict) else "",
+            "generated_trades": summary.get("generated_trades", "") if isinstance(summary, dict) else "",
+            "executed_trades": summary.get("executed_trades", "") if isinstance(summary, dict) else "",
+            "ret_pct": summary.get("ret_pct", "") if isinstance(summary, dict) else "",
+            "max_dd_pct": summary.get("max_dd_pct", "") if isinstance(summary, dict) else "",
+        })
+    return records
+
+
 def json_response(handler: BaseHTTPRequestHandler, status: int, payload: dict[str, Any]) -> None:
     data = json.dumps(payload, ensure_ascii=False, indent=2, default=str).encode("utf-8")
     handler.send_response(status)
@@ -164,7 +189,7 @@ def create_handler(base_dir: str | Path = "."):
     root = Path(base_dir).resolve()
 
     class ResearchHandler(BaseHTTPRequestHandler):
-        server_version = "SmokeResearchServer/0.3"
+        server_version = "SmokeResearchServer/0.4"
 
         def log_message(self, fmt: str, *args: Any) -> None:  # noqa: A003
             return
@@ -178,6 +203,12 @@ def create_handler(base_dir: str | Path = "."):
                     return
                 if not is_authorized(self):
                     auth_error(self)
+                    return
+                if parsed.path == "/runs/list":
+                    runs_dir = make_safe_path(root, query.get("runs_dir", ["results/runs"])[0], "results/runs")
+                    limit = int(query.get("limit", ["20"])[0])
+                    records = list_run_records(runs_dir, limit=limit)
+                    json_response(self, 200, {"status": "ok", "runs_dir": str(runs_dir), "count": len(records), "runs": records})
                     return
                 if parsed.path == "/runs/latest":
                     runs_dir = make_safe_path(root, query.get("runs_dir", ["results/runs"])[0], "results/runs")
