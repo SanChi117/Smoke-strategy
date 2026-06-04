@@ -16,6 +16,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable
 
+from strategy_lab.paper_review import run_paper_review
+
 
 @dataclass(frozen=True)
 class PaperSignal:
@@ -75,6 +77,10 @@ class PaperSummary:
     winners: int
     losers: int
     avg_pnl_pct: float
+    review_approved: int
+    review_watch: int
+    review_rejected: int
+    review_status: str
     status: str
 
 
@@ -236,6 +242,10 @@ def run_paper_mode(generated_trades_csv: str | Path, out_dir: str | Path = "resu
     winners = sum(1 for position in positions if position.pnl_pct > 0)
     losers = sum(1 for position in positions if position.pnl_pct < 0)
     avg_pnl = round(sum(p.pnl_pct for p in positions) / len(positions), 6) if positions else 0.0
+    write_dict_csv(out / "paper_signals.csv", rows_as_dicts(signals))
+    write_dict_csv(out / "paper_journal.csv", rows_as_dicts(events))
+    write_dict_csv(out / "paper_positions.csv", rows_as_dicts(positions))
+    review = run_paper_review(out / "paper_positions.csv", out)
     summary = PaperSummary(
         source_rows=len(rows),
         paper_signals=len(signals),
@@ -246,10 +256,11 @@ def run_paper_mode(generated_trades_csv: str | Path, out_dir: str | Path = "resu
         winners=winners,
         losers=losers,
         avg_pnl_pct=avg_pnl,
+        review_approved=review.approved,
+        review_watch=review.watch,
+        review_rejected=review.rejected,
+        review_status=review.status,
         status="OK" if signals else "EMPTY",
     )
-    write_dict_csv(out / "paper_signals.csv", rows_as_dicts(signals))
-    write_dict_csv(out / "paper_journal.csv", rows_as_dicts(events))
-    write_dict_csv(out / "paper_positions.csv", rows_as_dicts(positions))
     write_dict_csv(out / "paper_summary.csv", rows_as_dicts([summary]))
     return summary
