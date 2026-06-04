@@ -14,10 +14,18 @@ def write_trades(path: Path) -> None:
     rows = [
         {"symbol": "AAAUSDT", "side": "long", "entry_time": "2025-01-01T00:00:00", "exit_time": "2025-01-01T02:00:00", "entry": 100, "exit": 104, "stop": 98, "target": 104, "setup_type": "breakout", "risk_grade": "A", "target_policy": "rr", "exit_reason": "take_profit"},
         {"symbol": "BBBUSDT", "side": "long", "entry_time": "2025-01-01T01:00:00", "exit_time": "2025-01-01T03:00:00", "entry": 80, "exit": 78, "stop": 78, "target": 84, "setup_type": "pullback", "risk_grade": "B", "target_policy": "rr", "exit_reason": "stop_loss"},
+        # Pipeline-style row: generated_trades.csv from candle_pipeline has entry/stop/exit,
+        # but does not include target. Paper mode must still create a signal.
+        {"symbol": "CCCUSDT", "side": "long", "entry_time": "2025-01-01T04:00:00", "exit_time": "2025-01-01T06:00:00", "entry": 50, "exit": 52, "stop": 49, "kind": "continuation", "r_mult": 2.0, "exit_reason": "take_profit"},
     ]
     path.parent.mkdir(parents=True, exist_ok=True)
+    fields: list[str] = []
+    for row in rows:
+        for key in row:
+            if key not in fields:
+                fields.append(key)
     with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        writer = csv.DictWriter(f, fieldnames=fields)
         writer.writeheader()
         writer.writerows(rows)
 
@@ -41,18 +49,21 @@ def main() -> None:
         journal = read_rows(out / "paper_journal.csv")
         positions = read_rows(out / "paper_positions.csv")
         summary = read_rows(out / "paper_summary.csv")[0]
-        assert len(signals) == 2, signals
-        assert len(journal) == 6, journal
-        assert len(positions) == 2, positions
+        assert len(signals) == 3, signals
+        assert len(journal) == 9, journal
+        assert len(positions) == 3, positions
         assert signals[0]["status"] == "OPEN_SIGNAL", signals
+        assert signals[2]["target"] == "52.0", signals
+        assert signals[2]["setup_type"] == "continuation", signals
         assert {row["event"] for row in journal} == {"OPEN_SIGNAL", "FILLED_PAPER", "CLOSED_PAPER"}, journal
         assert {row["status"] for row in positions} == {"CLOSED_PAPER"}, positions
         assert positions[0]["close_reason"] == "take_profit", positions
         assert positions[1]["close_reason"] == "stop_loss", positions
-        assert summary["paper_signals"] == "2", summary
-        assert summary["filled_paper"] == "2", summary
-        assert summary["closed_paper"] == "2", summary
-        assert summary["winners"] == "1", summary
+        assert positions[2]["close_reason"] == "take_profit", positions
+        assert summary["paper_signals"] == "3", summary
+        assert summary["filled_paper"] == "3", summary
+        assert summary["closed_paper"] == "3", summary
+        assert summary["winners"] == "2", summary
         assert summary["losers"] == "1", summary
         assert summary["status"] == "OK", summary
     print("PAPER MODE SMOKE TEST OK")
