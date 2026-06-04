@@ -115,7 +115,52 @@ structure_skip
 allowed_full_balanced
 ```
 
-## 4. Run with custom output
+## 4. Compare market regimes
+
+Generate deterministic trend/range/high-volatility samples:
+
+```bash
+python scripts/generate_regime_samples.py
+```
+
+Run all regimes through the full research chain:
+
+```bash
+python scripts/run_regime_batch.py
+```
+
+Main comparison file:
+
+```text
+results/regime_batch/regime_batch_summary.csv
+```
+
+Read it as a regime comparison table:
+
+```text
+trend      → trending synthetic market
+range      → mean-reverting/range synthetic market
+high_vol   → high-volatility synthetic market
+mixed      → all regimes combined
+```
+
+Most important columns:
+
+```text
+generated_trades
+executed_trades
+ret_pct
+max_dd_pct
+candle_avg_r
+candle_total_r
+best_setup_type
+worst_setup_type
+most_common_exit
+```
+
+A weak or empty regime is useful information. It means the current logic did not find enough valid trades there.
+
+## 5. Run with custom output
 
 ```bash
 python scripts/run_local_demo.py \
@@ -127,7 +172,7 @@ python scripts/run_local_demo.py \
   --min-confidence 40
 ```
 
-## 5. Run candle pipeline on your own candles
+## 6. Run candle pipeline on your own candles
 
 Your CSV must contain:
 
@@ -145,7 +190,17 @@ python scripts/run_end_to_end_pipeline.py \
   --min-confidence 40
 ```
 
-## 6. Start research server
+Check candle quality only:
+
+```bash
+python scripts/check_candles_quality.py \
+  --candles data/candles.csv \
+  --out-dir results/data_quality \
+  --min-candles 100 \
+  --min-symbols 1
+```
+
+## 7. Start research server
 
 ```bash
 python scripts/run_research_server.py \
@@ -166,7 +221,7 @@ Or:
 curl http://127.0.0.1:8080/health
 ```
 
-## 7. Run through research server
+## 8. Run through research server
 
 ### Run full candle-to-pipeline flow
 
@@ -182,7 +237,7 @@ curl -X POST http://127.0.0.1:8080/run/end-to-end \
 curl http://127.0.0.1:8080/reports/latest?out_dir=results
 ```
 
-## 8. Current project status
+## 9. Current project status
 
 The current project is a research platform, not a live bot.
 
@@ -190,6 +245,9 @@ Implemented:
 
 ```text
 market data CSV layer
+data quality validation
+regime sample generator
+regime batch comparison
 feature builder
 setup generator
 risk model
@@ -214,7 +272,7 @@ production authentication
 live alert/execution layer
 ```
 
-## 9. Safety rule
+## 10. Safety rule
 
 Do not add exchange API keys to this project yet.
 
