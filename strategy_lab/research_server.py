@@ -35,6 +35,10 @@ REPORT_FILES = [
     "pipeline_risk_policy.csv",
     "pipeline_decisions.csv",
     "end_to_end_summary.csv",
+    "candle_research_report.csv",
+    "candle_exit_diagnostics.csv",
+    "candle_exit_results.csv",
+    "generated_trades.csv",
 ]
 
 
