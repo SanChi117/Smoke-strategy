@@ -162,6 +162,29 @@ pipeline_summary.csv
 ...
 ```
 
+### List recent runs
+
+```bash
+curl "http://127.0.0.1:8080/runs/list?runs_dir=results/runs&limit=20" \
+  -H 'X-Research-Token: change-this-long-random-token'
+```
+
+The response includes:
+
+```text
+run_id
+type
+started_at
+completed_at
+profile
+sanity_status
+generated_trades
+executed_trades
+ret_pct
+max_dd_pct
+out_dir
+```
+
 ### Read latest run metadata
 
 ```bash
