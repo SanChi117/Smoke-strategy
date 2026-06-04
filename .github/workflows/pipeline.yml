@@ -7,6 +7,7 @@ on:
       - 'strategy_lab/config.py'
       - 'strategy_lab/schemas.py'
       - 'strategy_lab/market_data.py'
+      - 'strategy_lab/data_quality.py'
       - 'strategy_lab/feature_builder.py'
       - 'strategy_lab/setup_generator.py'
       - 'strategy_lab/risk_model.py'
