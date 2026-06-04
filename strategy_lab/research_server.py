@@ -52,6 +52,10 @@ REPORT_FILES = [
     "candle_exit_diagnostics.csv",
     "candle_exit_results.csv",
     "generated_trades.csv",
+    "paper/paper_signals.csv",
+    "paper/paper_journal.csv",
+    "paper/paper_positions.csv",
+    "paper/paper_summary.csv",
 ]
 
 
@@ -144,6 +148,8 @@ def list_run_records(runs_dir: Path, limit: int = 20) -> list[dict[str, Any]]:
             "sanity_status": summary.get("sanity_status", "") if isinstance(summary, dict) else "",
             "generated_trades": summary.get("generated_trades", "") if isinstance(summary, dict) else "",
             "executed_trades": summary.get("executed_trades", "") if isinstance(summary, dict) else "",
+            "paper_signals": summary.get("paper_signals", "") if isinstance(summary, dict) else "",
+            "paper_closed": summary.get("paper_closed", "") if isinstance(summary, dict) else "",
             "ret_pct": summary.get("ret_pct", "") if isinstance(summary, dict) else "",
             "max_dd_pct": summary.get("max_dd_pct", "") if isinstance(summary, dict) else "",
         })
@@ -189,7 +195,7 @@ def create_handler(base_dir: str | Path = "."):
     root = Path(base_dir).resolve()
 
     class ResearchHandler(BaseHTTPRequestHandler):
-        server_version = "SmokeResearchServer/0.4"
+        server_version = "SmokeResearchServer/0.5"
 
         def log_message(self, fmt: str, *args: Any) -> None:  # noqa: A003
             return
