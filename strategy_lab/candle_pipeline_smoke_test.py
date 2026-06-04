@@ -3,7 +3,7 @@
 
 Checks the missing execution chain:
 
-candles -> features -> candidate setups -> risk plans -> candle exits -> exit diagnostics -> generated trades
+candles -> features -> candidate setups -> risk plans -> candle exits -> exit diagnostics -> candle report -> generated trades
 
 Research only. No live trading. No API keys.
 """
@@ -73,9 +73,10 @@ def main() -> None:
         assert summary["risk_plans"] == summary["candidates"], "risk plan count must match candidates"
         assert summary["exit_results"] == summary["risk_plans"], "exit result count must match risk plans"
         assert summary["exit_diagnostics"] > 0, "expected exit diagnostics"
+        assert summary["candle_research_report"] > 0, "expected candle research report"
         assert summary["generated_trades"] == summary["risk_plans"], "generated trade count must match risk plans"
 
-        for name in ["candle_features.csv", "candidate_setups.csv", "risk_plans.csv", "candle_exit_results.csv", "candle_exit_diagnostics.csv", "generated_trades.csv"]:
+        for name in ["candle_features.csv", "candidate_setups.csv", "risk_plans.csv", "candle_exit_results.csv", "candle_exit_diagnostics.csv", "candle_research_report.csv", "generated_trades.csv"]:
             path = out / name
             assert path.exists(), f"missing output: {name}"
             assert count_rows(path) > 0, f"empty output: {name}"
@@ -105,6 +106,11 @@ def main() -> None:
         assert any(row["group"] == "all" and row["value"] == "all" for row in diagnostic_rows), "expected all/all exit diagnostic row"
         assert any(row["group"] == "setup_type" for row in diagnostic_rows), "expected setup_type exit diagnostics"
         assert any(row["group"] == "risk_grade" for row in diagnostic_rows), "expected risk_grade exit diagnostics"
+
+        report_rows = read_rows(out / "candle_research_report.csv")
+        report_metrics = {row["metric"] for row in report_rows}
+        for metric in ["candles", "features", "candidate_setups", "risk_plans", "simulated_exits", "winrate_pct", "avg_r", "total_r", "best_setup_type", "setup_types_seen"]:
+            assert metric in report_metrics, f"missing candle research report metric: {metric}"
 
         generated_rows = read_rows(out / "generated_trades.csv")
         generated_columns = set(generated_rows[0])
