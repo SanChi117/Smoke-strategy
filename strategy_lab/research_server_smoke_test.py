@@ -28,8 +28,6 @@ def make_candles_csv(path: Path) -> None:
     symbols = ["AAAUSDT", "BBBUSDT", "CCCUSDT", "DDDUSDT"]
     for idx, symbol in enumerate(symbols):
         price = 90.0 + idx * 20.0
-        # More than 30 days of hourly candles so the server end-to-end test
-        # gives rolling selector enough lookback after feature/setup generation.
         for i in range(1000):
             is_impulse = i % 10 in {0, 1, 2}
             drift = 0.18 if idx < 3 else -0.02
@@ -38,8 +36,6 @@ def make_candles_csv(path: Path) -> None:
             close_p = max(1.0, open_p + drift + impulse)
             high = max(open_p, close_p) + 0.75
             low = min(open_p, close_p) - 0.55
-            # Strong synthetic volume surge. The feature builder requires
-            # volume_ratio >= 1.25/1.8 for actionable continuation setups.
             volume = 1000 + idx * 120 + (1800 if is_impulse else 0)
             rows.append({
                 "symbol": symbol,
@@ -84,6 +80,7 @@ def main() -> None:
             assert status == 200, payload
             assert payload["status"] == "ok", payload
             assert payload["mode"] == "research", payload
+            assert "server_version" in payload, payload
 
             status, payload = request_json(port, "POST", "/run/end-to-end", {
                 "candles_csv": "data/candles.csv",
@@ -93,16 +90,27 @@ def main() -> None:
             })
             assert status == 200, payload
             assert payload["status"] == "ok", payload
+            assert payload["run_id"], payload
+            run_id = payload["run_id"]
+            assert payload["out_dir"].endswith(f"results/runs/{run_id}"), payload
             assert payload["summary"]["generated_trades"] > 0, payload
             assert payload["summary"]["pipeline_candidates"] == payload["summary"]["generated_trades"], payload
             assert payload["summary"]["allowed_candidates"] > 0, payload
             assert payload["summary"]["executed_trades"] > 0, payload
             assert payload["summary"]["avg_risk_pct"] > 0, payload
             assert payload["summary"]["sanity_status"] in {"OK", "WARN", "FAIL"}, payload
+            assert (root / "results" / "runs" / run_id / "run_metadata.json").exists(), "missing run metadata"
+
+            status, payload = request_json(port, "GET", "/runs/latest?runs_dir=results/runs")
+            assert status == 200, payload
+            assert payload["status"] == "ok", payload
+            assert payload["run_id"] == run_id, payload
+            assert payload["metadata"]["type"] == "end-to-end", payload
 
             status, payload = request_json(port, "GET", "/reports/latest?out_dir=results")
             assert status == 200, payload
             assert payload["status"] == "ok", payload
+            assert payload["run_id"] == run_id, payload
             assert "pipeline_summary.csv" in payload["reports"], payload
             assert "end_to_end_summary.csv" in payload["reports"], payload
             assert "report_sanity_summary.csv" in payload["reports"], payload
@@ -113,6 +121,10 @@ def main() -> None:
             report_metrics = {row.get("metric") for row in payload["reports"]["candle_research_report.csv"]}
             assert "avg_r" in report_metrics, payload
             assert "best_setup_type" in report_metrics, payload
+
+            status, payload = request_json(port, "GET", f"/reports/latest?out_dir=results&run_id={run_id}")
+            assert status == 200, payload
+            assert payload["run_id"] == run_id, payload
         finally:
             server.shutdown()
             thread.join(timeout=5)
