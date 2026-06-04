@@ -9,6 +9,7 @@ candles.csv
 -> risk_plans.csv
 -> generated_trades.csv
 -> integrated pipeline reports
+-> paper mode reports
 -> report sanity checks
 
 Research only. No live trading. No API keys.
@@ -21,6 +22,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from strategy_lab.candle_pipeline import run_candle_pipeline
+from strategy_lab.paper_mode import run_paper_mode
 from strategy_lab.pipeline import run_pipeline
 from strategy_lab.report_sanity import write_report_sanity
 
@@ -42,6 +44,10 @@ class EndToEndSummary:
     pf: float
     winrate: float
     avg_risk_pct: float
+    paper_signals: int
+    paper_filled: int
+    paper_closed: int
+    paper_avg_pnl_pct: float
     sanity_status: str
     sanity_errors: int
     sanity_warnings: int
@@ -66,6 +72,7 @@ def run_end_to_end_pipeline(candles_csv: str | Path, out_dir: str | Path = "resu
         raise RuntimeError("Candle pipeline did not create generated_trades.csv")
 
     pipeline_summary = run_pipeline(input_csv=generated_trades, out_dir=out, profile_name=profile)
+    paper_summary = run_paper_mode(generated_trades_csv=generated_trades, out_dir=out / "paper")
     sanity = write_report_sanity(out)
     summary = EndToEndSummary(
         profile=profile,
@@ -83,6 +90,10 @@ def run_end_to_end_pipeline(candles_csv: str | Path, out_dir: str | Path = "resu
         pf=pipeline_summary.pf,
         winrate=pipeline_summary.winrate,
         avg_risk_pct=pipeline_summary.avg_risk_pct,
+        paper_signals=paper_summary.paper_signals,
+        paper_filled=paper_summary.filled_paper,
+        paper_closed=paper_summary.closed_paper,
+        paper_avg_pnl_pct=paper_summary.avg_pnl_pct,
         sanity_status=sanity.status,
         sanity_errors=sanity.errors,
         sanity_warnings=sanity.warnings,
