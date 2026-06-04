@@ -14,6 +14,7 @@ __all__ = [
     "candle_research_report",
     "candle_pipeline",
     "candle_pipeline_smoke_test",
+    "report_sanity",
     "end_to_end_pipeline",
     "end_to_end_smoke_test",
     "walk_forward",
