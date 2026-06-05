@@ -166,6 +166,7 @@ def main() -> int:
             out_dir=run_dir,
             profile=args.profile,
             min_confidence=float(cfg_spec["min_confidence"]),
+            cfg=cfg,
         )
         diagnosis, flags = build_diagnosis(run_dir)
         (run_dir / "research_diagnosis.md").write_text(diagnosis, encoding="utf-8")
