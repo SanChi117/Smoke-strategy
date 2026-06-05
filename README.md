@@ -18,6 +18,7 @@ candles.csv
 → generated trades
 → universe / quality / structure gates
 → dynamic portfolio simulation
+→ paper mode / review / decision
 → report sanity checks
 → reports
 ```
@@ -41,6 +42,8 @@ results/demo/
 ```text
 results/demo/report_sanity_summary.csv
 results/demo/report_sanity_issues.csv
+results/demo/paper/paper_decision_summary.csv
+results/demo/paper/paper_review_summary.csv
 results/demo/candle_research_report.csv
 results/demo/candle_exit_diagnostics.csv
 results/demo/generated_trades.csv
@@ -49,6 +52,14 @@ results/demo/pipeline_risk_diagnostics.csv
 ```
 
 Use `report_sanity_summary.csv` first. It shows whether the generated research result is clean, suspicious, or failing basic sanity checks.
+
+Then open `paper/paper_decision_summary.csv`. It gives a compact paper-mode decision:
+
+```text
+PASS
+WATCH
+BLOCK
+```
 
 Then open `candle_research_report.csv`. It gives the compact strategy view:
 
@@ -105,6 +116,50 @@ python scripts/check_report_sanity.py \
 ```
 
 `WARN` does not mean the code failed. It means the result should be reviewed before trusting it.
+
+## Paper mode
+
+Paper mode is created automatically by the end-to-end pipeline.
+
+Main files:
+
+```text
+paper/paper_signals.csv
+paper/paper_journal.csv
+paper/paper_positions.csv
+paper/paper_review.csv
+paper/paper_review_summary.csv
+paper/paper_decision_summary.csv
+paper/paper_summary.csv
+```
+
+Read first:
+
+```text
+paper/paper_decision_summary.csv
+```
+
+Decision values:
+
+```text
+PASS   basic paper review passed
+WATCH  review needed before trusting the run
+BLOCK  paper set failed basic review
+```
+
+Standalone paper mode:
+
+```bash
+python scripts/run_paper_mode.py \
+  --generated-trades results/generated_trades.csv \
+  --out-dir results/paper
+```
+
+Full documentation:
+
+```text
+docs/PAPER_MODE.md
+```
 
 ## Compare market regimes
 
@@ -249,6 +304,14 @@ curl -X POST http://127.0.0.1:8080/run/end-to-end \
   -d '{"candles_csv":"data/candles.csv","out_dir":"results","profile":"growth_100_20x","min_confidence":40}'
 ```
 
+Run standalone paper mode through server:
+
+```bash
+curl -X POST http://127.0.0.1:8080/run/paper \
+  -H 'Content-Type: application/json' \
+  -d '{"generated_trades_csv":"results/runs/<run_id>/generated_trades.csv","out_dir":"results"}'
+```
+
 Read reports:
 
 ```bash
@@ -268,6 +331,8 @@ strategy_lab/exit_diagnostics.py
 strategy_lab/candle_research_report.py
 strategy_lab/candle_pipeline.py
 strategy_lab/report_sanity.py
+strategy_lab/paper_mode.py
+strategy_lab/paper_review.py
 strategy_lab/end_to_end_pipeline.py
 strategy_lab/walk_forward.py
 strategy_lab/universe_selector.py
@@ -286,6 +351,7 @@ python -m strategy_lab.pipeline_smoke_test
 python -m strategy_lab.candle_pipeline_smoke_test
 python -m strategy_lab.data_quality_cli_smoke_test
 python -m strategy_lab.report_sanity_cli_smoke_test
+python -m strategy_lab.paper_mode_smoke_test
 python -m strategy_lab.regime_samples_smoke_test
 python -m strategy_lab.local_demo_smoke_test
 ```
@@ -304,6 +370,8 @@ python -m strategy_lab.regime_batch_smoke_test
 ```text
 QUICKSTART.md
 ROADMAP.md
+docs/PAPER_MODE.md
+docs/PARAMETER_GRID_AND_UNIVERSE.md
 docs/PROJECT_ARCHITECTURE.md
 docs/UNIVERSE_AND_MONEY_MANAGEMENT.md
 docs/TRADING_PLAYBOOK.md
@@ -320,6 +388,8 @@ one-command local demo
 market data CSV layer
 data quality validation
 report sanity checks
+paper mode lifecycle
+paper review and decision summary
 regime sample generator
 regime batch comparison
 walk-forward research skeleton
