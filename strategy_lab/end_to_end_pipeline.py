@@ -22,6 +22,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from strategy_lab.candle_pipeline import run_candle_pipeline
+from strategy_lab.config import PipelineConfig
 from strategy_lab.paper_mode import run_paper_mode
 from strategy_lab.pipeline import run_pipeline
 from strategy_lab.report_sanity import write_report_sanity
@@ -62,7 +63,13 @@ def write_summary(path: str | Path, summary: EndToEndSummary) -> None:
         writer.writerow(asdict(summary))
 
 
-def run_end_to_end_pipeline(candles_csv: str | Path, out_dir: str | Path = "results", profile: str = "growth_100_20x", min_confidence: float = 50.0) -> EndToEndSummary:
+def run_end_to_end_pipeline(
+    candles_csv: str | Path,
+    out_dir: str | Path = "results",
+    profile: str = "growth_100_20x",
+    min_confidence: float = 50.0,
+    cfg: PipelineConfig | None = None,
+) -> EndToEndSummary:
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
 
@@ -71,7 +78,7 @@ def run_end_to_end_pipeline(candles_csv: str | Path, out_dir: str | Path = "resu
     if not generated_trades.exists() or generated_trades.stat().st_size == 0:
         raise RuntimeError("Candle pipeline did not create generated_trades.csv")
 
-    pipeline_summary = run_pipeline(input_csv=generated_trades, out_dir=out, profile_name=profile)
+    pipeline_summary = run_pipeline(input_csv=generated_trades, out_dir=out, cfg=cfg, profile_name=profile)
     paper_summary = run_paper_mode(generated_trades_csv=generated_trades, out_dir=out / "paper")
     sanity = write_report_sanity(out)
     summary = EndToEndSummary(
