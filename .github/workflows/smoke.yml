@@ -28,7 +28,7 @@ jobs:
   smoke:
     name: smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -81,6 +81,18 @@ jobs:
           cat results/binance_real_ci/report_sanity_summary.csv
           echo '--- candle_research_report.csv ---'
           cat results/binance_real_ci/candle_research_report.csv
+
+      - name: Run Binance real-data matrix quick check
+        run: |
+          python scripts/run_binance_real_matrix.py \
+            --symbols BTCUSDT,ETHUSDT,SOLUSDT \
+            --interval 1h \
+            --limit 800 \
+            --out-dir results/binance_real_matrix_ci
+          echo '--- matrix_summary.md ---'
+          cat results/binance_real_matrix_ci/matrix_summary.md
+          echo '--- matrix_summary.csv ---'
+          cat results/binance_real_matrix_ci/matrix_summary.csv
 
       - name: Run report sanity CLI smoke test
         run: |
