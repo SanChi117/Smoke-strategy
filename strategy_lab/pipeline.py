@@ -127,7 +127,7 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
         setup_type = str(getattr(s, "setup_type", "unknown") or "unknown").strip().lower()
         trend_context = str(getattr(s, "trend_context", "unknown") or "unknown").strip().lower()
         volatility_regime = str(getattr(s, "volatility_regime", "unknown") or "unknown").strip().lower()
-        in_universe = trade.symbol in universe_allowed
+        in_universe = True if not cfg.require_universe_gate else trade.symbol in universe_allowed
         in_rolling = True if not cfg.require_rolling_top else key in rolling_keys
         quality_ok = q.decision != "SKIP"
         structure_ok = s.structure_decision != "SKIP"
