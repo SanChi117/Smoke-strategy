@@ -14,6 +14,17 @@ import json
 from pathlib import Path
 
 
+FILTER_COLUMNS = [
+    "allowed_symbols_filter",
+    "blocked_symbols_filter",
+    "allowed_setup_types_filter",
+    "blocked_setup_types_filter",
+    "allowed_trend_contexts_filter",
+    "blocked_trend_contexts_filter",
+    "allowed_volatility_regimes_filter",
+    "blocked_volatility_regimes_filter",
+]
+
 REQUIRED_COLUMNS = [
     "name",
     "score",
@@ -55,8 +66,17 @@ def to_float(value: str | None, default: float = 0.0) -> float:
         return default
 
 
+def split_filter(value: str | None) -> list[str]:
+    if value is None:
+        return []
+    value = str(value).strip()
+    if not value or value.lower() == "nan":
+        return []
+    return [part.strip() for part in value.split(";") if part.strip()]
+
+
 def normalize_row(row: dict[str, str]) -> dict[str, object]:
-    return {
+    candidate = {
         "name": row.get("name", ""),
         "score": to_float(row.get("score")),
         "rolling_top_n": int(to_float(row.get("rolling_top_n"))),
@@ -78,6 +98,10 @@ def normalize_row(row: dict[str, str]) -> dict[str, object]:
         "diagnosis_flags": [flag for flag in row.get("diagnosis_flags", "").split(";") if flag],
         "source_out_dir": row.get("out_dir", ""),
     }
+    for col in FILTER_COLUMNS:
+        json_key = col.replace("_filter", "")
+        candidate[json_key] = split_filter(row.get(col))
+    return candidate
 
 
 def choose_best(rows: list[dict[str, str]]) -> dict[str, str]:
@@ -100,6 +124,16 @@ def write_markdown(path: Path, candidate: dict[str, object], all_rows: list[dict
         f"- Quality WATCH threshold: {candidate['quality_watch_threshold']}",
         f"- Structure TAKE threshold: {candidate['structure_take_threshold']}",
         f"- Structure WATCH threshold: {candidate['structure_watch_threshold']}",
+        "",
+        "## Tactical filters",
+        f"- Allowed symbols: {', '.join(candidate.get('allowed_symbols', [])) or 'none'}",
+        f"- Blocked symbols: {', '.join(candidate.get('blocked_symbols', [])) or 'none'}",
+        f"- Allowed setup types: {', '.join(candidate.get('allowed_setup_types', [])) or 'none'}",
+        f"- Blocked setup types: {', '.join(candidate.get('blocked_setup_types', [])) or 'none'}",
+        f"- Allowed trend contexts: {', '.join(candidate.get('allowed_trend_contexts', [])) or 'none'}",
+        f"- Blocked trend contexts: {', '.join(candidate.get('blocked_trend_contexts', [])) or 'none'}",
+        f"- Allowed volatility regimes: {', '.join(candidate.get('allowed_volatility_regimes', [])) or 'none'}",
+        f"- Blocked volatility regimes: {', '.join(candidate.get('blocked_volatility_regimes', [])) or 'none'}",
         "",
         "## Performance snapshot",
         f"- Generated trades: {candidate['generated_trades']}",
