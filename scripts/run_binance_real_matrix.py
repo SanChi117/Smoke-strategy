@@ -20,6 +20,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from analyze_research_reports import build_diagnosis  # noqa: E402
+from promote_matrix_baseline import normalize_row, write_markdown  # noqa: E402
 from run_binance_real_research import DEFAULT_SYMBOLS, resolve_symbols  # noqa: E402
 from strategy_lab.binance_market_data import load_binance_futures_candles
 from strategy_lab.config import PipelineConfig
@@ -85,6 +86,18 @@ def write_csv(path: str | Path, rows: list[dict]) -> None:
         writer = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         writer.writeheader()
         writer.writerows(rows)
+
+
+def write_baseline_candidate(root: Path, rows: list[dict]) -> None:
+    if not rows:
+        return
+    baseline_dir = root / "baseline_candidate"
+    baseline_dir.mkdir(parents=True, exist_ok=True)
+    candidate = normalize_row({key: str(value) for key, value in rows[0].items()})
+    candidate["source_matrix"] = str(root / "matrix_summary.csv")
+    import json
+    (baseline_dir / "baseline_candidate.json").write_text(json.dumps(candidate, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    write_markdown(baseline_dir / "baseline_candidate.md", candidate, [{key: str(value) for key, value in row.items()} for row in rows])
 
 
 def score_row(row: dict) -> float:
@@ -185,6 +198,7 @@ def main() -> int:
 
     rows = sorted(rows, key=lambda item: float(item["score"]), reverse=True)
     write_csv(root / "matrix_summary.csv", rows)
+    write_baseline_candidate(root, rows)
 
     best = rows[0] if rows else {}
     lines = [
@@ -218,6 +232,8 @@ def main() -> int:
     print("\nMatrix complete")
     print(root / "matrix_summary.csv")
     print(root / "matrix_summary.md")
+    print(root / "baseline_candidate" / "baseline_candidate.md")
+    print(root / "baseline_candidate" / "baseline_candidate.json")
     print("\n" + "\n".join(lines))
     return 0
 
