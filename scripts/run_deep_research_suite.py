@@ -76,7 +76,7 @@ def main() -> int:
 
     run_cmd([
         sys.executable,
-        "scripts/run_binance_walk_forward.py",
+        "scripts/run_binance_walk_forward_v2.py",
         *symbol_args,
         "--interval", args.interval,
         "--limit", str(args.limit),
