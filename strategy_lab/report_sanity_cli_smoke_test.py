@@ -66,13 +66,13 @@ def write_base_reports(out: Path) -> None:
     ])
 
 
-def run_check(out: Path) -> dict[str, str]:
+def run_check(out: Path, expected_returncode: int = 0) -> dict[str, str]:
     cmd = [sys.executable, "scripts/check_report_sanity.py", "--out-dir", str(out)]
     result = subprocess.run(cmd, cwd=Path.cwd(), text=True, capture_output=True, timeout=30)
     print(result.stdout)
-    if result.returncode != 0:
+    if result.returncode != expected_returncode:
         print(result.stderr)
-    assert result.returncode == 0, result.stderr
+    assert result.returncode == expected_returncode, result.stderr
     summary_path = out / "report_sanity_summary.csv"
     issues_path = out / "report_sanity_issues.csv"
     assert summary_path.exists(), "missing report_sanity_summary.csv"
@@ -118,7 +118,7 @@ def main() -> None:
         out = Path(td) / "results"
         write_base_reports(out)
         write_decision(out, "BLOCK", "rejected_paper_trades_present", 7, 1, 2, -0.1)
-        summary = run_check(out)
+        summary = run_check(out, expected_returncode=1)
         assert summary["status"] == "FAIL", summary
         assert summary["errors"] == "1", summary
     print("REPORT SANITY CLI SMOKE TEST OK")
