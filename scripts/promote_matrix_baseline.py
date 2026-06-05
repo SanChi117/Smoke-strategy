@@ -87,6 +87,7 @@ def normalize_row(row: dict[str, str]) -> dict[str, object]:
         "score": to_float(row.get("score")),
         "rolling_top_n": int(to_float(row.get("rolling_top_n"))),
         "require_rolling_top": to_bool(row.get("require_rolling_top"), True),
+        "require_universe_gate": to_bool(row.get("require_universe_gate"), True),
         "min_confidence": to_float(row.get("min_confidence")),
         "quality_take_threshold": to_float(row.get("quality_take_threshold")),
         "quality_watch_threshold": to_float(row.get("quality_watch_threshold")),
@@ -127,6 +128,7 @@ def write_markdown(path: Path, candidate: dict[str, object], all_rows: list[dict
         f"- Score: {candidate['score']}",
         f"- Rolling top N: {candidate['rolling_top_n']}",
         f"- Require rolling top: {candidate['require_rolling_top']}",
+        f"- Require universe gate: {candidate['require_universe_gate']}",
         f"- Minimum confidence: {candidate['min_confidence']}",
         f"- Quality TAKE threshold: {candidate['quality_take_threshold']}",
         f"- Quality WATCH threshold: {candidate['quality_watch_threshold']}",
@@ -170,7 +172,8 @@ def write_markdown(path: Path, candidate: dict[str, object], all_rows: list[dict
         lines.append(
             f"- {row.get('name')}: score={row.get('score')}, ret={row.get('ret_pct')}%, "
             f"dd={row.get('max_dd_pct')}%, pf={row.get('pf')}, executed={row.get('executed_trades')}, "
-            f"allowed={row.get('allowed_pct')}%, rolling_required={row.get('require_rolling_top', '')}, sanity={row.get('sanity_status')}"
+            f"allowed={row.get('allowed_pct')}%, rolling_required={row.get('require_rolling_top', '')}, "
+            f"universe_required={row.get('require_universe_gate', '')}, sanity={row.get('sanity_status')}"
         )
     lines.append("")
     path.write_text("\n".join(lines), encoding="utf-8")
