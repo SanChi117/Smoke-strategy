@@ -8,6 +8,7 @@ that should not be silently accepted, for example:
 - weak average R
 - data quality errors
 - weak walk-forward stability
+- blocked paper decision
 
 Research only. No live trading.
 """
@@ -108,6 +109,18 @@ def run_report_sanity_checks(out_dir: str | Path, cfg: ReportSanityConfig | None
             add_issue(issues, "warning", "trade_count", "generated_trades", generated, cfg.min_generated_trades, "Too few generated trades for reliable interpretation.")
         if executed < cfg.min_executed_trades:
             add_issue(issues, "warning", "trade_count", "executed_trades", executed, cfg.min_executed_trades, "No or too few executed trades after filters.")
+
+    paper_decision = read_csv_first(out / "paper" / "paper_decision_summary.csv")
+    if paper_decision:
+        checks += 1
+        decision = str(paper_decision.get("decision", "")).strip().upper()
+        reason = str(paper_decision.get("reason", ""))
+        if decision == "BLOCK":
+            add_issue(issues, "error", "paper_decision", "decision", decision, "PASS/WATCH", f"Paper decision blocked this run: {reason}")
+        elif decision == "WATCH":
+            add_issue(issues, "warning", "paper_decision", "decision", decision, "PASS", f"Paper decision requires review: {reason}")
+        elif decision and decision != "PASS":
+            add_issue(issues, "warning", "paper_decision", "decision", decision, "PASS/WATCH/BLOCK", "Unknown paper decision value.")
 
     candle_report = read_metric_rows(out / "candle_research_report.csv")
     if candle_report:
