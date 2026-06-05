@@ -34,6 +34,7 @@ MATRIX_CONFIGS = [
     {
         "name": "BASE_T5_C40",
         "rolling_top_n": 5,
+        "require_rolling_top": True,
         "min_confidence": 40.0,
         "quality_take_threshold": 65.0,
         "quality_watch_threshold": 50.0,
@@ -43,6 +44,7 @@ MATRIX_CONFIGS = [
     {
         "name": "MORE_COINS_T8_C40",
         "rolling_top_n": 8,
+        "require_rolling_top": True,
         "min_confidence": 40.0,
         "quality_take_threshold": 65.0,
         "quality_watch_threshold": 50.0,
@@ -52,6 +54,7 @@ MATRIX_CONFIGS = [
     {
         "name": "MORE_COINS_T10_C35",
         "rolling_top_n": 10,
+        "require_rolling_top": True,
         "min_confidence": 35.0,
         "quality_take_threshold": 65.0,
         "quality_watch_threshold": 50.0,
@@ -61,6 +64,7 @@ MATRIX_CONFIGS = [
     {
         "name": "SOFTER_GATES_T8_C35",
         "rolling_top_n": 8,
+        "require_rolling_top": True,
         "min_confidence": 35.0,
         "quality_take_threshold": 60.0,
         "quality_watch_threshold": 45.0,
@@ -70,6 +74,7 @@ MATRIX_CONFIGS = [
     {
         "name": "EXPLORATORY_T15_C30",
         "rolling_top_n": 15,
+        "require_rolling_top": True,
         "min_confidence": 30.0,
         "quality_take_threshold": 55.0,
         "quality_watch_threshold": 40.0,
@@ -79,6 +84,7 @@ MATRIX_CONFIGS = [
     {
         "name": "DISCOVERY_T15_C25",
         "rolling_top_n": 15,
+        "require_rolling_top": True,
         "min_confidence": 25.0,
         "quality_take_threshold": 50.0,
         "quality_watch_threshold": 35.0,
@@ -88,6 +94,7 @@ MATRIX_CONFIGS = [
     {
         "name": "WIDE_UNIVERSE_T20_C25",
         "rolling_top_n": 20,
+        "require_rolling_top": True,
         "min_confidence": 25.0,
         "quality_take_threshold": 50.0,
         "quality_watch_threshold": 35.0,
@@ -97,6 +104,7 @@ MATRIX_CONFIGS = [
     {
         "name": "TACTICAL_NO_BREAKOUT_T8_C40",
         "rolling_top_n": 8,
+        "require_rolling_top": True,
         "min_confidence": 40.0,
         "quality_take_threshold": 65.0,
         "quality_watch_threshold": 50.0,
@@ -107,6 +115,7 @@ MATRIX_CONFIGS = [
     {
         "name": "TACTICAL_NO_BREAKOUT_NO_HIGHVOL",
         "rolling_top_n": 8,
+        "require_rolling_top": True,
         "min_confidence": 40.0,
         "quality_take_threshold": 65.0,
         "quality_watch_threshold": 50.0,
@@ -118,6 +127,7 @@ MATRIX_CONFIGS = [
     {
         "name": "TACTICAL_BEST_SYMBOLS_CORE",
         "rolling_top_n": 8,
+        "require_rolling_top": True,
         "min_confidence": 40.0,
         "quality_take_threshold": 65.0,
         "quality_watch_threshold": 50.0,
@@ -128,8 +138,34 @@ MATRIX_CONFIGS = [
         "blocked_volatility_regimes": ("high",),
     },
     {
+        "name": "TACTICAL_CORE_NO_ROLLING",
+        "rolling_top_n": 8,
+        "require_rolling_top": False,
+        "min_confidence": 40.0,
+        "quality_take_threshold": 65.0,
+        "quality_watch_threshold": 50.0,
+        "structure_take_threshold": 64.0,
+        "structure_watch_threshold": 52.0,
+        "allowed_symbols": BEST_RESEARCH_SYMBOLS,
+        "blocked_setup_types": ("breakout",),
+        "blocked_volatility_regimes": ("high",),
+    },
+    {
+        "name": "TACTICAL_NO_BREAKOUT_NO_HIGHVOL_NO_ROLLING",
+        "rolling_top_n": 8,
+        "require_rolling_top": False,
+        "min_confidence": 40.0,
+        "quality_take_threshold": 65.0,
+        "quality_watch_threshold": 50.0,
+        "structure_take_threshold": 64.0,
+        "structure_watch_threshold": 52.0,
+        "blocked_setup_types": ("breakout",),
+        "blocked_volatility_regimes": ("high",),
+    },
+    {
         "name": "TACTICAL_GOOD_SETUPS_ONLY",
         "rolling_top_n": 10,
+        "require_rolling_top": True,
         "min_confidence": 35.0,
         "quality_take_threshold": 60.0,
         "quality_watch_threshold": 45.0,
@@ -141,6 +177,7 @@ MATRIX_CONFIGS = [
     {
         "name": "STRICT_T5_C50",
         "rolling_top_n": 5,
+        "require_rolling_top": True,
         "min_confidence": 50.0,
         "quality_take_threshold": 70.0,
         "quality_watch_threshold": 55.0,
@@ -237,6 +274,7 @@ def main() -> int:
             PipelineConfig(),
             name=name,
             rolling_top_n=int(cfg_spec["rolling_top_n"]),
+            require_rolling_top=bool(cfg_spec.get("require_rolling_top", True)),
             quality_take_threshold=float(cfg_spec["quality_take_threshold"]),
             quality_watch_threshold=float(cfg_spec["quality_watch_threshold"]),
             structure_take_threshold=float(cfg_spec["structure_take_threshold"]),
@@ -265,6 +303,7 @@ def main() -> int:
         row = {
             "name": name,
             "rolling_top_n": cfg.rolling_top_n,
+            "require_rolling_top": cfg.require_rolling_top,
             "min_confidence": cfg_spec["min_confidence"],
             "quality_take_threshold": cfg.quality_take_threshold,
             "quality_watch_threshold": cfg.quality_watch_threshold,
@@ -310,13 +349,15 @@ def main() -> int:
         f"PF: {best.get('pf', '')}",
         f"Executed trades: {best.get('executed_trades', '')}",
         f"Sanity: {best.get('sanity_status', '')}",
+        f"Require rolling top: {best.get('require_rolling_top', '')}",
         "",
         "## All configs",
     ]
     for row in rows:
         lines.append(
             f"- {row['name']}: score={row['score']}, ret={row['ret_pct']}%, dd={row['max_dd_pct']}%, "
-            f"pf={row['pf']}, executed={row['executed_trades']}, allowed={row['allowed_pct']}%, sanity={row['sanity_status']}"
+            f"pf={row['pf']}, executed={row['executed_trades']}, allowed={row['allowed_pct']}%, "
+            f"rolling_required={row['require_rolling_top']}, sanity={row['sanity_status']}"
         )
     lines.append("")
     lines.append("## Next step")
