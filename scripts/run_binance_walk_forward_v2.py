@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Walk-forward runner with baseline rolling-gate support.
+"""Walk-forward runner with baseline tactical gate support.
 
 Small compatibility wrapper around run_binance_walk_forward.py.
 It preserves all existing behavior, but ensures baseline_candidate.json can
-control PipelineConfig.require_rolling_top.
+control PipelineConfig.require_rolling_top and require_universe_gate.
 
 Research only. No API keys. No private account data. No order execution.
 """
@@ -36,6 +36,7 @@ def patched_baseline_to_cfg(
         end=(validation_end + timedelta(days=1)).date().isoformat(),
         rolling_top_n=base.to_int(baseline.get("rolling_top_n"), 5),
         require_rolling_top=to_bool(baseline.get("require_rolling_top"), True),
+        require_universe_gate=to_bool(baseline.get("require_universe_gate"), True),
         quality_take_threshold=base.to_float(baseline.get("quality_take_threshold"), 65.0),
         quality_watch_threshold=base.to_float(baseline.get("quality_watch_threshold"), 50.0),
         structure_take_threshold=base.to_float(baseline.get("structure_take_threshold"), 64.0),
@@ -53,6 +54,7 @@ def patched_baseline_to_cfg(
 
 def main() -> int:
     base.DEFAULT_BASELINE["require_rolling_top"] = True
+    base.DEFAULT_BASELINE["require_universe_gate"] = True
     base.baseline_to_cfg = patched_baseline_to_cfg
     return base.main()
 
