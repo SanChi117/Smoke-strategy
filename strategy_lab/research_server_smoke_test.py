@@ -116,6 +116,7 @@ def run_open_server_check(root: Path, candles: Path) -> None:
         assert payload["summary"]["paper_signals"] > 0, payload
         assert payload["summary"]["closed_paper"] > 0, payload
         assert (root / "results" / "runs" / paper_run_id / "paper" / "paper_summary.csv").exists(), "missing standalone paper summary"
+        assert (root / "results" / "runs" / paper_run_id / "paper" / "paper_decision_summary.csv").exists(), "missing standalone paper decision summary"
         assert (root / "results" / "runs" / paper_run_id / "run_metadata.json").exists(), "missing standalone paper metadata"
 
         status, payload = request_json(port, "GET", "/runs/list?runs_dir=results/runs&limit=5")
@@ -134,8 +135,12 @@ def run_open_server_check(root: Path, candles: Path) -> None:
         assert "paper/paper_signals.csv" in payload["reports"], payload
         assert "paper/paper_journal.csv" in payload["reports"], payload
         assert "paper/paper_positions.csv" in payload["reports"], payload
+        assert "paper/paper_review.csv" in payload["reports"], payload
+        assert "paper/paper_review_summary.csv" in payload["reports"], payload
+        assert "paper/paper_decision_summary.csv" in payload["reports"], payload
         assert "paper/paper_summary.csv" in payload["reports"], payload
         assert len(payload["reports"]["paper/paper_positions.csv"]) > 0, payload
+        assert payload["reports"]["paper/paper_decision_summary.csv"][0]["decision"] in {"PASS", "WATCH", "BLOCK"}, payload
 
         status, payload = request_json(port, "GET", f"/reports/latest?out_dir=results&run_id={run_id}")
         assert status == 200, payload
@@ -148,6 +153,7 @@ def run_open_server_check(root: Path, candles: Path) -> None:
         assert "candle_exit_diagnostics.csv" in payload["reports"], payload
         assert "generated_trades.csv" in payload["reports"], payload
         assert "paper/paper_summary.csv" in payload["reports"], payload
+        assert "paper/paper_decision_summary.csv" in payload["reports"], payload
         report_metrics = {row.get("metric") for row in payload["reports"]["candle_research_report.csv"]}
         assert "avg_r" in report_metrics, payload
         assert "best_setup_type" in report_metrics, payload
