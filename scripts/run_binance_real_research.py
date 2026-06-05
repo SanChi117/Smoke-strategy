@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Run a complete real Binance public-data research pass in one command.
 
-This script downloads public candles and runs the end-to-end research pipeline.
+This script downloads public candles, runs the end-to-end research pipeline,
+and writes a compact research diagnosis.
+
 It does not use API keys, private account data, or order endpoints.
 """
 
@@ -11,6 +13,7 @@ import argparse
 from dataclasses import asdict
 from pathlib import Path
 
+from scripts.analyze_research_reports import build_diagnosis
 from strategy_lab.binance_market_data import load_binance_futures_candles, parse_symbols
 from strategy_lab.end_to_end_pipeline import run_end_to_end_pipeline
 
@@ -95,8 +98,16 @@ def main() -> int:
     for key, value in asdict(research_summary).items():
         print(f"{key}: {value}")
 
+    out_dir = Path(args.out_dir)
+    diagnosis, flags = build_diagnosis(out_dir)
+    diagnosis_path = out_dir / "research_diagnosis.md"
+    diagnosis_path.write_text(diagnosis, encoding="utf-8")
+    print("\nResearch diagnosis")
+    print(diagnosis)
+
     print("\nMain report files")
     for name in [
+        "research_diagnosis.md",
         "end_to_end_summary.csv",
         "report_sanity_summary.csv",
         "report_sanity_issues.csv",
@@ -105,9 +116,11 @@ def main() -> int:
         "pipeline_risk_diagnostics.csv",
         "paper/paper_decision_summary.csv",
     ]:
-        print(Path(args.out_dir) / name)
+        print(out_dir / name)
 
-    return 0 if research_summary.sanity_status != "FAIL" else 1
+    if "SANITY_FAIL" in flags or "PAPER_BLOCK" in flags:
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
