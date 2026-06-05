@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Smoke test for paper mode lifecycle and review."""
+"""Smoke test for paper mode lifecycle, review and decision summary."""
 
 from __future__ import annotations
 
@@ -48,6 +48,7 @@ def main() -> None:
         positions = read_rows(out / "paper_positions.csv")
         review = read_rows(out / "paper_review.csv")
         review_summary = read_rows(out / "paper_review_summary.csv")[0]
+        decision_summary = read_rows(out / "paper_decision_summary.csv")[0]
         summary = read_rows(out / "paper_summary.csv")[0]
         assert len(signals) == 3, signals
         assert len(journal) == 9, journal
@@ -66,6 +67,12 @@ def main() -> None:
         assert review_summary["approved"] == "1", review_summary
         assert review_summary["watch"] == "1", review_summary
         assert review_summary["rejected"] == "1", review_summary
+        assert decision_summary["decision"] == "BLOCK", decision_summary
+        assert decision_summary["positions"] == "3", decision_summary
+        assert decision_summary["approved"] == "1", decision_summary
+        assert decision_summary["watch"] == "1", decision_summary
+        assert decision_summary["rejected"] == "1", decision_summary
+        assert decision_summary["reason"] == "rejected_paper_trades_present", decision_summary
         assert summary["paper_signals"] == "3", summary
         assert summary["filled_paper"] == "3", summary
         assert summary["closed_paper"] == "3", summary
