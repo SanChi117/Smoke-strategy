@@ -104,11 +104,15 @@ def score_row(row: dict) -> float:
     executed = float(row.get("executed_trades", 0) or 0)
     ret = float(row.get("ret_pct", 0) or 0)
     dd = abs(float(row.get("max_dd_pct", 0) or 0))
-    pf = float(row.get("pf", 0) or 0)
+    pf_raw = float(row.get("pf", 0) or 0)
+    pf = min(pf_raw, 3.0)
     allowed_pct = float(row.get("allowed_pct", 0) or 0)
-    sanity_penalty = 20.0 if row.get("sanity_status") == "FAIL" else 8.0 if row.get("sanity_status") == "WARN" else 0.0
-    sparse_penalty = max(0.0, 10.0 - executed) * 2.0
-    return round(ret + (pf * 3.0) + min(allowed_pct, 25.0) * 0.2 - dd * 0.5 - sanity_penalty - sparse_penalty, 4)
+    sanity_status = row.get("sanity_status")
+    sanity_penalty = 50.0 if sanity_status == "FAIL" else 15.0 if sanity_status == "WARN" else 0.0
+    sparse_penalty = max(0.0, 20.0 - executed) * 3.0
+    ultra_sparse_penalty = 35.0 if executed < 5 else 0.0
+    overfilter_penalty = max(0.0, 1.0 - allowed_pct) * 8.0
+    return round(ret + (pf * 4.0) + min(allowed_pct, 25.0) * 0.2 - dd * 0.5 - sanity_penalty - sparse_penalty - ultra_sparse_penalty - overfilter_penalty, 4)
 
 
 def main() -> int:
@@ -222,8 +226,8 @@ def main() -> int:
         )
     lines.append("")
     lines.append("## Next step")
-    if best and float(best.get("executed_trades", 0) or 0) < 10:
-        lines.append("- Increase symbols/history before judging the strategy; best config is still too sparse.")
+    if best and float(best.get("executed_trades", 0) or 0) < 20:
+        lines.append("- Increase symbols/history or relax gates before judging the strategy; best config is still too sparse.")
     elif best and best.get("sanity_status") != "OK":
         lines.append("- Inspect best config diagnosis warnings before changing strategy defaults.")
     else:
