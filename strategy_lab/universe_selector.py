@@ -24,6 +24,9 @@ class UniverseConfig:
     clean_pf_min: float = 1.10
     chaotic_pf_max: float = 0.95
     max_loss_streak_clean: int = 5
+    fallback_when_empty: bool = True
+    fallback_min_pf: float = 0.90
+    fallback_min_avg_r: float = -0.05
 
 
 def classify_symbol(trades: list[Trade], cfg: UniverseConfig) -> CoinUniverseRow:
@@ -103,7 +106,22 @@ def allowed_symbols(rows: list[CoinUniverseRow], cfg: UniverseConfig | None = No
     cfg = cfg or UniverseConfig()
     allowed_classes = {"trend_friendly", "volatile_clean", "watch_only"}
     candidates = [row for row in rows if row.coin_class in allowed_classes and row.risk_multiplier > 0]
-    return {row.symbol for row in candidates[: cfg.allow_top_n]}
+    if candidates:
+        return {row.symbol for row in candidates[: cfg.allow_top_n]}
+
+    if not cfg.fallback_when_empty:
+        return set()
+
+    # Research fallback: if strict classification blocks every symbol, allow the
+    # best-ranked symbols that are not clearly broken. This prevents the whole
+    # pipeline from producing zero executed trades while still avoiding the worst
+    # coins. The ranking file keeps the original strict class visible.
+    fallback = [
+        row for row in rows
+        if row.coin_class != "insufficient_history"
+        and (row.pf >= cfg.fallback_min_pf or row.avg_r >= cfg.fallback_min_avg_r)
+    ]
+    return {row.symbol for row in fallback[: cfg.allow_top_n]}
 
 
 def rows_as_dicts(rows: list[CoinUniverseRow]) -> list[dict[str, Any]]:
