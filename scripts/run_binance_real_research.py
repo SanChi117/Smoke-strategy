@@ -10,10 +10,15 @@ It does not use API keys, private account data, or order endpoints.
 from __future__ import annotations
 
 import argparse
+import sys
 from dataclasses import asdict
 from pathlib import Path
 
-from scripts.analyze_research_reports import build_diagnosis
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from analyze_research_reports import build_diagnosis  # noqa: E402
 from strategy_lab.binance_market_data import load_binance_futures_candles, parse_symbols
 from strategy_lab.end_to_end_pipeline import run_end_to_end_pipeline
 
