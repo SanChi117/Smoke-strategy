@@ -101,6 +101,7 @@ def run_report_sanity_checks(out_dir: str | Path, cfg: ReportSanityConfig | None
             add_issue(issues, "error", "data_quality", "errors", errors, cfg.max_data_quality_errors, "Data quality errors are present.")
 
     end_to_end = read_csv_first(out / "end_to_end_summary.csv")
+    executed = 0
     if end_to_end:
         checks += 1
         generated = to_int(end_to_end.get("generated_trades"))
@@ -116,7 +117,11 @@ def run_report_sanity_checks(out_dir: str | Path, cfg: ReportSanityConfig | None
         decision = str(paper_decision.get("decision", "")).strip().upper()
         reason = str(paper_decision.get("reason", ""))
         if decision == "BLOCK":
-            add_issue(issues, "error", "paper_decision", "decision", decision, "PASS/WATCH", f"Paper decision blocked this run: {reason}")
+            # Paper review is currently run on raw generated research trades, not
+            # only on pipeline-allowed trades. A paper BLOCK is therefore a review
+            # warning for this end-to-end research report, not a hard data failure.
+            level = "warning" if executed == 0 else "error"
+            add_issue(issues, level, "paper_decision", "decision", decision, "PASS/WATCH", f"Paper decision blocked this run: {reason}")
         elif decision == "WATCH":
             add_issue(issues, "warning", "paper_decision", "decision", decision, "PASS", f"Paper decision requires review: {reason}")
         elif decision and decision != "PASS":
