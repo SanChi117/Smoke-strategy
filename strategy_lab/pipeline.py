@@ -48,6 +48,10 @@ def trade_key(symbol: str, side: str, entry_time: str | datetime) -> tuple[str, 
     return (symbol.upper(), side.lower(), parse_dt(entry_time))
 
 
+def norm_set(values: tuple[str, ...]) -> set[str]:
+    return {str(value).strip().lower() for value in values if str(value).strip()}
+
+
 def write_dict_csv(path: str | Path, rows: list[dict]) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -73,6 +77,12 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
 
     universe_rows = rank_universe(all_trades, UniverseConfig(allow_top_n=9999))
     universe_allowed = allowed_symbols(universe_rows, UniverseConfig(allow_top_n=9999))
+    cfg_allowed_symbols = {symbol.upper() for symbol in cfg.allowed_symbols}
+    cfg_blocked_symbols = {symbol.upper() for symbol in cfg.blocked_symbols}
+    if cfg_allowed_symbols:
+        universe_allowed = universe_allowed.intersection(cfg_allowed_symbols)
+    if cfg_blocked_symbols:
+        universe_allowed = {symbol for symbol in universe_allowed if symbol not in cfg_blocked_symbols}
     write_dict_csv(out / "pipeline_universe_ranking.csv", rows_as_dicts(universe_rows))
 
     rolling_trades, _windows, _avg_selected = build_rolling_trades(
@@ -100,6 +110,13 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
     structure_rows = score_structure_trades(read_structure_rows(input_csv), structure_cfg)
     structure_by_key = {trade_key(r.symbol, r.side, r.entry_time): r for r in structure_rows}
 
+    allowed_setups = norm_set(cfg.allowed_setup_types)
+    blocked_setups = norm_set(cfg.blocked_setup_types)
+    allowed_trends = norm_set(cfg.allowed_trend_contexts)
+    blocked_trends = norm_set(cfg.blocked_trend_contexts)
+    allowed_vols = norm_set(cfg.allowed_volatility_regimes)
+    blocked_vols = norm_set(cfg.blocked_volatility_regimes)
+
     decisions: list[PipelineDecision] = []
     allowed_trades = []
     risk_pcts: dict[tuple[str, str, object], float] = {}
@@ -107,11 +124,17 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
     for key, trade in sorted(trade_by_key.items(), key=lambda item: (item[1].entry_time, item[1].symbol, item[1].side)):
         q = quality_by_key[key]
         s = structure_by_key[key]
+        setup_type = str(getattr(s, "setup_type", "unknown") or "unknown").strip().lower()
+        trend_context = str(getattr(s, "trend_context", "unknown") or "unknown").strip().lower()
+        volatility_regime = str(getattr(s, "volatility_regime", "unknown") or "unknown").strip().lower()
         in_universe = trade.symbol in universe_allowed
         in_rolling = key in rolling_keys
         quality_ok = q.decision != "SKIP"
         structure_ok = s.structure_decision != "SKIP"
-        allowed = in_universe and in_rolling and quality_ok and structure_ok
+        setup_ok = (not allowed_setups or setup_type in allowed_setups) and setup_type not in blocked_setups
+        trend_ok = (not allowed_trends or trend_context in allowed_trends) and trend_context not in blocked_trends
+        volatility_ok = (not allowed_vols or volatility_regime in allowed_vols) and volatility_regime not in blocked_vols
+        allowed = in_universe and in_rolling and quality_ok and structure_ok and setup_ok and trend_ok and volatility_ok
 
         if not in_universe:
             reason = "symbol_not_allowed_by_universe"
@@ -121,6 +144,12 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
             reason = "quality_skip"
         elif not structure_ok:
             reason = "structure_skip"
+        elif not setup_ok:
+            reason = "setup_filtered"
+        elif not trend_ok:
+            reason = "trend_context_filtered"
+        elif not volatility_ok:
+            reason = "volatility_regime_filtered"
         else:
             reason = "allowed_full_balanced"
 
@@ -143,9 +172,9 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
             risk_pct=round(risk_pct, 6),
             leverage=profile.leverage,
             target_policy=s.recommended_target_policy,
-            setup_type=getattr(s, "setup_type", "unknown"),
-            trend_context=getattr(s, "trend_context", "unknown"),
-            volatility_regime=getattr(s, "volatility_regime", "unknown"),
+            setup_type=setup_type,
+            trend_context=trend_context,
+            volatility_regime=volatility_regime,
         ))
         if allowed:
             allowed_trades.append(trade)
