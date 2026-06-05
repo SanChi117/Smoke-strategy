@@ -28,6 +28,7 @@ synthetic candles
 → candle exits
 → generated trades
 → integrated pipeline
+→ paper mode / review / decision
 → report sanity checks
 → reports
 ```
@@ -62,13 +63,46 @@ Are there too many time-stop exits?
 
 `WARN` does not mean the code failed. It means the result should be reviewed before trusting it.
 
-### 2. Candle summary
+### 2. Paper decision
+
+```text
+results/demo/paper/paper_decision_summary.csv
+```
+
+Open this after sanity checks.
+
+It gives one compact paper-mode decision:
+
+```text
+PASS
+WATCH
+BLOCK
+```
+
+Read `docs/PAPER_MODE.md` for the full paper lifecycle, review and decision rules.
+
+### 3. Paper review
+
+```text
+results/demo/paper/paper_review_summary.csv
+results/demo/paper/paper_review.csv
+```
+
+Use this to see how many paper positions were:
+
+```text
+APPROVED
+WATCH
+REJECTED
+```
+
+### 4. Candle summary
 
 ```text
 results/demo/candle_research_report.csv
 ```
 
-Use this after sanity checks.
+Use this after sanity and paper decision checks.
 
 It answers:
 
@@ -80,7 +114,7 @@ Which risk grade worked best?
 What was the most common exit reason?
 ```
 
-### 3. Exit breakdown
+### 5. Exit breakdown
 
 ```text
 results/demo/candle_exit_diagnostics.csv
@@ -97,7 +131,7 @@ side
 exit_reason
 ```
 
-### 4. Generated trades
+### 6. Generated trades
 
 ```text
 results/demo/generated_trades.csv
@@ -105,9 +139,9 @@ results/demo/generated_trades.csv
 
 This is the normalized trade CSV produced from candles.
 
-It feeds the integrated pipeline.
+It feeds the integrated pipeline and paper mode.
 
-### 5. Portfolio summary
+### 7. Portfolio summary
 
 ```text
 results/demo/pipeline_summary.csv
@@ -123,7 +157,7 @@ $100 balance
 1.00% max risk
 ```
 
-### 6. Risk diagnostics
+### 8. Risk diagnostics
 
 ```text
 results/demo/pipeline_risk_diagnostics.csv
@@ -138,7 +172,35 @@ structure_skip
 allowed_full_balanced
 ```
 
-## 4. Check existing reports only
+## 4. Paper mode standalone
+
+Run paper mode on an existing generated trades file:
+
+```bash
+python scripts/run_paper_mode.py \
+  --generated-trades results/generated_trades.csv \
+  --out-dir results/paper
+```
+
+Main outputs:
+
+```text
+paper_signals.csv
+paper_journal.csv
+paper_positions.csv
+paper_review.csv
+paper_review_summary.csv
+paper_decision_summary.csv
+paper_summary.csv
+```
+
+Full docs:
+
+```text
+docs/PAPER_MODE.md
+```
+
+## 5. Check existing reports only
 
 Run sanity checks on an existing reports folder without rerunning the strategy:
 
@@ -165,7 +227,7 @@ report_sanity_summary.csv
 report_sanity_issues.csv
 ```
 
-## 5. Compare market regimes
+## 6. Compare market regimes
 
 Generate deterministic trend/range/high-volatility samples:
 
@@ -210,7 +272,7 @@ most_common_exit
 
 A weak or empty regime is useful information. It means the current logic did not find enough valid trades there.
 
-## 6. Walk-forward check
+## 7. Walk-forward check
 
 Run rolling windows on your candle dataset:
 
@@ -266,7 +328,7 @@ worst_window
 
 This is not parameter optimization yet. It checks whether the current logic survives multiple time windows.
 
-## 7. Run with custom output
+## 8. Run with custom output
 
 ```bash
 python scripts/run_local_demo.py \
@@ -278,7 +340,7 @@ python scripts/run_local_demo.py \
   --min-confidence 40
 ```
 
-## 8. Run candle pipeline on your own candles
+## 9. Run candle pipeline on your own candles
 
 Your CSV must contain:
 
@@ -306,7 +368,7 @@ python scripts/check_candles_quality.py \
   --min-symbols 1
 ```
 
-## 9. Start research server
+## 10. Start research server
 
 ```bash
 python scripts/run_research_server.py \
@@ -327,7 +389,7 @@ Or:
 curl http://127.0.0.1:8080/health
 ```
 
-## 10. Run through research server
+## 11. Run through research server
 
 ### Run full candle-to-pipeline flow
 
@@ -337,13 +399,21 @@ curl -X POST http://127.0.0.1:8080/run/end-to-end \
   -d '{"candles_csv":"data/candles.csv","out_dir":"results","profile":"growth_100_20x","min_confidence":40}'
 ```
 
+### Run standalone paper mode
+
+```bash
+curl -X POST http://127.0.0.1:8080/run/paper \
+  -H 'Content-Type: application/json' \
+  -d '{"generated_trades_csv":"results/runs/<run_id>/generated_trades.csv","out_dir":"results"}'
+```
+
 ### Read latest reports
 
 ```bash
 curl http://127.0.0.1:8080/reports/latest?out_dir=results
 ```
 
-## 11. Current project status
+## 12. Current project status
 
 The current project is a research platform, not a live bot.
 
@@ -353,6 +423,8 @@ Implemented:
 market data CSV layer
 data quality validation
 report sanity checks
+paper mode lifecycle
+paper review and decision summary
 regime sample generator
 regime batch comparison
 walk-forward research skeleton
@@ -381,7 +453,7 @@ production authentication
 live alert/execution layer
 ```
 
-## 12. Safety rule
+## 13. Safety rule
 
 Do not add exchange API keys to this project yet.
 
