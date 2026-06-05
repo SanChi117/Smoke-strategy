@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
-"""Public Binance Futures market data loader.
+"""Public Binance market data loader.
 
-Loads public USDT-M futures klines and writes project-compatible candles.csv.
+Loads public klines and writes project-compatible candles.csv.
+
+Primary source is Binance USDT-M Futures. If that endpoint is geo-blocked
+(for example on GitHub-hosted runners), the loader falls back to Binance Vision
+public spot klines. This keeps CI research checks usable without API keys.
 
 Research only. No API keys. No private endpoints. No order execution.
 """
@@ -11,6 +15,7 @@ from __future__ import annotations
 import csv
 import json
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import asdict, dataclass
@@ -20,7 +25,9 @@ from typing import Callable, Iterable
 
 
 BINANCE_FAPI_BASE_URL = "https://fapi.binance.com"
-KLINES_PATH = "/fapi/v1/klines"
+BINANCE_VISION_SPOT_BASE_URL = "https://data-api.binance.vision"
+FUTURES_KLINES_PATH = "/fapi/v1/klines"
+SPOT_KLINES_PATH = "/api/v3/klines"
 
 
 @dataclass(frozen=True)
@@ -51,7 +58,14 @@ def normalize_symbol(symbol: str) -> str:
     return symbol.strip().upper().replace("/", "").replace("_", "")
 
 
-def build_klines_url(symbol: str, interval: str = "1h", limit: int = 500, start_time_ms: int | None = None, end_time_ms: int | None = None) -> str:
+def build_klines_url(
+    symbol: str,
+    interval: str = "1h",
+    limit: int = 500,
+    start_time_ms: int | None = None,
+    end_time_ms: int | None = None,
+    source: str = "futures",
+) -> str:
     params: dict[str, str | int] = {
         "symbol": normalize_symbol(symbol),
         "interval": interval,
@@ -61,7 +75,9 @@ def build_klines_url(symbol: str, interval: str = "1h", limit: int = 500, start_
         params["startTime"] = int(start_time_ms)
     if end_time_ms is not None:
         params["endTime"] = int(end_time_ms)
-    return f"{BINANCE_FAPI_BASE_URL}{KLINES_PATH}?{urllib.parse.urlencode(params)}"
+    if source == "spot_vision":
+        return f"{BINANCE_VISION_SPOT_BASE_URL}{SPOT_KLINES_PATH}?{urllib.parse.urlencode(params)}"
+    return f"{BINANCE_FAPI_BASE_URL}{FUTURES_KLINES_PATH}?{urllib.parse.urlencode(params)}"
 
 
 def default_fetch_json(url: str, timeout: int = 20) -> object:
@@ -90,11 +106,33 @@ def parse_kline_rows(symbol: str, payload: object) -> list[CandleRow]:
     return out
 
 
-def fetch_symbol_klines(symbol: str, interval: str = "1h", limit: int = 500, fetch_json: Callable[[str], object] | None = None) -> list[CandleRow]:
+def fetch_symbol_klines(
+    symbol: str,
+    interval: str = "1h",
+    limit: int = 500,
+    fetch_json: Callable[[str], object] | None = None,
+    source: str = "auto",
+) -> list[CandleRow]:
     fetcher = fetch_json or default_fetch_json
-    url = build_klines_url(symbol=symbol, interval=interval, limit=limit)
-    payload = fetcher(url)
-    return parse_kline_rows(symbol, payload)
+    sources = [source]
+    if source == "auto":
+        sources = ["futures", "spot_vision"]
+
+    last_error: Exception | None = None
+    for candidate in sources:
+        url = build_klines_url(symbol=symbol, interval=interval, limit=limit, source=candidate)
+        try:
+            payload = fetcher(url)
+            return parse_kline_rows(symbol, payload)
+        except urllib.error.HTTPError as exc:
+            last_error = exc
+            if exc.code == 451 and candidate == "futures" and source == "auto":
+                print(f"WARNING: Binance Futures endpoint geo-blocked for {symbol}; trying Binance Vision spot klines.")
+                continue
+            raise
+    if last_error:
+        raise last_error
+    return []
 
 
 def write_candles_csv(path: str | Path, rows: Iterable[CandleRow]) -> int:
@@ -108,11 +146,19 @@ def write_candles_csv(path: str | Path, rows: Iterable[CandleRow]) -> int:
     return len(row_dicts)
 
 
-def load_binance_futures_candles(symbols: list[str], out_csv: str | Path, interval: str = "1h", limit: int = 500, sleep_sec: float = 0.05, fetch_json: Callable[[str], object] | None = None) -> MarketDataSummary:
+def load_binance_futures_candles(
+    symbols: list[str],
+    out_csv: str | Path,
+    interval: str = "1h",
+    limit: int = 500,
+    sleep_sec: float = 0.05,
+    fetch_json: Callable[[str], object] | None = None,
+    source: str = "auto",
+) -> MarketDataSummary:
     rows: list[CandleRow] = []
     loaded = 0
     for symbol in symbols:
-        klines = fetch_symbol_klines(symbol=symbol, interval=interval, limit=limit, fetch_json=fetch_json)
+        klines = fetch_symbol_klines(symbol=symbol, interval=interval, limit=limit, fetch_json=fetch_json, source=source)
         if klines:
             loaded += 1
             rows.extend(klines)
