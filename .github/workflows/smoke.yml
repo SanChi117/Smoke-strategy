@@ -28,7 +28,7 @@ jobs:
   smoke:
     name: smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -93,6 +93,23 @@ jobs:
           cat results/binance_real_matrix_ci/matrix_summary.md
           echo '--- matrix_summary.csv ---'
           cat results/binance_real_matrix_ci/matrix_summary.csv
+          echo '--- baseline_candidate.md ---'
+          cat results/binance_real_matrix_ci/baseline_candidate/baseline_candidate.md
+
+      - name: Run Binance walk-forward quick check
+        run: |
+          python scripts/run_binance_walk_forward.py \
+            --symbols BTCUSDT,ETHUSDT,SOLUSDT \
+            --interval 1h \
+            --limit 1000 \
+            --windows 2 \
+            --lookback-days 30 \
+            --baseline results/binance_real_matrix_ci/baseline_candidate/baseline_candidate.json \
+            --out-dir results/binance_walk_forward_ci
+          echo '--- walk_forward_summary.md ---'
+          cat results/binance_walk_forward_ci/walk_forward_summary.md
+          echo '--- walk_forward_summary.csv ---'
+          cat results/binance_walk_forward_ci/walk_forward_summary.csv
 
       - name: Run report sanity CLI smoke test
         run: |
