@@ -253,6 +253,12 @@ def write_baseline_candidate(root: Path, rows: list[dict]) -> None:
     write_markdown(baseline_dir / "baseline_candidate.md", candidate, [{key: str(value) for key, value in row.items()} for row in rows])
 
 
+def to_bool(value: object, default: bool = True) -> bool:
+    if value is None or value == "":
+        return default
+    return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
 def score_row(row: dict) -> float:
     executed = float(row.get("executed_trades", 0) or 0)
     ret = float(row.get("ret_pct", 0) or 0)
@@ -265,11 +271,42 @@ def score_row(row: dict) -> float:
     sparse_penalty = max(0.0, 20.0 - executed) * 3.0
     ultra_sparse_penalty = 35.0 if executed < 5 else 0.0
     overfilter_penalty = max(0.0, 1.0 - allowed_pct) * 8.0
-    return round(ret + (pf * 4.0) + min(allowed_pct, 25.0) * 0.2 - dd * 0.5 - sanity_penalty - sparse_penalty - ultra_sparse_penalty - overfilter_penalty, 4)
+
+    # Tie-breaker: for explicit tactical cores, prefer the most direct version
+    # when matrix performance is otherwise identical. This lets walk-forward test
+    # whether the learned universe gate is the source of zero-trade folds.
+    has_explicit_core = bool(str(row.get("allowed_symbols_filter", "")).strip())
+    require_rolling = to_bool(row.get("require_rolling_top"), True)
+    require_universe = to_bool(row.get("require_universe_gate"), True)
+    direct_gate_bonus = 0.05 if has_explicit_core and not require_universe else 0.0
+    no_rolling_bonus = 0.01 if has_explicit_core and not require_rolling else 0.0
+
+    return round(
+        ret
+        + (pf * 4.0)
+        + min(allowed_pct, 25.0) * 0.2
+        - dd * 0.5
+        - sanity_penalty
+        - sparse_penalty
+        - ultra_sparse_penalty
+        - overfilter_penalty
+        + direct_gate_bonus
+        + no_rolling_bonus,
+        4,
+    )
 
 
 def cfg_tuple(cfg_spec: dict, key: str) -> tuple[str, ...]:
     return tuple(str(item) for item in cfg_spec.get(key, ()) if str(item).strip())
+
+
+def sort_key(row: dict) -> tuple[float, float, float, int]:
+    return (
+        float(row.get("score", 0) or 0),
+        float(row.get("ret_pct", 0) or 0),
+        float(row.get("pf", 0) or 0),
+        int(float(row.get("executed_trades", 0) or 0)),
+    )
 
 
 def main() -> int:
@@ -378,7 +415,7 @@ def main() -> int:
         rows.append(row)
         print(f"{name}: ret={summary.ret_pct}% dd={summary.max_dd_pct}% pf={summary.pf} executed={summary.executed_trades} sanity={summary.sanity_status} score={row['score']}")
 
-    rows = sorted(rows, key=lambda item: float(item["score"]), reverse=True)
+    rows = sorted(rows, key=sort_key, reverse=True)
     write_csv(root / "matrix_summary.csv", rows)
     write_baseline_candidate(root, rows)
 
