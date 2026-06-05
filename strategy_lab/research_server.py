@@ -57,6 +57,9 @@ REPORT_FILES = [
     "paper/paper_signals.csv",
     "paper/paper_journal.csv",
     "paper/paper_positions.csv",
+    "paper/paper_review.csv",
+    "paper/paper_review_summary.csv",
+    "paper/paper_decision_summary.csv",
     "paper/paper_summary.csv",
 ]
 
@@ -150,8 +153,9 @@ def list_run_records(runs_dir: Path, limit: int = 20) -> list[dict[str, Any]]:
             "sanity_status": summary.get("sanity_status", "") if isinstance(summary, dict) else "",
             "generated_trades": summary.get("generated_trades", "") if isinstance(summary, dict) else "",
             "executed_trades": summary.get("executed_trades", "") if isinstance(summary, dict) else "",
-            "paper_signals": summary.get("paper_signals", summary.get("paper_signals", "")) if isinstance(summary, dict) else "",
+            "paper_signals": summary.get("paper_signals", "") if isinstance(summary, dict) else "",
             "paper_closed": summary.get("paper_closed", summary.get("closed_paper", "")) if isinstance(summary, dict) else "",
+            "paper_review_status": summary.get("review_status", "") if isinstance(summary, dict) else "",
             "ret_pct": summary.get("ret_pct", "") if isinstance(summary, dict) else "",
             "max_dd_pct": summary.get("max_dd_pct", "") if isinstance(summary, dict) else "",
         })
@@ -197,7 +201,7 @@ def create_handler(base_dir: str | Path = "."):
     root = Path(base_dir).resolve()
 
     class ResearchHandler(BaseHTTPRequestHandler):
-        server_version = "SmokeResearchServer/0.6"
+        server_version = "SmokeResearchServer/0.7"
 
         def log_message(self, fmt: str, *args: Any) -> None:  # noqa: A003
             return
