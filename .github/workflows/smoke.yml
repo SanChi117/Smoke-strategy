@@ -2,6 +2,15 @@ name: Smoke Test
 
 on:
   workflow_dispatch:
+    inputs:
+      run_deep_research:
+        description: 'Run full deep Binance research suite after smoke checks'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
   push:
     paths:
       - 'strategy_lab/**'
@@ -28,7 +37,7 @@ jobs:
   smoke:
     name: smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -123,6 +132,18 @@ jobs:
           echo '--- research_decision.json ---'
           cat results/research_decision_ci/research_decision.json
 
+      - name: Run full deep Binance research suite
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.run_deep_research == 'true' }}
+        run: |
+          python scripts/run_deep_research_suite.py \
+            --root results/deep_research_manual \
+            --interval 1h \
+            --limit 1500 \
+            --windows 4 \
+            --lookback-days 30
+          echo '--- deep research decision ---'
+          cat results/deep_research_manual/decision/research_decision.md
+
       - name: Upload Binance research artifacts
         uses: actions/upload-artifact@v4
         if: always()
@@ -134,6 +155,7 @@ jobs:
             results/binance_real_matrix_ci/**
             results/binance_walk_forward_ci/**
             results/research_decision_ci/**
+            results/deep_research_manual/**
 
       - name: Run report sanity CLI smoke test
         run: |
