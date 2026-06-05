@@ -59,6 +59,10 @@ jobs:
         run: |
           python -m strategy_lab.data_quality_cli_smoke_test
 
+      - name: Run Binance market data smoke test
+        run: |
+          python -m strategy_lab.binance_market_data_smoke_test
+
       - name: Run report sanity CLI smoke test
         run: |
           python -m strategy_lab.report_sanity_cli_smoke_test
