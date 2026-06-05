@@ -27,6 +27,9 @@ from strategy_lab.config import PipelineConfig
 from strategy_lab.end_to_end_pipeline import run_end_to_end_pipeline
 
 
+BEST_RESEARCH_SYMBOLS = ("INJUSDT", "TONUSDT", "DOGEUSDT", "ARBUSDT", "NEARUSDT", "OPUSDT")
+BEST_RESEARCH_SETUPS = ("liquidity_reclaim", "pullback", "range_rotation", "ignition")
+
 MATRIX_CONFIGS = [
     {
         "name": "BASE_T5_C40",
@@ -92,6 +95,50 @@ MATRIX_CONFIGS = [
         "structure_watch_threshold": 35.0,
     },
     {
+        "name": "TACTICAL_NO_BREAKOUT_T8_C40",
+        "rolling_top_n": 8,
+        "min_confidence": 40.0,
+        "quality_take_threshold": 65.0,
+        "quality_watch_threshold": 50.0,
+        "structure_take_threshold": 64.0,
+        "structure_watch_threshold": 52.0,
+        "blocked_setup_types": ("breakout",),
+    },
+    {
+        "name": "TACTICAL_NO_BREAKOUT_NO_HIGHVOL",
+        "rolling_top_n": 8,
+        "min_confidence": 40.0,
+        "quality_take_threshold": 65.0,
+        "quality_watch_threshold": 50.0,
+        "structure_take_threshold": 64.0,
+        "structure_watch_threshold": 52.0,
+        "blocked_setup_types": ("breakout",),
+        "blocked_volatility_regimes": ("high",),
+    },
+    {
+        "name": "TACTICAL_BEST_SYMBOLS_CORE",
+        "rolling_top_n": 8,
+        "min_confidence": 40.0,
+        "quality_take_threshold": 65.0,
+        "quality_watch_threshold": 50.0,
+        "structure_take_threshold": 64.0,
+        "structure_watch_threshold": 52.0,
+        "allowed_symbols": BEST_RESEARCH_SYMBOLS,
+        "blocked_setup_types": ("breakout",),
+        "blocked_volatility_regimes": ("high",),
+    },
+    {
+        "name": "TACTICAL_GOOD_SETUPS_ONLY",
+        "rolling_top_n": 10,
+        "min_confidence": 35.0,
+        "quality_take_threshold": 60.0,
+        "quality_watch_threshold": 45.0,
+        "structure_take_threshold": 60.0,
+        "structure_watch_threshold": 48.0,
+        "allowed_setup_types": BEST_RESEARCH_SETUPS,
+        "blocked_volatility_regimes": ("high",),
+    },
+    {
         "name": "STRICT_T5_C50",
         "rolling_top_n": 5,
         "min_confidence": 50.0,
@@ -142,6 +189,10 @@ def score_row(row: dict) -> float:
     return round(ret + (pf * 4.0) + min(allowed_pct, 25.0) * 0.2 - dd * 0.5 - sanity_penalty - sparse_penalty - ultra_sparse_penalty - overfilter_penalty, 4)
 
 
+def cfg_tuple(cfg_spec: dict, key: str) -> tuple[str, ...]:
+    return tuple(str(item) for item in cfg_spec.get(key, ()) if str(item).strip())
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run Binance real-data research matrix.")
     parser.add_argument("--symbols", default=DEFAULT_SYMBOLS, help="Comma/newline separated symbols")
@@ -190,6 +241,14 @@ def main() -> int:
             quality_watch_threshold=float(cfg_spec["quality_watch_threshold"]),
             structure_take_threshold=float(cfg_spec["structure_take_threshold"]),
             structure_watch_threshold=float(cfg_spec["structure_watch_threshold"]),
+            allowed_symbols=cfg_tuple(cfg_spec, "allowed_symbols"),
+            blocked_symbols=cfg_tuple(cfg_spec, "blocked_symbols"),
+            allowed_setup_types=cfg_tuple(cfg_spec, "allowed_setup_types"),
+            blocked_setup_types=cfg_tuple(cfg_spec, "blocked_setup_types"),
+            allowed_trend_contexts=cfg_tuple(cfg_spec, "allowed_trend_contexts"),
+            blocked_trend_contexts=cfg_tuple(cfg_spec, "blocked_trend_contexts"),
+            allowed_volatility_regimes=cfg_tuple(cfg_spec, "allowed_volatility_regimes"),
+            blocked_volatility_regimes=cfg_tuple(cfg_spec, "blocked_volatility_regimes"),
         )
         print(f"\n=== Running {name} ===")
         summary = run_end_to_end_pipeline(
@@ -211,6 +270,14 @@ def main() -> int:
             "quality_watch_threshold": cfg.quality_watch_threshold,
             "structure_take_threshold": cfg.structure_take_threshold,
             "structure_watch_threshold": cfg.structure_watch_threshold,
+            "allowed_symbols_filter": ";".join(cfg.allowed_symbols),
+            "blocked_symbols_filter": ";".join(cfg.blocked_symbols),
+            "allowed_setup_types_filter": ";".join(cfg.allowed_setup_types),
+            "blocked_setup_types_filter": ";".join(cfg.blocked_setup_types),
+            "allowed_trend_contexts_filter": ";".join(cfg.allowed_trend_contexts),
+            "blocked_trend_contexts_filter": ";".join(cfg.blocked_trend_contexts),
+            "allowed_volatility_regimes_filter": ";".join(cfg.allowed_volatility_regimes),
+            "blocked_volatility_regimes_filter": ";".join(cfg.blocked_volatility_regimes),
             "generated_trades": generated,
             "allowed_candidates": allowed,
             "allowed_pct": round(allowed / generated * 100.0, 2) if generated else 0.0,
