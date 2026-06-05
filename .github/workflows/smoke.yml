@@ -111,6 +111,18 @@ jobs:
           echo '--- walk_forward_summary.csv ---'
           cat results/binance_walk_forward_ci/walk_forward_summary.csv
 
+      - name: Make research decision
+        run: |
+          python scripts/make_research_decision.py \
+            --matrix results/binance_real_matrix_ci/matrix_summary.csv \
+            --baseline results/binance_real_matrix_ci/baseline_candidate/baseline_candidate.json \
+            --walk-forward results/binance_walk_forward_ci/walk_forward_summary.csv \
+            --out-dir results/research_decision_ci
+          echo '--- research_decision.md ---'
+          cat results/research_decision_ci/research_decision.md
+          echo '--- research_decision.json ---'
+          cat results/research_decision_ci/research_decision.json
+
       - name: Upload Binance research artifacts
         uses: actions/upload-artifact@v4
         if: always()
@@ -121,6 +133,7 @@ jobs:
             results/binance_real_ci/**
             results/binance_real_matrix_ci/**
             results/binance_walk_forward_ci/**
+            results/research_decision_ci/**
 
       - name: Run report sanity CLI smoke test
         run: |
