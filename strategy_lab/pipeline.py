@@ -76,13 +76,13 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
     trade_by_key = {trade_key(t.symbol, t.side, t.entry_time): t for t in all_trades}
 
     universe_rows = rank_universe(all_trades, UniverseConfig(allow_top_n=9999))
-    universe_allowed = allowed_symbols(universe_rows, UniverseConfig(allow_top_n=9999))
+    learned_universe_allowed = allowed_symbols(universe_rows, UniverseConfig(allow_top_n=9999))
     cfg_allowed_symbols = {symbol.upper() for symbol in cfg.allowed_symbols}
     cfg_blocked_symbols = {symbol.upper() for symbol in cfg.blocked_symbols}
     if cfg_allowed_symbols:
-        universe_allowed = universe_allowed.intersection(cfg_allowed_symbols)
+        learned_universe_allowed = learned_universe_allowed.intersection(cfg_allowed_symbols)
     if cfg_blocked_symbols:
-        universe_allowed = {symbol for symbol in universe_allowed if symbol not in cfg_blocked_symbols}
+        learned_universe_allowed = {symbol for symbol in learned_universe_allowed if symbol not in cfg_blocked_symbols}
     write_dict_csv(out / "pipeline_universe_ranking.csv", rows_as_dicts(universe_rows))
 
     rolling_trades, _windows, _avg_selected = build_rolling_trades(
@@ -127,7 +127,11 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
         setup_type = str(getattr(s, "setup_type", "unknown") or "unknown").strip().lower()
         trend_context = str(getattr(s, "trend_context", "unknown") or "unknown").strip().lower()
         volatility_regime = str(getattr(s, "volatility_regime", "unknown") or "unknown").strip().lower()
-        in_universe = True if not cfg.require_universe_gate else trade.symbol in universe_allowed
+
+        symbol_whitelist_ok = not cfg_allowed_symbols or trade.symbol in cfg_allowed_symbols
+        symbol_block_ok = trade.symbol not in cfg_blocked_symbols
+        learned_universe_ok = True if not cfg.require_universe_gate else trade.symbol in learned_universe_allowed
+        in_universe = symbol_whitelist_ok and symbol_block_ok and learned_universe_ok
         in_rolling = True if not cfg.require_rolling_top else key in rolling_keys
         quality_ok = q.decision != "SKIP"
         structure_ok = s.structure_decision != "SKIP"
@@ -136,7 +140,11 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
         volatility_ok = (not allowed_vols or volatility_regime in allowed_vols) and volatility_regime not in blocked_vols
         allowed = in_universe and in_rolling and quality_ok and structure_ok and setup_ok and trend_ok and volatility_ok
 
-        if not in_universe:
+        if not symbol_whitelist_ok:
+            reason = "symbol_not_in_explicit_allowlist"
+        elif not symbol_block_ok:
+            reason = "symbol_blocked_explicitly"
+        elif not learned_universe_ok:
             reason = "symbol_not_allowed_by_universe"
         elif not in_rolling:
             reason = "not_in_current_rolling_top"
