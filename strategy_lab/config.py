@@ -42,6 +42,14 @@ class PipelineConfig:
     structure_lookback_days: int = 30
     structure_take_threshold: float = 64.0
     structure_watch_threshold: float = 52.0
+    allowed_symbols: tuple[str, ...] = ()
+    blocked_symbols: tuple[str, ...] = ()
+    allowed_setup_types: tuple[str, ...] = ()
+    blocked_setup_types: tuple[str, ...] = ()
+    allowed_trend_contexts: tuple[str, ...] = ()
+    blocked_trend_contexts: tuple[str, ...] = ()
+    allowed_volatility_regimes: tuple[str, ...] = ()
+    blocked_volatility_regimes: tuple[str, ...] = ()
     fee_rate: float = 0.0010
     slippage_rate: float = 0.0002
     default_profile: str = "growth_100_20x"
