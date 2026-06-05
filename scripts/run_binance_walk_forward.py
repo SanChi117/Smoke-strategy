@@ -38,6 +38,14 @@ DEFAULT_BASELINE = {
     "quality_watch_threshold": 50.0,
     "structure_take_threshold": 64.0,
     "structure_watch_threshold": 52.0,
+    "allowed_symbols": [],
+    "blocked_symbols": [],
+    "allowed_setup_types": [],
+    "blocked_setup_types": [],
+    "allowed_trend_contexts": [],
+    "blocked_trend_contexts": [],
+    "allowed_volatility_regimes": [],
+    "blocked_volatility_regimes": [],
 }
 
 
@@ -59,6 +67,16 @@ def to_int(value: object, default: int = 0) -> int:
         return int(float(value if value not in {None, ""} else default))
     except (TypeError, ValueError):
         return default
+
+
+def to_tuple(value: object) -> tuple[str, ...]:
+    if value is None:
+        return ()
+    if isinstance(value, str):
+        return tuple(part.strip() for part in value.split(";") if part.strip())
+    if isinstance(value, (list, tuple, set)):
+        return tuple(str(part).strip() for part in value if str(part).strip())
+    return ()
 
 
 def read_csv_rows(path: str | Path) -> tuple[list[dict[str, str]], list[str]]:
@@ -111,6 +129,14 @@ def baseline_to_cfg(baseline: dict[str, object], name: str, warmup_start: dateti
         quality_watch_threshold=to_float(baseline.get("quality_watch_threshold"), 50.0),
         structure_take_threshold=to_float(baseline.get("structure_take_threshold"), 64.0),
         structure_watch_threshold=to_float(baseline.get("structure_watch_threshold"), 52.0),
+        allowed_symbols=to_tuple(baseline.get("allowed_symbols")),
+        blocked_symbols=to_tuple(baseline.get("blocked_symbols")),
+        allowed_setup_types=to_tuple(baseline.get("allowed_setup_types")),
+        blocked_setup_types=to_tuple(baseline.get("blocked_setup_types")),
+        allowed_trend_contexts=to_tuple(baseline.get("allowed_trend_contexts")),
+        blocked_trend_contexts=to_tuple(baseline.get("blocked_trend_contexts")),
+        allowed_volatility_regimes=to_tuple(baseline.get("allowed_volatility_regimes")),
+        blocked_volatility_regimes=to_tuple(baseline.get("blocked_volatility_regimes")),
     )
 
 
@@ -146,7 +172,7 @@ def score_fold(row: dict[str, object]) -> float:
     executed = to_float(row.get("executed_trades"))
     ret = to_float(row.get("ret_pct"))
     dd = abs(to_float(row.get("max_dd_pct")))
-    pf = to_float(row.get("pf"))
+    pf = min(to_float(row.get("pf")), 3.0)
     sanity_penalty = 0.0 if row.get("sanity_status") == "OK" else 10.0
     sparse_penalty = max(0.0, 5.0 - executed) * 2.0
     return round(ret + pf * 2.0 - dd * 0.5 - sanity_penalty - sparse_penalty, 4)
@@ -183,6 +209,9 @@ def build_markdown(summary_rows: list[dict[str, object]], baseline: dict[str, ob
         f"- Min confidence: {baseline.get('min_confidence')}",
         f"- Quality TAKE/WATCH: {baseline.get('quality_take_threshold')} / {baseline.get('quality_watch_threshold')}",
         f"- Structure TAKE/WATCH: {baseline.get('structure_take_threshold')} / {baseline.get('structure_watch_threshold')}",
+        f"- Allowed symbols: {', '.join(to_tuple(baseline.get('allowed_symbols'))) or 'none'}",
+        f"- Blocked setup types: {', '.join(to_tuple(baseline.get('blocked_setup_types'))) or 'none'}",
+        f"- Blocked volatility regimes: {', '.join(to_tuple(baseline.get('blocked_volatility_regimes'))) or 'none'}",
         "",
         "## Aggregate",
         f"- Valid folds: {len(ok_rows)} / {len(summary_rows)}",
