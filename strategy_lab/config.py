@@ -37,6 +37,7 @@ class PipelineConfig:
     rolling_rebalance_days: int = 7
     rolling_top_n: int = 5
     require_rolling_top: bool = True
+    require_universe_gate: bool = True
     quality_lookback_days: int = 30
     quality_take_threshold: float = 65.0
     quality_watch_threshold: float = 50.0
