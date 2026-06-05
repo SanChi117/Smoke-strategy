@@ -28,6 +28,8 @@ BINANCE_FAPI_BASE_URL = "https://fapi.binance.com"
 BINANCE_VISION_SPOT_BASE_URL = "https://data-api.binance.vision"
 FUTURES_KLINES_PATH = "/fapi/v1/klines"
 SPOT_KLINES_PATH = "/api/v3/klines"
+FUTURES_MAX_LIMIT = 1500
+SPOT_MAX_LIMIT = 1000
 
 
 @dataclass(frozen=True)
@@ -58,6 +60,10 @@ def normalize_symbol(symbol: str) -> str:
     return symbol.strip().upper().replace("/", "").replace("_", "")
 
 
+def source_max_limit(source: str) -> int:
+    return SPOT_MAX_LIMIT if source == "spot_vision" else FUTURES_MAX_LIMIT
+
+
 def build_klines_url(
     symbol: str,
     interval: str = "1h",
@@ -69,7 +75,7 @@ def build_klines_url(
     params: dict[str, str | int] = {
         "symbol": normalize_symbol(symbol),
         "interval": interval,
-        "limit": max(1, min(int(limit), 1500)),
+        "limit": max(1, min(int(limit), source_max_limit(source))),
     }
     if start_time_ms is not None:
         params["startTime"] = int(start_time_ms)
@@ -106,6 +112,71 @@ def parse_kline_rows(symbol: str, payload: object) -> list[CandleRow]:
     return out
 
 
+def fetch_symbol_klines_single(
+    symbol: str,
+    interval: str,
+    limit: int,
+    fetcher: Callable[[str], object],
+    source: str,
+    end_time_ms: int | None = None,
+) -> list[CandleRow]:
+    url = build_klines_url(symbol=symbol, interval=interval, limit=limit, end_time_ms=end_time_ms, source=source)
+    payload = fetcher(url)
+    return parse_kline_rows(symbol, payload)
+
+
+def fetch_symbol_klines_paged(
+    symbol: str,
+    interval: str,
+    limit: int,
+    fetcher: Callable[[str], object],
+    source: str,
+) -> list[CandleRow]:
+    """Fetch up to `limit` candles, paging backwards when one request is not enough.
+
+    Binance spot klines cap at 1000 rows per request; futures cap at 1500. GitHub
+    runners often need the spot fallback, so pagination is required for deep tests.
+    """
+    requested = max(1, int(limit))
+    max_batch = source_max_limit(source)
+    rows: list[CandleRow] = []
+    seen: set[tuple[str, str]] = set()
+    end_time_ms: int | None = None
+
+    while len(rows) < requested:
+        batch_limit = min(max_batch, requested - len(rows))
+        batch = fetch_symbol_klines_single(
+            symbol=symbol,
+            interval=interval,
+            limit=batch_limit,
+            fetcher=fetcher,
+            source=source,
+            end_time_ms=end_time_ms,
+        )
+        if not batch:
+            break
+
+        new_rows: list[CandleRow] = []
+        for row in batch:
+            key = (row.symbol, row.time)
+            if key not in seen:
+                seen.add(key)
+                new_rows.append(row)
+        if not new_rows:
+            break
+        rows.extend(new_rows)
+
+        oldest_ms = int(datetime.fromisoformat(min(row.time for row in batch)).replace(tzinfo=timezone.utc).timestamp() * 1000)
+        next_end = oldest_ms - 1
+        if end_time_ms is not None and next_end >= end_time_ms:
+            break
+        end_time_ms = next_end
+        if len(batch) < batch_limit:
+            break
+
+    return sorted(rows, key=lambda row: row.time)[-requested:]
+
+
 def fetch_symbol_klines(
     symbol: str,
     interval: str = "1h",
@@ -120,10 +191,8 @@ def fetch_symbol_klines(
 
     last_error: Exception | None = None
     for candidate in sources:
-        url = build_klines_url(symbol=symbol, interval=interval, limit=limit, source=candidate)
         try:
-            payload = fetcher(url)
-            return parse_kline_rows(symbol, payload)
+            return fetch_symbol_klines_paged(symbol=symbol, interval=interval, limit=limit, fetcher=fetcher, source=candidate)
         except urllib.error.HTTPError as exc:
             last_error = exc
             if exc.code == 451 and candidate == "futures" and source == "auto":
