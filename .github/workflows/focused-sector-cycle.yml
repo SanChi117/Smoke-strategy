@@ -1,0 +1,100 @@
+name: Focused Sector Cycle
+
+on:
+  workflow_dispatch:
+    inputs:
+      sector_only:
+        description: 'Comma-separated sector groups for focused deeper cycle'
+        required: true
+        default: 'defi_dex_lending,oracles_data_services'
+        type: string
+      sector_limit:
+        description: 'Candles per symbol'
+        required: false
+        default: '3000'
+        type: choice
+        options:
+          - '2000'
+          - '3000'
+      sector_windows:
+        description: 'Walk-forward windows'
+        required: false
+        default: '6'
+        type: choice
+        options:
+          - '4'
+          - '6'
+
+concurrency:
+  group: focused-sector-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  focused-sector-cycle:
+    name: focused-sector-cycle
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Run focused sector cycle
+        run: |
+          python scripts/run_sector_research_cycle.py \
+            --top-n 10 \
+            --limit "${{ github.event.inputs.sector_limit }}" \
+            --windows "${{ github.event.inputs.sector_windows }}" \
+            --only "${{ github.event.inputs.sector_only }}" \
+            --skip-combined \
+            --allow-fail
+
+      - name: Classify focused sector cycle
+        run: |
+          python scripts/classify_sector_cycle.py \
+            --input results/sector_research_cycle/sector_cycle_summary.csv \
+            --out-dir results/sector_research_cycle
+          echo '--- sector_cycle_summary.md ---'
+          cat results/sector_research_cycle/sector_cycle_summary.md
+          echo '--- sector_classification.md ---'
+          cat results/sector_research_cycle/sector_classification.md
+          echo '--- sector_rotation_baseline_candidate.json ---'
+          cat results/sector_research_cycle/sector_rotation_baseline_candidate.json
+
+      - name: Upload focused sector artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: focused-sector-cycle-results
+          path: |
+            results/sector_research_cycle/sector_cycle_summary.csv
+            results/sector_research_cycle/sector_cycle_summary.md
+            results/sector_research_cycle/sector_classification.csv
+            results/sector_research_cycle/sector_classification.md
+            results/sector_research_cycle/sector_rotation_baseline_candidate.json
+            results/sector_research_cycle/*/symbols.txt
+            results/sector_research_cycle/*/sector_universe.md
+            results/sector_research_cycle/*/deep_research/matrix/matrix_summary.csv
+            results/sector_research_cycle/*/deep_research/matrix/matrix_summary.md
+            results/sector_research_cycle/*/deep_research/matrix/baseline_candidate/baseline_candidate.json
+            results/sector_research_cycle/*/deep_research/matrix/baseline_candidate/baseline_candidate.md
+            results/sector_research_cycle/*/deep_research/walk_forward/walk_forward_summary.csv
+            results/sector_research_cycle/*/deep_research/walk_forward/walk_forward_summary.md
+            results/sector_research_cycle/*/deep_research/decision/research_decision.json
+            results/sector_research_cycle/*/deep_research/decision/research_decision.md
