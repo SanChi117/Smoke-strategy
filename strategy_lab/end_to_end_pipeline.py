@@ -9,7 +9,7 @@ candles.csv
 -> risk_plans.csv
 -> generated_trades.csv
 -> integrated pipeline reports
--> paper mode reports
+-> paper mode reports on pipeline-allowed trades
 -> report sanity checks
 
 Research only. No live trading. No API keys.
@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import csv
 from dataclasses import asdict, dataclass
+from datetime import datetime
 from pathlib import Path
 
 from strategy_lab.candle_pipeline import run_candle_pipeline
@@ -63,6 +64,61 @@ def write_summary(path: str | Path, summary: EndToEndSummary) -> None:
         writer.writerow(asdict(summary))
 
 
+def read_csv_rows(path: str | Path) -> tuple[list[dict[str, str]], list[str]]:
+    p = Path(path)
+    if not p.exists() or p.stat().st_size == 0:
+        return [], []
+    with p.open("r", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        return list(reader), list(reader.fieldnames or [])
+
+
+def write_dict_csv(path: str | Path, rows: list[dict[str, str]], fieldnames: list[str] | None = None) -> None:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fields = fieldnames or (list(rows[0].keys()) if rows else [])
+    if not fields:
+        path.write_text("", encoding="utf-8")
+        return
+    with path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def parse_dt(value: str | datetime) -> datetime:
+    if isinstance(value, datetime):
+        return value
+    return datetime.fromisoformat(str(value).strip().replace("Z", "").replace("T", " "))
+
+
+def trade_key(row: dict[str, str]) -> tuple[str, str, str]:
+    return (
+        str(row.get("symbol", "")).strip().upper(),
+        str(row.get("side", "")).strip().lower(),
+        parse_dt(str(row.get("entry_time", ""))).isoformat(sep=" ", timespec="seconds"),
+    )
+
+
+def write_pipeline_allowed_trades(generated_trades: str | Path, pipeline_decisions: str | Path, out_csv: str | Path) -> int:
+    """Write generated trade rows that passed the integrated pipeline gate.
+
+    Paper mode must review the actual strategy candidate, not every raw generated
+    setup. This helper joins generated_trades.csv with pipeline_decisions.csv by
+    symbol/side/entry_time and keeps only rows with allowed=True.
+    """
+    generated_rows, generated_fields = read_csv_rows(generated_trades)
+    decision_rows, _decision_fields = read_csv_rows(pipeline_decisions)
+    allowed_keys = {
+        trade_key(row)
+        for row in decision_rows
+        if str(row.get("allowed", "")).strip().lower() == "true"
+    }
+    allowed_rows = [row for row in generated_rows if trade_key(row) in allowed_keys]
+    write_dict_csv(out_csv, allowed_rows, generated_fields)
+    return len(allowed_rows)
+
+
 def run_end_to_end_pipeline(
     candles_csv: str | Path,
     out_dir: str | Path = "results",
@@ -79,7 +135,13 @@ def run_end_to_end_pipeline(
         raise RuntimeError("Candle pipeline did not create generated_trades.csv")
 
     pipeline_summary = run_pipeline(input_csv=generated_trades, out_dir=out, cfg=cfg, profile_name=profile)
-    paper_summary = run_paper_mode(generated_trades_csv=generated_trades, out_dir=out / "paper")
+    allowed_trades = out / "pipeline_allowed_trades.csv"
+    write_pipeline_allowed_trades(generated_trades, out / "pipeline_decisions.csv", allowed_trades)
+
+    # Keep a raw paper audit for diagnostics, but make the primary paper report
+    # review the actual pipeline-allowed strategy candidate.
+    run_paper_mode(generated_trades_csv=generated_trades, out_dir=out / "paper_raw")
+    paper_summary = run_paper_mode(generated_trades_csv=allowed_trades, out_dir=out / "paper")
     sanity = write_report_sanity(out)
     summary = EndToEndSummary(
         profile=profile,
