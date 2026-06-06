@@ -23,6 +23,12 @@ FILTER_COLUMNS = [
     "blocked_trend_contexts_filter",
     "allowed_volatility_regimes_filter",
     "blocked_volatility_regimes_filter",
+    "allowed_liquidity_states_filter",
+    "blocked_liquidity_states_filter",
+    "allowed_candle_types_filter",
+    "blocked_candle_types_filter",
+    "allowed_direction_contexts_filter",
+    "blocked_direction_contexts_filter",
 ]
 
 REQUIRED_COLUMNS = [
@@ -93,6 +99,7 @@ def normalize_row(row: dict[str, str]) -> dict[str, object]:
         "quality_watch_threshold": to_float(row.get("quality_watch_threshold")),
         "structure_take_threshold": to_float(row.get("structure_take_threshold")),
         "structure_watch_threshold": to_float(row.get("structure_watch_threshold")),
+        "min_volume_ratio": to_float(row.get("min_volume_ratio"), 0.0),
         "generated_trades": int(to_float(row.get("generated_trades"))),
         "allowed_candidates": int(to_float(row.get("allowed_candidates"))),
         "allowed_pct": to_float(row.get("allowed_pct")),
@@ -116,6 +123,10 @@ def choose_best(rows: list[dict[str, str]]) -> dict[str, str]:
     return sorted(rows, key=lambda r: to_float(r.get("score")), reverse=True)[0]
 
 
+def list_value(candidate: dict[str, object], key: str) -> str:
+    return ", ".join(candidate.get(key, [])) or "none"
+
+
 def write_markdown(path: Path, candidate: dict[str, object], all_rows: list[dict[str, str]]) -> None:
     lines = [
         "# Baseline Candidate From Matrix",
@@ -134,16 +145,23 @@ def write_markdown(path: Path, candidate: dict[str, object], all_rows: list[dict
         f"- Quality WATCH threshold: {candidate['quality_watch_threshold']}",
         f"- Structure TAKE threshold: {candidate['structure_take_threshold']}",
         f"- Structure WATCH threshold: {candidate['structure_watch_threshold']}",
+        f"- Minimum volume ratio: {candidate['min_volume_ratio']}",
         "",
         "## Tactical filters",
-        f"- Allowed symbols: {', '.join(candidate.get('allowed_symbols', [])) or 'none'}",
-        f"- Blocked symbols: {', '.join(candidate.get('blocked_symbols', [])) or 'none'}",
-        f"- Allowed setup types: {', '.join(candidate.get('allowed_setup_types', [])) or 'none'}",
-        f"- Blocked setup types: {', '.join(candidate.get('blocked_setup_types', [])) or 'none'}",
-        f"- Allowed trend contexts: {', '.join(candidate.get('allowed_trend_contexts', [])) or 'none'}",
-        f"- Blocked trend contexts: {', '.join(candidate.get('blocked_trend_contexts', [])) or 'none'}",
-        f"- Allowed volatility regimes: {', '.join(candidate.get('allowed_volatility_regimes', [])) or 'none'}",
-        f"- Blocked volatility regimes: {', '.join(candidate.get('blocked_volatility_regimes', [])) or 'none'}",
+        f"- Allowed symbols: {list_value(candidate, 'allowed_symbols')}",
+        f"- Blocked symbols: {list_value(candidate, 'blocked_symbols')}",
+        f"- Allowed setup types: {list_value(candidate, 'allowed_setup_types')}",
+        f"- Blocked setup types: {list_value(candidate, 'blocked_setup_types')}",
+        f"- Allowed trend contexts: {list_value(candidate, 'allowed_trend_contexts')}",
+        f"- Blocked trend contexts: {list_value(candidate, 'blocked_trend_contexts')}",
+        f"- Allowed volatility regimes: {list_value(candidate, 'allowed_volatility_regimes')}",
+        f"- Blocked volatility regimes: {list_value(candidate, 'blocked_volatility_regimes')}",
+        f"- Allowed liquidity states: {list_value(candidate, 'allowed_liquidity_states')}",
+        f"- Blocked liquidity states: {list_value(candidate, 'blocked_liquidity_states')}",
+        f"- Allowed candle types: {list_value(candidate, 'allowed_candle_types')}",
+        f"- Blocked candle types: {list_value(candidate, 'blocked_candle_types')}",
+        f"- Allowed direction contexts: {list_value(candidate, 'allowed_direction_contexts')}",
+        f"- Blocked direction contexts: {list_value(candidate, 'blocked_direction_contexts')}",
         "",
         "## Performance snapshot",
         f"- Generated trades: {candidate['generated_trades']}",
@@ -172,8 +190,9 @@ def write_markdown(path: Path, candidate: dict[str, object], all_rows: list[dict
         lines.append(
             f"- {row.get('name')}: score={row.get('score')}, ret={row.get('ret_pct')}%, "
             f"dd={row.get('max_dd_pct')}%, pf={row.get('pf')}, executed={row.get('executed_trades')}, "
-            f"allowed={row.get('allowed_pct')}%, rolling_required={row.get('require_rolling_top', '')}, "
-            f"universe_required={row.get('require_universe_gate', '')}, sanity={row.get('sanity_status')}"
+            f"allowed={row.get('allowed_pct')}%, min_vr={row.get('min_volume_ratio', '')}, "
+            f"rolling_required={row.get('require_rolling_top', '')}, universe_required={row.get('require_universe_gate', '')}, "
+            f"sanity={row.get('sanity_status')}"
         )
     lines.append("")
     path.write_text("\n".join(lines), encoding="utf-8")
