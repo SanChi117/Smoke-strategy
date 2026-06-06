@@ -11,6 +11,31 @@ on:
         options:
           - 'false'
           - 'true'
+      run_sector_cycle:
+        description: 'Run sector rotation research cycle after smoke checks'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+      sector_limit:
+        description: 'Candles per symbol for sector cycle'
+        required: false
+        default: '1500'
+        type: choice
+        options:
+          - '1500'
+          - '2000'
+          - '3000'
+      sector_windows:
+        description: 'Walk-forward windows for sector cycle'
+        required: false
+        default: '4'
+        type: choice
+        options:
+          - '4'
+          - '6'
   push:
     paths:
       - 'strategy_lab/**'
@@ -37,7 +62,7 @@ jobs:
   smoke:
     name: smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 360
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -144,6 +169,24 @@ jobs:
           echo '--- deep research decision ---'
           cat results/deep_research_manual/decision/research_decision.md
 
+      - name: Run sector rotation research cycle
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.run_sector_cycle == 'true' }}
+        run: |
+          python scripts/run_sector_research_cycle.py \
+            --top-n 10 \
+            --limit ${{ github.event.inputs.sector_limit }} \
+            --windows ${{ github.event.inputs.sector_windows }} \
+            --allow-fail
+          python scripts/classify_sector_cycle.py \
+            --input results/sector_research_cycle/sector_cycle_summary.csv \
+            --out-dir results/sector_research_cycle
+          echo '--- sector_cycle_summary.md ---'
+          cat results/sector_research_cycle/sector_cycle_summary.md
+          echo '--- sector_classification.md ---'
+          cat results/sector_research_cycle/sector_classification.md
+          echo '--- sector_rotation_baseline_candidate.json ---'
+          cat results/sector_research_cycle/sector_rotation_baseline_candidate.json
+
       - name: Upload Binance research artifacts
         uses: actions/upload-artifact@v4
         if: always()
@@ -156,6 +199,7 @@ jobs:
             results/binance_walk_forward_ci/**
             results/research_decision_ci/**
             results/deep_research_manual/**
+            results/sector_research_cycle/**
 
       - name: Run report sanity CLI smoke test
         run: |
