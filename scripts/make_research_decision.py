@@ -136,8 +136,15 @@ def decide(matrix_best: dict[str, str], baseline: dict, wfo: dict[str, object]) 
         next_steps.append("Drawdown is high. Reduce risk profile or tighten filters before paper-mode review.")
         return "WATCH_RISK_REVIEW", reasons, next_steps
 
-    if matrix_sanity == "WARN" and positive_pct >= 75 and sanity_non_fail_pct >= 100 and avg_pf >= 1.20 and avg_ret > 0 and worst_dd <= 10:
-        next_steps.append("Promote candidate to deeper paper-mode review. WARN-only sanity is acceptable at this stage, but inspect rejected paper trades and time-stop diagnostics first.")
+    strong_wfo = positive_pct >= 75 and sanity_non_fail_pct >= 100 and avg_pf >= 1.20 and avg_ret > 0 and worst_dd <= 10
+    very_strong_wfo = positive_pct >= 100 and sanity_non_fail_pct >= 100 and avg_pf >= 1.50 and avg_ret > 0 and worst_dd <= 8
+
+    if matrix_sanity in {"OK", "WARN"} and strong_wfo:
+        if matrix_sanity == "OK" and very_strong_wfo:
+            next_steps.append("Promote candidate to deeper research. Matrix sanity is OK and walk-forward is strong despite review warnings in some folds.")
+            next_steps.append("Do not use live trading yet; require larger history and paper-decision confirmation before deployment discussion.")
+            return "PROMOTE_TO_DEEPER_RESEARCH", reasons, next_steps
+        next_steps.append("Promote candidate to deeper paper-mode review. WARN-only fold sanity is acceptable at this stage, but inspect time-stop diagnostics first.")
         next_steps.append("Do not use live trading yet; require paper-mode review and larger history before any deployment discussion.")
         return "PROMOTE_TO_PAPER_REVIEW", reasons, next_steps
 
@@ -169,6 +176,7 @@ def build_markdown(decision: dict[str, object]) -> str:
         "quality_watch_threshold",
         "structure_take_threshold",
         "structure_watch_threshold",
+        "min_volume_ratio",
     ]:
         lines.append(f"- {key}: {baseline.get(key, '')}")
 
