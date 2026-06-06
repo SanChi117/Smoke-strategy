@@ -2,8 +2,10 @@
 """Walk-forward runner with baseline tactical gate support.
 
 Small compatibility wrapper around run_binance_walk_forward.py.
-It preserves all existing behavior, but ensures baseline_candidate.json can
-control PipelineConfig.require_rolling_top and require_universe_gate.
+It preserves existing fold execution behavior, but ensures baseline_candidate.json
+can control PipelineConfig.require_rolling_top and require_universe_gate.
+It also treats WARN-only sanity folds as reviewable instead of unstable when the
+walk-forward result is otherwise strong.
 
 Research only. No API keys. No private account data. No order execution.
 """
@@ -12,6 +14,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from datetime import datetime, timedelta
+from statistics import mean
 
 import run_binance_walk_forward as base
 from strategy_lab.config import PipelineConfig
@@ -52,10 +55,87 @@ def patched_baseline_to_cfg(
     )
 
 
+def patched_build_markdown(summary_rows: list[dict[str, object]], baseline: dict[str, object]) -> str:
+    ok_rows = [r for r in summary_rows if r.get("status") == "OK"]
+    positive_rows = [r for r in ok_rows if base.to_float(r.get("ret_pct")) > 0]
+    sanity_ok_rows = [r for r in ok_rows if r.get("sanity_status") == "OK"]
+    sanity_non_fail_rows = [r for r in ok_rows if r.get("sanity_status") in {"OK", "WARN"}]
+    total_executed = sum(base.to_int(r.get("executed_trades")) for r in ok_rows)
+    avg_ret = round(mean([base.to_float(r.get("ret_pct")) for r in ok_rows]), 4) if ok_rows else 0.0
+    avg_pf = round(mean([base.to_float(r.get("pf")) for r in ok_rows]), 4) if ok_rows else 0.0
+    worst_dd = round(max([abs(base.to_float(r.get("max_dd_pct"))) for r in ok_rows], default=0.0), 4)
+    positive_pct = round(len(positive_rows) / len(ok_rows) * 100.0, 2) if ok_rows else 0.0
+    sanity_ok_pct = round(len(sanity_ok_rows) / len(ok_rows) * 100.0, 2) if ok_rows else 0.0
+    sanity_non_fail_pct = round(len(sanity_non_fail_rows) / len(ok_rows) * 100.0, 2) if ok_rows else 0.0
+
+    if not ok_rows:
+        verdict = "BLOCK_NO_VALID_FOLDS"
+    elif total_executed < 10:
+        verdict = "WATCH_TOO_SPARSE"
+    elif positive_pct >= 75 and sanity_non_fail_pct >= 100 and avg_pf >= 1.20 and avg_ret > 0 and worst_dd <= 10:
+        verdict = "PASS_WALK_FORWARD_REVIEW"
+    elif positive_pct >= 50 and sanity_non_fail_pct >= 100 and avg_pf >= 1.0 and avg_ret > 0:
+        verdict = "WATCH_REVIEWABLE_BUT_UNSTABLE"
+    else:
+        verdict = "WATCH_UNSTABLE"
+
+    lines = [
+        "# Binance Walk-Forward Summary",
+        "",
+        f"Verdict: **{verdict}**",
+        "",
+        "## Baseline candidate",
+        f"- Name: {baseline.get('name')}",
+        f"- Rolling top N: {baseline.get('rolling_top_n')}",
+        f"- Require rolling top: {baseline.get('require_rolling_top')}",
+        f"- Require universe gate: {baseline.get('require_universe_gate')}",
+        f"- Min confidence: {baseline.get('min_confidence')}",
+        f"- Quality TAKE/WATCH: {baseline.get('quality_take_threshold')} / {baseline.get('quality_watch_threshold')}",
+        f"- Structure TAKE/WATCH: {baseline.get('structure_take_threshold')} / {baseline.get('structure_watch_threshold')}",
+        f"- Allowed symbols: {', '.join(base.to_tuple(baseline.get('allowed_symbols'))) or 'none'}",
+        f"- Blocked setup types: {', '.join(base.to_tuple(baseline.get('blocked_setup_types'))) or 'none'}",
+        f"- Blocked volatility regimes: {', '.join(base.to_tuple(baseline.get('blocked_volatility_regimes'))) or 'none'}",
+        "",
+        "## Aggregate",
+        f"- Valid folds: {len(ok_rows)} / {len(summary_rows)}",
+        f"- Positive folds: {len(positive_rows)} ({positive_pct}%)",
+        f"- Sanity OK folds: {len(sanity_ok_rows)} ({sanity_ok_pct}%)",
+        f"- Sanity non-fail folds: {len(sanity_non_fail_rows)} ({sanity_non_fail_pct}%)",
+        f"- Total executed trades: {total_executed}",
+        f"- Average return pct: {avg_ret}%",
+        f"- Average PF: {avg_pf}",
+        f"- Worst max DD pct: {worst_dd}%",
+        "",
+        "## Folds",
+    ]
+    for row in summary_rows:
+        lines.append(
+            f"- {row.get('fold')}: status={row.get('status')}, score={row.get('score')}, "
+            f"ret={row.get('ret_pct')}%, dd={row.get('max_dd_pct')}%, pf={row.get('pf')}, "
+            f"executed={row.get('executed_trades')}, sanity={row.get('sanity_status')}, "
+            f"window={row.get('validation_start')} -> {row.get('validation_end')}"
+        )
+        if row.get("error"):
+            lines.append(f"  - error: {row.get('error')}")
+    lines.extend(["", "## Next step"])
+    if verdict == "PASS_WALK_FORWARD_REVIEW":
+        lines.append("- Candidate can move to deeper paper-mode review. WARN-only sanity is reviewable because all folds are non-fail and performance is stable.")
+    elif verdict == "WATCH_REVIEWABLE_BUT_UNSTABLE":
+        lines.append("- Candidate is reviewable, but compare fold diagnostics before promotion.")
+    elif verdict == "WATCH_TOO_SPARSE":
+        lines.append("- Increase candle limit, symbols, or reduce window count before judging stability.")
+    elif verdict == "WATCH_UNSTABLE":
+        lines.append("- Compare fold diagnostics and disable weak setup/regime groups before promotion.")
+    else:
+        lines.append("- Fix data/window generation or baseline configuration before continuing.")
+    return "\n".join(lines) + "\n"
+
+
 def main() -> int:
     base.DEFAULT_BASELINE["require_rolling_top"] = True
     base.DEFAULT_BASELINE["require_universe_gate"] = True
     base.baseline_to_cfg = patched_baseline_to_cfg
+    base.build_markdown = patched_build_markdown
     return base.main()
 
 
