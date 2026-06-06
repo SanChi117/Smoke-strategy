@@ -18,8 +18,9 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections import defaultdict
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable, Iterable
 
@@ -30,6 +31,7 @@ FUTURES_KLINES_PATH = "/fapi/v1/klines"
 SPOT_KLINES_PATH = "/api/v3/klines"
 FUTURES_MAX_LIMIT = 1500
 SPOT_MAX_LIMIT = 1000
+STALE_SYMBOL_MAX_LAG_DAYS = 7
 
 
 @dataclass(frozen=True)
@@ -54,6 +56,10 @@ class MarketDataSummary:
 
 def ms_to_iso(ms: int | float | str) -> str:
     return datetime.fromtimestamp(int(ms) / 1000.0, tz=timezone.utc).replace(tzinfo=None).isoformat(timespec="seconds")
+
+
+def parse_iso(value: str) -> datetime:
+    return datetime.fromisoformat(str(value).strip().replace("Z", ""))
 
 
 def normalize_symbol(symbol: str) -> str:
@@ -215,6 +221,31 @@ def write_candles_csv(path: str | Path, rows: Iterable[CandleRow]) -> int:
     return len(row_dicts)
 
 
+def filter_stale_symbols(rows: list[CandleRow], max_lag_days: int = STALE_SYMBOL_MAX_LAG_DAYS) -> tuple[list[CandleRow], set[str]]:
+    """Drop symbols whose newest candle is far behind the dataset newest candle.
+
+    Expanded research can hit delisted/legacy spot symbols. A stale symbol can
+    create a huge timestamp gap and break walk-forward windows, so stale rows are
+    removed before writing the shared candles file.
+    """
+    if not rows:
+        return [], set()
+    global_latest = max(parse_iso(row.time) for row in rows)
+    cutoff = global_latest - timedelta(days=max_lag_days)
+    latest_by_symbol: dict[str, datetime] = {}
+    for row in rows:
+        ts = parse_iso(row.time)
+        latest_by_symbol[row.symbol] = max(ts, latest_by_symbol.get(row.symbol, ts))
+    stale = {symbol for symbol, latest in latest_by_symbol.items() if latest < cutoff}
+    if stale:
+        for symbol in sorted(stale):
+            print(
+                f"WARNING: Skipping stale symbol {symbol}; latest candle {latest_by_symbol[symbol].isoformat()} "
+                f"is older than cutoff {cutoff.isoformat()}."
+            )
+    return [row for row in rows if row.symbol not in stale], stale
+
+
 def load_binance_futures_candles(
     symbols: list[str],
     out_csv: str | Path,
@@ -225,26 +256,29 @@ def load_binance_futures_candles(
     source: str = "auto",
 ) -> MarketDataSummary:
     rows: list[CandleRow] = []
-    loaded = 0
+    requested_symbols = {normalize_symbol(symbol) for symbol in symbols}
     for symbol in symbols:
+        normalized = normalize_symbol(symbol)
         try:
-            klines = fetch_symbol_klines(symbol=symbol, interval=interval, limit=limit, fetch_json=fetch_json, source=source)
+            klines = fetch_symbol_klines(symbol=normalized, interval=interval, limit=limit, fetch_json=fetch_json, source=source)
         except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, ValueError) as exc:
-            print(f"WARNING: Skipping {symbol}; public kline load failed: {exc}")
+            print(f"WARNING: Skipping {normalized}; public kline load failed: {exc}")
             klines = []
         if klines:
-            loaded += 1
             rows.extend(klines)
         else:
-            print(f"WARNING: No candles loaded for {symbol}; symbol skipped.")
+            print(f"WARNING: No candles loaded for {normalized}; symbol skipped.")
         if sleep_sec > 0:
             time.sleep(sleep_sec)
+    rows, stale_symbols = filter_stale_symbols(rows)
     rows = sorted(rows, key=lambda row: (row.symbol, row.time))
+    loaded_symbols = {row.symbol for row in rows}
     count = write_candles_csv(out_csv, rows)
-    status = "OK" if count > 0 and loaded == len(symbols) else "PARTIAL" if count > 0 else "EMPTY"
+    skipped = requested_symbols - loaded_symbols
+    status = "OK" if count > 0 and not skipped else "PARTIAL" if count > 0 else "EMPTY"
     return MarketDataSummary(
         symbols_requested=len(symbols),
-        symbols_loaded=loaded,
+        symbols_loaded=len(loaded_symbols),
         candles=count,
         interval=interval,
         status=status,
