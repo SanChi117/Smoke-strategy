@@ -1,0 +1,113 @@
+name: Symbol Universe Research
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Candles per symbol'
+        required: false
+        default: '1500'
+        type: choice
+        options:
+          - '1500'
+          - '2000'
+          - '3000'
+      windows:
+        description: 'Walk-forward windows'
+        required: false
+        default: '4'
+        type: choice
+        options:
+          - '4'
+          - '6'
+      top_n_per_group:
+        description: 'Top N symbols per sector seed'
+        required: false
+        default: '10'
+        type: choice
+        options:
+          - '10'
+          - '15'
+          - '20'
+
+concurrency:
+  group: symbol-universe-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  symbol-universe-research:
+    name: symbol-universe-research
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Build combined classified universe
+        run: |
+          python scripts/build_sector_universe.py \
+            --groups all \
+            --top-n "${{ github.event.inputs.top_n_per_group }}" \
+            --out results/symbol_universe_research/symbols.txt \
+            --md-out results/symbol_universe_research/sector_universe.md
+
+      - name: Run combined universe deep research
+        run: |
+          python scripts/run_deep_research_suite.py \
+            --symbols-file results/symbol_universe_research/symbols.txt \
+            --interval 1h \
+            --limit "${{ github.event.inputs.limit }}" \
+            --windows "${{ github.event.inputs.windows }}" \
+            --lookback-days 30 \
+            --profile growth_100_20x \
+            --root results/symbol_universe_research/deep_research \
+            --sleep-sec 0.05
+
+      - name: Rank symbols with sector context
+        run: |
+          python scripts/rank_research_symbols.py \
+            --matrix-root results/symbol_universe_research/deep_research/matrix \
+            --groups-file strategy_lab/universe/sector_groups.json \
+            --out-dir results/symbol_universe_research \
+            --top-n 40
+          echo '--- symbol_research_ranking.md ---'
+          cat results/symbol_universe_research/symbol_research_ranking.md
+          echo '--- dynamic_symbol_universe_candidate.json ---'
+          cat results/symbol_universe_research/dynamic_symbol_universe_candidate.json
+
+      - name: Upload symbol universe artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: symbol-universe-research-results
+          path: |
+            results/symbol_universe_research/symbols.txt
+            results/symbol_universe_research/sector_universe.md
+            results/symbol_universe_research/symbol_research_ranking.csv
+            results/symbol_universe_research/symbol_research_ranking.md
+            results/symbol_universe_research/dynamic_symbol_universe_candidate.json
+            results/symbol_universe_research/deep_research/matrix/matrix_summary.csv
+            results/symbol_universe_research/deep_research/matrix/matrix_summary.md
+            results/symbol_universe_research/deep_research/matrix/baseline_candidate/baseline_candidate.json
+            results/symbol_universe_research/deep_research/matrix/baseline_candidate/baseline_candidate.md
+            results/symbol_universe_research/deep_research/walk_forward/walk_forward_summary.csv
+            results/symbol_universe_research/deep_research/walk_forward/walk_forward_summary.md
+            results/symbol_universe_research/deep_research/decision/research_decision.json
+            results/symbol_universe_research/deep_research/decision/research_decision.md
