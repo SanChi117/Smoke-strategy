@@ -51,6 +51,26 @@ def base_cfg(name: str, **overrides: object) -> dict:
     return cfg
 
 
+def micro_strict_cfg(name: str, **overrides: object) -> dict:
+    """Strategy-first micro strict logic.
+
+    By default this does NOT hard-code allowed symbols. It should be used to test
+    whether the strategy logic survives on a dynamic universe instead of only on
+    hand-picked core coins.
+    """
+    cfg = base_cfg(
+        name,
+        blocked_setup_types=("breakout",),
+        blocked_volatility_regimes=("high",),
+        allowed_liquidity_states=GOOD_LIQUIDITY_STATES,
+        blocked_candle_types=BAD_CANDLE_TYPES,
+        blocked_direction_contexts=BAD_DIRECTION_CONTEXTS,
+        min_volume_ratio=0.84,
+    )
+    cfg.update(overrides)
+    return cfg
+
+
 MATRIX_CONFIGS = [
     base_cfg("BASE_T5_C40", rolling_top_n=5),
     base_cfg("MORE_COINS_T8_C40"),
@@ -121,7 +141,6 @@ MATRIX_CONFIGS = [
         blocked_volatility_regimes=("high",),
     ),
     base_cfg("STRICT_T5_C50", rolling_top_n=5, min_confidence=50.0, quality_take_threshold=70.0, quality_watch_threshold=55.0, structure_take_threshold=68.0, structure_watch_threshold=56.0),
-    # Context-filter candidates discovered from TACTICAL_CORE_DIRECT paper review.
     base_cfg(
         "TACTICAL_CORE_DIRECT_NO_BAD_LIQ",
         require_rolling_top=False,
@@ -160,22 +179,34 @@ MATRIX_CONFIGS = [
         blocked_candle_types=BAD_CANDLE_TYPES,
         min_volume_ratio=0.84,
     ),
-    base_cfg(
+    micro_strict_cfg(
         "TACTICAL_CORE_DIRECT_MICRO_STRICT",
         require_rolling_top=False,
         require_universe_gate=False,
-        min_confidence=40.0,
-        quality_take_threshold=65.0,
-        quality_watch_threshold=50.0,
-        structure_take_threshold=64.0,
-        structure_watch_threshold=52.0,
         allowed_symbols=BEST_RESEARCH_SYMBOLS,
-        allowed_liquidity_states=GOOD_LIQUIDITY_STATES,
-        blocked_setup_types=("breakout",),
-        blocked_volatility_regimes=("high",),
-        blocked_candle_types=BAD_CANDLE_TYPES,
-        blocked_direction_contexts=BAD_DIRECTION_CONTEXTS,
-        min_volume_ratio=0.84,
+    ),
+    # Strategy-first dynamic universe tests. These are intentionally NOT allowed_symbols-limited.
+    # They answer the overfitting question: does the logic work beyond the hand-picked core?
+    micro_strict_cfg("DYNAMIC_MICRO_STRICT_T8", rolling_top_n=8, require_rolling_top=True, require_universe_gate=True),
+    micro_strict_cfg("DYNAMIC_MICRO_STRICT_T12", rolling_top_n=12, require_rolling_top=True, require_universe_gate=True),
+    micro_strict_cfg("DYNAMIC_MICRO_STRICT_T20", rolling_top_n=20, require_rolling_top=True, require_universe_gate=True),
+    micro_strict_cfg(
+        "DYNAMIC_MICRO_STRICTER_T12",
+        rolling_top_n=12,
+        require_rolling_top=True,
+        require_universe_gate=True,
+        min_confidence=45.0,
+        quality_take_threshold=68.0,
+        quality_watch_threshold=55.0,
+        structure_take_threshold=66.0,
+        structure_watch_threshold=55.0,
+    ),
+    micro_strict_cfg(
+        "NEW_COINS_DISCOVERY_MICRO_STRICT_T20",
+        rolling_top_n=20,
+        require_rolling_top=True,
+        require_universe_gate=True,
+        blocked_symbols=BEST_RESEARCH_SYMBOLS,
     ),
 ]
 
@@ -241,11 +272,10 @@ def score_row(row: dict) -> float:
     ultra_sparse_penalty = 35.0 if executed < 5 else 0.0
     overfilter_penalty = max(0.0, 1.0 - allowed_pct) * 8.0
 
-    has_explicit_core = bool(str(row.get("allowed_symbols_filter", "")).strip())
-    require_rolling = to_bool(row.get("require_rolling_top"), True)
-    require_universe = to_bool(row.get("require_universe_gate"), True)
-    direct_gate_bonus = 0.05 if has_explicit_core and not require_universe else 0.0
-    no_rolling_bonus = 0.01 if has_explicit_core and not require_rolling else 0.0
+    # Avoid rewarding a fixed-symbol core just because it was hand-picked.
+    # The score should prefer robust strategy logic, not a cherry-picked coin list.
+    has_explicit_allowlist = bool(str(row.get("allowed_symbols_filter", "")).strip())
+    fixed_symbol_penalty = 0.25 if has_explicit_allowlist else 0.0
 
     return round(
         ret
@@ -256,8 +286,7 @@ def score_row(row: dict) -> float:
         - sparse_penalty
         - ultra_sparse_penalty
         - overfilter_penalty
-        + direct_gate_bonus
-        + no_rolling_bonus,
+        - fixed_symbol_penalty,
         4,
     )
 
@@ -308,8 +337,10 @@ def main() -> int:
     print("Market data summary")
     for key, value in asdict(market_summary).items():
         print(f"{key}: {value}")
-    if market_summary.status != "OK":
+    if market_summary.status == "EMPTY":
         return 1
+    if market_summary.status == "PARTIAL":
+        print("WARNING: Continuing matrix with partial market data after unavailable/stale symbols were skipped.")
 
     rows: list[dict] = []
     for cfg_spec in MATRIX_CONFIGS:
@@ -397,6 +428,7 @@ def main() -> int:
             f"- {row['name']}: score={row['score']}, ret={row['ret_pct']}%, dd={row['max_dd_pct']}%, "
             f"pf={row['pf']}, executed={row['executed_trades']}, allowed={row['allowed_pct']}%, "
             f"rolling_required={row['require_rolling_top']}, universe_required={row['require_universe_gate']}, "
+            f"fixed_allowlist={'yes' if row.get('allowed_symbols_filter') else 'no'}, "
             f"min_vr={row['min_volume_ratio']}, sanity={row['sanity_status']}"
         )
     lines.append("")
