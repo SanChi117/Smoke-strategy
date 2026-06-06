@@ -58,19 +58,42 @@ def load_sector_map(groups_file: str | Path) -> dict[str, list[str]]:
         return {}
     data = json.loads(p.read_text(encoding="utf-8"))
     result: dict[str, list[str]] = defaultdict(list)
-    for group, symbols in (data.get("groups") or {}).items():
-        for symbol in symbols or []:
+    for group, payload in (data.get("groups") or {}).items():
+        if isinstance(payload, dict):
+            symbols = payload.get("symbols") or []
+        else:
+            symbols = payload or []
+        for symbol in symbols:
             s = str(symbol).strip().upper()
             if s and group not in result[s]:
                 result[s].append(group)
     return dict(result)
 
 
-def list_config_dirs(matrix_root: str | Path) -> list[Path]:
+def read_matrix_config_meta(matrix_root: str | Path) -> dict[str, dict[str, str]]:
+    rows = read_csv(Path(matrix_root) / "matrix_summary.csv")
+    return {str(row.get("name", "")).strip(): row for row in rows if str(row.get("name", "")).strip()}
+
+
+def has_fixed_allowlist(row: dict[str, str] | None) -> bool:
+    if not row:
+        return False
+    return bool(str(row.get("allowed_symbols_filter", "")).strip())
+
+
+def list_config_dirs(matrix_root: str | Path, include_fixed_allowlist: bool) -> list[Path]:
     root = Path(matrix_root)
     if not root.exists():
         return []
-    return sorted([p for p in root.iterdir() if p.is_dir() and (p / "paper" / "paper_positions.csv").exists()])
+    meta = read_matrix_config_meta(root)
+    result: list[Path] = []
+    for p in sorted(root.iterdir()):
+        if not p.is_dir() or not (p / "paper" / "paper_positions.csv").exists():
+            continue
+        if not include_fixed_allowlist and has_fixed_allowlist(meta.get(p.name)):
+            continue
+        result.append(p)
+    return result
 
 
 def symbol_bucket(trades: int, winrate: float, avg_pnl: float, pf: float) -> str:
@@ -88,11 +111,13 @@ def score_symbol(trades: int, avg_pnl: float, total_pnl: float, pf: float, winra
     return round(avg_pnl * 3.0 + total_pnl * 0.15 + capped_pf * 1.5 + winrate * 0.02 + min(trades, 30) * 0.1 + configs * 0.25, 6)
 
 
-def aggregate_symbols(matrix_root: str | Path, sector_map: dict[str, list[str]]) -> list[dict[str, Any]]:
+def aggregate_symbols(matrix_root: str | Path, sector_map: dict[str, list[str]], include_fixed_allowlist: bool) -> tuple[list[dict[str, Any]], list[str]]:
     by_symbol: dict[str, dict[str, Any]] = {}
+    used_configs: list[str] = []
 
-    for cfg_dir in list_config_dirs(matrix_root):
+    for cfg_dir in list_config_dirs(matrix_root, include_fixed_allowlist=include_fixed_allowlist):
         cfg_name = cfg_dir.name
+        used_configs.append(cfg_name)
         rows = read_csv(cfg_dir / "paper" / "paper_positions.csv")
         for row in rows:
             symbol = str(row.get("symbol", "")).strip().upper()
@@ -162,16 +187,19 @@ def aggregate_symbols(matrix_root: str | Path, sector_map: dict[str, list[str]])
             "best_config_avg_pnl_pct": round(best_avg, 6) if best_config else 0.0,
         })
 
-    return sorted(out, key=lambda r: (r["bucket"] == "STRONG", r["score"], r["trades"]), reverse=True)
+    rows = sorted(out, key=lambda r: (r["bucket"] == "STRONG", r["score"], r["trades"]), reverse=True)
+    return rows, used_configs
 
 
-def write_markdown(path: str | Path, rows: list[dict[str, Any]], top_n: int) -> None:
+def write_markdown(path: str | Path, rows: list[dict[str, Any]], top_n: int, used_configs: list[str], include_fixed_allowlist: bool) -> None:
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
     lines = [
         "# Symbol Research Ranking",
         "",
         "Coin-first report. Sector is context only, not a trading boundary.",
+        f"Fixed allowlist configs included: `{include_fixed_allowlist}`",
+        f"Configs used: {len(used_configs)}",
         "",
     ]
     for bucket in ["STRONG", "WATCH", "BLOCK"]:
@@ -187,6 +215,9 @@ def write_markdown(path: str | Path, rows: list[dict[str, Any]], top_n: int) -> 
                 f"total_pnl={r['total_pnl_pct']}%, pf={r['pf']}, best_config={r['best_config']}"
             )
         lines.append("")
+    lines += ["## Configs used", ""]
+    for cfg in used_configs:
+        lines.append(f"- {cfg}")
     p.write_text("\n".join(lines), encoding="utf-8")
 
 
@@ -196,18 +227,21 @@ def main() -> int:
     ap.add_argument("--groups-file", default="strategy_lab/universe/sector_groups.json")
     ap.add_argument("--out-dir", default="results/sector_research_cycle")
     ap.add_argument("--top-n", type=int, default=25)
+    ap.add_argument("--include-fixed-allowlist", action="store_true", help="Include old fixed-core allowlist configs in symbol ranking. Default: exclude them.")
     args = ap.parse_args()
 
     sector_map = load_sector_map(args.groups_file)
-    rows = aggregate_symbols(args.matrix_root, sector_map)
+    rows, used_configs = aggregate_symbols(args.matrix_root, sector_map, include_fixed_allowlist=args.include_fixed_allowlist)
     out = Path(args.out_dir)
     write_csv(out / "symbol_research_ranking.csv", rows)
-    write_markdown(out / "symbol_research_ranking.md", rows, args.top_n)
+    write_markdown(out / "symbol_research_ranking.md", rows, args.top_n, used_configs, args.include_fixed_allowlist)
 
     candidate = {
         "name": "DYNAMIC_SYMBOL_UNIVERSE_WITH_SECTOR_CONTEXT",
         "status": "research_candidate_only",
         "selection_logic": "rank symbols across the full universe; sector is context only",
+        "fixed_allowlist_configs_included": args.include_fixed_allowlist,
+        "configs_used": used_configs,
         "strong_symbols": [r["symbol"] for r in rows if r["bucket"] == "STRONG"],
         "watch_symbols": [r["symbol"] for r in rows if r["bucket"] == "WATCH"],
         "sector_usage": "metadata/context, not a hard allowlist or blocklist",
