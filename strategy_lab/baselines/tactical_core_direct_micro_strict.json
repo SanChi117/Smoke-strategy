@@ -1,0 +1,92 @@
+{
+  "name": "TACTICAL_CORE_DIRECT_MICRO_STRICT",
+  "status": "current_research_baseline",
+  "live_trading_approved": false,
+  "decision": "PROMOTE_TO_DEEPER_RESEARCH",
+  "profile": "growth_100_20x",
+  "interval": "1h",
+  "symbols_tested": [
+    "BTCUSDT",
+    "ETHUSDT",
+    "SOLUSDT",
+    "BNBUSDT",
+    "XRPUSDT",
+    "DOGEUSDT",
+    "ADAUSDT",
+    "LINKUSDT",
+    "AVAXUSDT",
+    "TONUSDT",
+    "NEARUSDT",
+    "APTUSDT",
+    "ARBUSDT",
+    "OPUSDT",
+    "INJUSDT"
+  ],
+  "allowed_symbols": [
+    "INJUSDT",
+    "TONUSDT",
+    "DOGEUSDT",
+    "ARBUSDT",
+    "NEARUSDT",
+    "OPUSDT"
+  ],
+  "blocked_setup_types": [
+    "breakout"
+  ],
+  "blocked_volatility_regimes": [
+    "high"
+  ],
+  "allowed_liquidity_states": [
+    "low_sweep_reclaim",
+    "none"
+  ],
+  "blocked_liquidity_states": [],
+  "blocked_candle_types": [
+    "bear_rejection"
+  ],
+  "blocked_direction_contexts": [
+    "up"
+  ],
+  "rolling_top_n": 8,
+  "require_rolling_top": false,
+  "require_universe_gate": false,
+  "min_confidence": 40.0,
+  "quality_take_threshold": 65.0,
+  "quality_watch_threshold": 50.0,
+  "structure_take_threshold": 64.0,
+  "structure_watch_threshold": 52.0,
+  "min_volume_ratio": 0.84,
+  "matrix_snapshot": {
+    "return_pct": 7.46,
+    "max_dd_pct": 3.11,
+    "pf": 3.0148,
+    "winrate_pct": 70.21,
+    "executed_trades": 47,
+    "sanity_status": "OK"
+  },
+  "walk_forward_snapshot": {
+    "folds": 4,
+    "positive_folds": 4,
+    "positive_fold_pct": 100.0,
+    "total_executed_trades": 120,
+    "avg_return_pct": 3.085,
+    "avg_pf": 2.7822,
+    "worst_max_dd_pct": 3.59,
+    "sanity_ok_folds": 2,
+    "sanity_non_fail_folds": 4
+  },
+  "paper_snapshot": {
+    "positions": 65,
+    "approved": 18,
+    "watch": 30,
+    "rejected": 17,
+    "rejected_pct": 26.1538,
+    "avg_pnl_pct": 0.895589,
+    "decision": "PASS"
+  },
+  "next_required_steps": [
+    "Run deeper research with larger history and/or additional walk-forward windows.",
+    "Confirm paper decision remains PASS on a larger sample.",
+    "Inspect time-stop diagnostics before any live deployment discussion."
+  ]
+}
