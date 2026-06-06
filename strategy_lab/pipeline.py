@@ -10,6 +10,7 @@ Research only. No live trading. No API keys.
 from __future__ import annotations
 
 import csv
+import re
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
@@ -50,6 +51,20 @@ def trade_key(symbol: str, side: str, entry_time: str | datetime) -> tuple[str, 
 
 def norm_set(values: tuple[str, ...]) -> set[str]:
     return {str(value).strip().lower() for value in values if str(value).strip()}
+
+
+def extract_reason_value(reason: object, key: str) -> str:
+    text = str(reason or "")
+    match = re.search(rf"(?:^|\|){re.escape(key)}=([^|]+)", text)
+    return match.group(1).strip().lower() if match else ""
+
+
+def extract_reason_float(reason: object, key: str, default: float = 0.0) -> float:
+    value = extract_reason_value(reason, key)
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
 
 
 def write_dict_csv(path: str | Path, rows: list[dict]) -> None:
@@ -116,6 +131,12 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
     blocked_trends = norm_set(cfg.blocked_trend_contexts)
     allowed_vols = norm_set(cfg.allowed_volatility_regimes)
     blocked_vols = norm_set(cfg.blocked_volatility_regimes)
+    allowed_liq = norm_set(cfg.allowed_liquidity_states)
+    blocked_liq = norm_set(cfg.blocked_liquidity_states)
+    allowed_candles = norm_set(cfg.allowed_candle_types)
+    blocked_candles = norm_set(cfg.blocked_candle_types)
+    allowed_dirs = norm_set(cfg.allowed_direction_contexts)
+    blocked_dirs = norm_set(cfg.blocked_direction_contexts)
 
     decisions: list[PipelineDecision] = []
     allowed_trades = []
@@ -124,9 +145,14 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
     for key, trade in sorted(trade_by_key.items(), key=lambda item: (item[1].entry_time, item[1].symbol, item[1].side)):
         q = quality_by_key[key]
         s = structure_by_key[key]
+        reason_text = getattr(trade, "risk_plan_reason", "")
         setup_type = str(getattr(s, "setup_type", "unknown") or "unknown").strip().lower()
         trend_context = str(getattr(s, "trend_context", "unknown") or "unknown").strip().lower()
         volatility_regime = str(getattr(s, "volatility_regime", "unknown") or "unknown").strip().lower()
+        liquidity_state = extract_reason_value(reason_text, "liq")
+        candle_type = extract_reason_value(reason_text, "candle")
+        direction_context = extract_reason_value(reason_text, "dir")
+        volume_ratio = extract_reason_float(reason_text, "vr", 0.0)
 
         symbol_whitelist_ok = not cfg_allowed_symbols or trade.symbol in cfg_allowed_symbols
         symbol_block_ok = trade.symbol not in cfg_blocked_symbols
@@ -138,7 +164,23 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
         setup_ok = (not allowed_setups or setup_type in allowed_setups) and setup_type not in blocked_setups
         trend_ok = (not allowed_trends or trend_context in allowed_trends) and trend_context not in blocked_trends
         volatility_ok = (not allowed_vols or volatility_regime in allowed_vols) and volatility_regime not in blocked_vols
-        allowed = in_universe and in_rolling and quality_ok and structure_ok and setup_ok and trend_ok and volatility_ok
+        liquidity_ok = (not allowed_liq or liquidity_state in allowed_liq) and liquidity_state not in blocked_liq
+        candle_ok = (not allowed_candles or candle_type in allowed_candles) and candle_type not in blocked_candles
+        direction_ok = (not allowed_dirs or direction_context in allowed_dirs) and direction_context not in blocked_dirs
+        volume_ratio_ok = volume_ratio >= cfg.min_volume_ratio
+        allowed = (
+            in_universe
+            and in_rolling
+            and quality_ok
+            and structure_ok
+            and setup_ok
+            and trend_ok
+            and volatility_ok
+            and liquidity_ok
+            and candle_ok
+            and direction_ok
+            and volume_ratio_ok
+        )
 
         if not symbol_whitelist_ok:
             reason = "symbol_not_in_explicit_allowlist"
@@ -158,6 +200,14 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
             reason = "trend_context_filtered"
         elif not volatility_ok:
             reason = "volatility_regime_filtered"
+        elif not liquidity_ok:
+            reason = "liquidity_state_filtered"
+        elif not candle_ok:
+            reason = "candle_type_filtered"
+        elif not direction_ok:
+            reason = "direction_context_filtered"
+        elif not volume_ratio_ok:
+            reason = "volume_ratio_filtered"
         else:
             reason = "allowed_full_balanced"
 
