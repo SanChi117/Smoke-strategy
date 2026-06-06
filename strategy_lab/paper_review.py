@@ -115,6 +115,12 @@ def review_position(row: dict[str, str]) -> PaperReviewRow:
 
 
 def build_decision(summary: PaperReviewSummary) -> PaperDecisionSummary:
+    """Build an aggregate paper decision.
+
+    Losing trades are expected in a real strategy. This decision therefore does
+    not block merely because rejected rows exist. It blocks only when the allowed
+    candidate has weak aggregate paper performance.
+    """
     positions = max(0, summary.positions)
     approved_pct = round(summary.approved / positions * 100.0, 4) if positions else 0.0
     rejected_pct = round(summary.rejected / positions * 100.0, 4) if positions else 0.0
@@ -122,18 +128,24 @@ def build_decision(summary: PaperReviewSummary) -> PaperDecisionSummary:
     if positions == 0:
         decision = "BLOCK"
         reason = "no_paper_positions"
-    elif summary.rejected > 0:
+    elif positions < 30:
+        decision = "WATCH"
+        reason = "paper_sample_too_small"
+    elif summary.avg_pnl_pct <= 0:
         decision = "BLOCK"
-        reason = "rejected_paper_trades_present"
+        reason = "non_positive_avg_pnl"
+    elif rejected_pct >= 55.0:
+        decision = "BLOCK"
+        reason = "rejected_pct_too_high"
+    elif rejected_pct >= 35.0:
+        decision = "WATCH"
+        reason = "positive_expectancy_but_rejected_pct_high"
     elif summary.watch > 0:
         decision = "WATCH"
-        reason = "watch_paper_trades_present"
-    elif summary.avg_pnl_pct <= 0:
-        decision = "WATCH"
-        reason = "non_positive_avg_pnl"
+        reason = "positive_expectancy_with_watch_trades"
     else:
         decision = "PASS"
-        reason = "all_paper_trades_approved"
+        reason = "paper_strategy_passed_aggregate_review"
 
     return PaperDecisionSummary(
         decision=decision,
