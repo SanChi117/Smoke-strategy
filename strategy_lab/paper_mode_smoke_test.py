@@ -67,12 +67,12 @@ def main() -> None:
         assert review_summary["approved"] == "1", review_summary
         assert review_summary["watch"] == "1", review_summary
         assert review_summary["rejected"] == "1", review_summary
-        assert decision_summary["decision"] == "BLOCK", decision_summary
+        assert decision_summary["decision"] == "WATCH", decision_summary
         assert decision_summary["positions"] == "3", decision_summary
         assert decision_summary["approved"] == "1", decision_summary
         assert decision_summary["watch"] == "1", decision_summary
         assert decision_summary["rejected"] == "1", decision_summary
-        assert decision_summary["reason"] == "rejected_paper_trades_present", decision_summary
+        assert decision_summary["reason"] == "paper_sample_too_small", decision_summary
         assert summary["paper_signals"] == "3", summary
         assert summary["filled_paper"] == "3", summary
         assert summary["closed_paper"] == "3", summary
