@@ -227,20 +227,27 @@ def load_binance_futures_candles(
     rows: list[CandleRow] = []
     loaded = 0
     for symbol in symbols:
-        klines = fetch_symbol_klines(symbol=symbol, interval=interval, limit=limit, fetch_json=fetch_json, source=source)
+        try:
+            klines = fetch_symbol_klines(symbol=symbol, interval=interval, limit=limit, fetch_json=fetch_json, source=source)
+        except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, ValueError) as exc:
+            print(f"WARNING: Skipping {symbol}; public kline load failed: {exc}")
+            klines = []
         if klines:
             loaded += 1
             rows.extend(klines)
+        else:
+            print(f"WARNING: No candles loaded for {symbol}; symbol skipped.")
         if sleep_sec > 0:
             time.sleep(sleep_sec)
     rows = sorted(rows, key=lambda row: (row.symbol, row.time))
     count = write_candles_csv(out_csv, rows)
+    status = "OK" if count > 0 and loaded == len(symbols) else "PARTIAL" if count > 0 else "EMPTY"
     return MarketDataSummary(
         symbols_requested=len(symbols),
         symbols_loaded=loaded,
         candles=count,
         interval=interval,
-        status="OK" if count > 0 else "EMPTY",
+        status=status,
     )
 
 
