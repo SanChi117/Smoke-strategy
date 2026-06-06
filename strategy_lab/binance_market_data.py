@@ -18,7 +18,6 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from collections import defaultdict
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -138,11 +137,7 @@ def fetch_symbol_klines_paged(
     fetcher: Callable[[str], object],
     source: str,
 ) -> list[CandleRow]:
-    """Fetch up to `limit` candles, paging backwards when one request is not enough.
-
-    Binance spot klines cap at 1000 rows per request; futures cap at 1500. GitHub
-    runners often need the spot fallback, so pagination is required for deep tests.
-    """
+    """Fetch up to `limit` candles, paging backwards when one request is not enough."""
     requested = max(1, int(limit))
     max_batch = source_max_limit(source)
     rows: list[CandleRow] = []
@@ -222,12 +217,7 @@ def write_candles_csv(path: str | Path, rows: Iterable[CandleRow]) -> int:
 
 
 def filter_stale_symbols(rows: list[CandleRow], max_lag_days: int = STALE_SYMBOL_MAX_LAG_DAYS) -> tuple[list[CandleRow], set[str]]:
-    """Drop symbols whose newest candle is far behind the dataset newest candle.
-
-    Expanded research can hit delisted/legacy spot symbols. A stale symbol can
-    create a huge timestamp gap and break walk-forward windows, so stale rows are
-    removed before writing the shared candles file.
-    """
+    """Drop symbols whose newest candle is far behind the dataset newest candle."""
     if not rows:
         return [], set()
     global_latest = max(parse_iso(row.time) for row in rows)
@@ -237,12 +227,11 @@ def filter_stale_symbols(rows: list[CandleRow], max_lag_days: int = STALE_SYMBOL
         ts = parse_iso(row.time)
         latest_by_symbol[row.symbol] = max(ts, latest_by_symbol.get(row.symbol, ts))
     stale = {symbol for symbol, latest in latest_by_symbol.items() if latest < cutoff}
-    if stale:
-        for symbol in sorted(stale):
-            print(
-                f"WARNING: Skipping stale symbol {symbol}; latest candle {latest_by_symbol[symbol].isoformat()} "
-                f"is older than cutoff {cutoff.isoformat()}."
-            )
+    for symbol in sorted(stale):
+        print(
+            f"WARNING: Skipping stale symbol {symbol}; latest candle {latest_by_symbol[symbol].isoformat()} "
+            f"is older than cutoff {cutoff.isoformat()}."
+        )
     return [row for row in rows if row.symbol not in stale], stale
 
 
@@ -256,7 +245,6 @@ def load_binance_futures_candles(
     source: str = "auto",
 ) -> MarketDataSummary:
     rows: list[CandleRow] = []
-    requested_symbols = {normalize_symbol(symbol) for symbol in symbols}
     for symbol in symbols:
         normalized = normalize_symbol(symbol)
         try:
@@ -270,12 +258,12 @@ def load_binance_futures_candles(
             print(f"WARNING: No candles loaded for {normalized}; symbol skipped.")
         if sleep_sec > 0:
             time.sleep(sleep_sec)
-    rows, stale_symbols = filter_stale_symbols(rows)
+
+    rows, _stale_symbols = filter_stale_symbols(rows)
     rows = sorted(rows, key=lambda row: (row.symbol, row.time))
     loaded_symbols = {row.symbol for row in rows}
     count = write_candles_csv(out_csv, rows)
-    skipped = requested_symbols - loaded_symbols
-    status = "OK" if count > 0 and not skipped else "PARTIAL" if count > 0 else "EMPTY"
+    status = "OK" if count > 0 else "EMPTY"
     return MarketDataSummary(
         symbols_requested=len(symbols),
         symbols_loaded=len(loaded_symbols),
