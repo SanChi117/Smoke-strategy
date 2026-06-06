@@ -52,6 +52,13 @@ class PipelineConfig:
     blocked_trend_contexts: tuple[str, ...] = ()
     allowed_volatility_regimes: tuple[str, ...] = ()
     blocked_volatility_regimes: tuple[str, ...] = ()
+    allowed_liquidity_states: tuple[str, ...] = ()
+    blocked_liquidity_states: tuple[str, ...] = ()
+    allowed_candle_types: tuple[str, ...] = ()
+    blocked_candle_types: tuple[str, ...] = ()
+    allowed_direction_contexts: tuple[str, ...] = ()
+    blocked_direction_contexts: tuple[str, ...] = ()
+    min_volume_ratio: float = 0.0
     fee_rate: float = 0.0010
     slippage_rate: float = 0.0002
     default_profile: str = "growth_100_20x"
