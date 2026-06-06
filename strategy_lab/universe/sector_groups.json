@@ -1,0 +1,60 @@
+{
+  "version": "sector_groups_v1",
+  "status": "research_seed_not_live_ranking",
+  "source_policy": {
+    "primary_reference": "CoinMarketCap/Coinbase-style sector taxonomy",
+    "note": "This file is a research seed for sector rotation tests. It is not a live CMC/Coinbase API ranking. Use it to build grouped universes, then validate by market data and walk-forward before any deployment discussion.",
+    "top_n_per_group": 10,
+    "symbol_format": "Binance-compatible USDT symbols where available"
+  },
+  "groups": {
+    "majors_liquid": {
+      "description": "Large liquid benchmark coins and broad-market anchors.",
+      "symbols": ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "DOGEUSDT", "ADAUSDT", "LINKUSDT", "AVAXUSDT", "TRXUSDT"]
+    },
+    "layer1_smart_contracts": {
+      "description": "L1 / smart-contract ecosystems.",
+      "symbols": ["ETHUSDT", "SOLUSDT", "BNBUSDT", "ADAUSDT", "AVAXUSDT", "SUIUSDT", "TONUSDT", "NEARUSDT", "APTUSDT", "SEIUSDT"]
+    },
+    "layer2_scaling": {
+      "description": "Ethereum L2 and scaling/modular execution assets.",
+      "symbols": ["ARBUSDT", "OPUSDT", "POLUSDT", "STRKUSDT", "IMXUSDT", "MANTAUSDT", "ZKUSDT", "METISUSDT", "TAIKOUSDT", "BLASTUSDT"]
+    },
+    "ai_data_compute": {
+      "description": "AI, data, compute and AI-agent-adjacent assets.",
+      "symbols": ["FETUSDT", "RENDERUSDT", "TAOUSDT", "WLDUSDT", "GRTUSDT", "ARKMUSDT", "IOUSDT", "NMRUSDT", "AIUSDT", "PHBUSDT"]
+    },
+    "depin_infrastructure": {
+      "description": "DePIN, storage, render, bandwidth and physical/digital infrastructure.",
+      "symbols": ["RENDERUSDT", "FILUSDT", "ARUSDT", "IOTXUSDT", "THETAUSDT", "STORJUSDT", "LPTUSDT", "ANKRUSDT", "FLUXUSDT", "HNTUSDT"]
+    },
+    "defi_dex_lending": {
+      "description": "DeFi blue chips: DEX, lending, derivatives and liquid-staking-adjacent tokens.",
+      "symbols": ["UNIUSDT", "AAVEUSDT", "LDOUSDT", "CRVUSDT", "COMPUSDT", "CAKEUSDT", "GMXUSDT", "DYDXUSDT", "1INCHUSDT", "SNXUSDT"]
+    },
+    "rwa_tokenization": {
+      "description": "RWA/tokenization and on-chain finance themed assets.",
+      "symbols": ["ONDOUSDT", "PENDLEUSDT", "OMUSDT", "POLYXUSDT", "TOKENUSDT", "TRUUSDT", "RSRUSDT", "CPOOLUSDT", "CFGUSDT", "PROPCUSDT"]
+    },
+    "memes_high_beta": {
+      "description": "High-beta meme coins with strong retail narrative rotation.",
+      "symbols": ["DOGEUSDT", "SHIBUSDT", "PEPEUSDT", "WIFUSDT", "BONKUSDT", "FLOKIUSDT", "BOMEUSDT", "MEMEUSDT", "TURBOUSDT", "NEIROUSDT"]
+    },
+    "gaming_metaverse": {
+      "description": "Gaming, metaverse and consumer crypto assets.",
+      "symbols": ["IMXUSDT", "SANDUSDT", "MANAUSDT", "GALAUSDT", "AXSUSDT", "RONINUSDT", "BEAMXUSDT", "YGGUSDT", "PIXELUSDT", "MAGICUSDT"]
+    },
+    "oracles_data_services": {
+      "description": "Oracles, data services and off-chain data infrastructure.",
+      "symbols": ["LINKUSDT", "PYTHUSDT", "API3USDT", "BANDUSDT", "TRBUSDT", "UMAUSDT", "DIAUSDT", "GRTUSDT", "NMRUSDT", "ARKMUSDT"]
+    },
+    "payments_legacy_value": {
+      "description": "Payments, older high-liquidity chains and value-transfer coins.",
+      "symbols": ["XRPUSDT", "LTCUSDT", "BCHUSDT", "TRXUSDT", "XLMUSDT", "HBARUSDT", "ALGOUSDT", "DASHUSDT", "ZECUSDT", "XMRUSDT"]
+    },
+    "solana_ecosystem": {
+      "description": "Solana ecosystem / Solana-beta assets.",
+      "symbols": ["SOLUSDT", "JUPUSDT", "PYTHUSDT", "WIFUSDT", "BONKUSDT", "JTOUSDT", "RAYUSDT", "ORCAUSDT", "WUSDT", "POPCATUSDT"]
+    }
+  }
+}
