@@ -67,6 +67,22 @@ def extract_reason_float(reason: object, key: str, default: float = 0.0) -> floa
         return default
 
 
+def read_trade_metadata(path: str | Path) -> dict[tuple[str, str, datetime], dict[str, str]]:
+    """Keep original generated_trades.csv metadata lost by load_trades_csv.
+
+    The lightweight Trade dataclass used by older modules intentionally keeps
+    only execution fields, so tactical micro-filters must read risk_plan_reason
+    from the original CSV rows and join by symbol/side/entry_time.
+    """
+    meta: dict[tuple[str, str, datetime], dict[str, str]] = {}
+    with Path(path).open("r", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            key = trade_key(row.get("symbol", ""), row.get("side", ""), row.get("entry_time", ""))
+            meta[key] = row
+    return meta
+
+
 def write_dict_csv(path: str | Path, rows: list[dict]) -> None:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -89,6 +105,7 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
 
     all_trades = load_trades_csv(input_csv)
     trade_by_key = {trade_key(t.symbol, t.side, t.entry_time): t for t in all_trades}
+    metadata_by_key = read_trade_metadata(input_csv)
 
     universe_rows = rank_universe(all_trades, UniverseConfig(allow_top_n=9999))
     learned_universe_allowed = allowed_symbols(universe_rows, UniverseConfig(allow_top_n=9999))
@@ -145,7 +162,8 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
     for key, trade in sorted(trade_by_key.items(), key=lambda item: (item[1].entry_time, item[1].symbol, item[1].side)):
         q = quality_by_key[key]
         s = structure_by_key[key]
-        reason_text = getattr(trade, "risk_plan_reason", "")
+        meta = metadata_by_key.get(key, {})
+        reason_text = meta.get("risk_plan_reason") or meta.get("reason") or ""
         setup_type = str(getattr(s, "setup_type", "unknown") or "unknown").strip().lower()
         trend_context = str(getattr(s, "trend_context", "unknown") or "unknown").strip().lower()
         volatility_regime = str(getattr(s, "volatility_regime", "unknown") or "unknown").strip().lower()
