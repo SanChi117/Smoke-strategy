@@ -3,9 +3,7 @@
 
 Small compatibility wrapper around run_binance_walk_forward.py.
 It preserves existing fold execution behavior, but ensures baseline_candidate.json
-can control PipelineConfig.require_rolling_top and require_universe_gate.
-It also treats WARN-only sanity folds as reviewable instead of unstable when the
-walk-forward result is otherwise strong.
+can control PipelineConfig tactical filters.
 
 Research only. No API keys. No private account data. No order execution.
 """
@@ -44,6 +42,7 @@ def patched_baseline_to_cfg(
         quality_watch_threshold=base.to_float(baseline.get("quality_watch_threshold"), 50.0),
         structure_take_threshold=base.to_float(baseline.get("structure_take_threshold"), 64.0),
         structure_watch_threshold=base.to_float(baseline.get("structure_watch_threshold"), 52.0),
+        min_volume_ratio=base.to_float(baseline.get("min_volume_ratio"), 0.0),
         allowed_symbols=base.to_tuple(baseline.get("allowed_symbols")),
         blocked_symbols=base.to_tuple(baseline.get("blocked_symbols")),
         allowed_setup_types=base.to_tuple(baseline.get("allowed_setup_types")),
@@ -52,6 +51,12 @@ def patched_baseline_to_cfg(
         blocked_trend_contexts=base.to_tuple(baseline.get("blocked_trend_contexts")),
         allowed_volatility_regimes=base.to_tuple(baseline.get("allowed_volatility_regimes")),
         blocked_volatility_regimes=base.to_tuple(baseline.get("blocked_volatility_regimes")),
+        allowed_liquidity_states=base.to_tuple(baseline.get("allowed_liquidity_states")),
+        blocked_liquidity_states=base.to_tuple(baseline.get("blocked_liquidity_states")),
+        allowed_candle_types=base.to_tuple(baseline.get("allowed_candle_types")),
+        blocked_candle_types=base.to_tuple(baseline.get("blocked_candle_types")),
+        allowed_direction_contexts=base.to_tuple(baseline.get("allowed_direction_contexts")),
+        blocked_direction_contexts=base.to_tuple(baseline.get("blocked_direction_contexts")),
     )
 
 
@@ -92,9 +97,13 @@ def patched_build_markdown(summary_rows: list[dict[str, object]], baseline: dict
         f"- Min confidence: {baseline.get('min_confidence')}",
         f"- Quality TAKE/WATCH: {baseline.get('quality_take_threshold')} / {baseline.get('quality_watch_threshold')}",
         f"- Structure TAKE/WATCH: {baseline.get('structure_take_threshold')} / {baseline.get('structure_watch_threshold')}",
+        f"- Min volume ratio: {baseline.get('min_volume_ratio')}",
         f"- Allowed symbols: {', '.join(base.to_tuple(baseline.get('allowed_symbols'))) or 'none'}",
         f"- Blocked setup types: {', '.join(base.to_tuple(baseline.get('blocked_setup_types'))) or 'none'}",
         f"- Blocked volatility regimes: {', '.join(base.to_tuple(baseline.get('blocked_volatility_regimes'))) or 'none'}",
+        f"- Blocked liquidity states: {', '.join(base.to_tuple(baseline.get('blocked_liquidity_states'))) or 'none'}",
+        f"- Blocked candle types: {', '.join(base.to_tuple(baseline.get('blocked_candle_types'))) or 'none'}",
+        f"- Blocked direction contexts: {', '.join(base.to_tuple(baseline.get('blocked_direction_contexts'))) or 'none'}",
         "",
         "## Aggregate",
         f"- Valid folds: {len(ok_rows)} / {len(summary_rows)}",
@@ -134,6 +143,7 @@ def patched_build_markdown(summary_rows: list[dict[str, object]], baseline: dict
 def main() -> int:
     base.DEFAULT_BASELINE["require_rolling_top"] = True
     base.DEFAULT_BASELINE["require_universe_gate"] = True
+    base.DEFAULT_BASELINE["min_volume_ratio"] = 0.0
     base.baseline_to_cfg = patched_baseline_to_cfg
     base.build_markdown = patched_build_markdown
     return base.main()
