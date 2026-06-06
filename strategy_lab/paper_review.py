@@ -117,9 +117,11 @@ def review_position(row: dict[str, str]) -> PaperReviewRow:
 def build_decision(summary: PaperReviewSummary) -> PaperDecisionSummary:
     """Build an aggregate paper decision.
 
-    Losing trades are expected in a real strategy. This decision therefore does
-    not block merely because rejected rows exist. It blocks only when the allowed
-    candidate has weak aggregate paper performance.
+    Losing trades and watch rows are expected in a real strategy. The aggregate
+    paper decision blocks only weak expectancy or excessive rejected share.
+    WATCH rows stay visible in paper_review.csv, but they do not block a PASS
+    when the sample is large enough, average pnl is positive, and rejected_pct is
+    below the risk threshold.
     """
     positions = max(0, summary.positions)
     approved_pct = round(summary.approved / positions * 100.0, 4) if positions else 0.0
@@ -140,9 +142,6 @@ def build_decision(summary: PaperReviewSummary) -> PaperDecisionSummary:
     elif rejected_pct >= 35.0:
         decision = "WATCH"
         reason = "positive_expectancy_but_rejected_pct_high"
-    elif summary.watch > 0:
-        decision = "WATCH"
-        reason = "positive_expectancy_with_watch_trades"
     else:
         decision = "PASS"
         reason = "paper_strategy_passed_aggregate_review"
