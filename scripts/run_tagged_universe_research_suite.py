@@ -9,6 +9,7 @@ Flow:
 3. Run WFO on the best matrix candidate.
 4. Make research decision.
 5. Summarize what symbols were actually selected with core/discovery/sector tags.
+6. Run multi-WFO comparison across several tagged candidates.
 
 Research only. No API keys. No private account data. No order execution.
 """
@@ -109,6 +110,20 @@ def main() -> int:
         "--out-dir", str(root),
     ])
 
+    run_cmd([
+        sys.executable,
+        "scripts/run_tagged_multi_wfo.py",
+        "--matrix", str(matrix_dir / "matrix_summary.csv"),
+        "--symbols-file", str(symbols_file),
+        "--out-dir", str(root / "multi_wfo"),
+        "--interval", args.interval,
+        "--limit", str(args.limit),
+        "--windows", str(args.windows),
+        "--lookback-days", str(args.lookback_days),
+        "--profile", args.profile,
+        "--sleep-sec", str(args.sleep_sec),
+    ])
+
     print("\nTagged-universe research suite complete")
     for path in [
         layer_root / "strategy_universe_layer.md",
@@ -117,6 +132,7 @@ def main() -> int:
         walk_forward_dir / "walk_forward_summary.md",
         decision_dir / "research_decision.md",
         root / "tagged_universe_selection.md",
+        root / "multi_wfo" / "tagged_multi_wfo_summary.md",
     ]:
         print(path)
     return 0
