@@ -60,37 +60,23 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .
 
-      - name: Build combined classified universe
+      - name: Run dynamic symbol universe research
         run: |
-          python scripts/build_sector_universe.py \
-            --groups all \
-            --top-n "${{ github.event.inputs.top_n_per_group }}" \
-            --out results/symbol_universe_research/symbols.txt \
-            --md-out results/symbol_universe_research/sector_universe.md
-
-      - name: Run combined universe deep research
-        run: |
-          python scripts/run_deep_research_suite.py \
-            --symbols-file results/symbol_universe_research/symbols.txt \
-            --interval 1h \
+          python scripts/run_dynamic_symbol_universe_research.py \
+            --top-n-per-group "${{ github.event.inputs.top_n_per_group }}" \
             --limit "${{ github.event.inputs.limit }}" \
             --windows "${{ github.event.inputs.windows }}" \
-            --lookback-days 30 \
-            --profile growth_100_20x \
-            --root results/symbol_universe_research/deep_research \
-            --sleep-sec 0.05
-
-      - name: Rank symbols with sector context
-        run: |
-          python scripts/rank_research_symbols.py \
-            --matrix-root results/symbol_universe_research/deep_research/matrix \
-            --groups-file strategy_lab/universe/sector_groups.json \
-            --out-dir results/symbol_universe_research \
-            --top-n 40
+            --root results/symbol_universe_research
           echo '--- symbol_research_ranking.md ---'
           cat results/symbol_universe_research/symbol_research_ranking.md
           echo '--- dynamic_symbol_universe_candidate.json ---'
           cat results/symbol_universe_research/dynamic_symbol_universe_candidate.json
+          echo '--- matrix_summary.md ---'
+          cat results/symbol_universe_research/deep_research/matrix/matrix_summary.md
+          echo '--- walk_forward_summary.md ---'
+          cat results/symbol_universe_research/deep_research/walk_forward/walk_forward_summary.md
+          echo '--- research_decision.md ---'
+          cat results/symbol_universe_research/deep_research/decision/research_decision.md
 
       - name: Upload symbol universe artifacts
         uses: actions/upload-artifact@v4
