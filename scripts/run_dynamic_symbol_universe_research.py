@@ -4,7 +4,7 @@
 Flow:
 sector_groups.json -> combined classified universe -> dynamic-only matrix
 (no fixed allowed_symbols configs) -> walk-forward -> research decision ->
-symbol-first ranking with sector context.
+symbol-first ranking with sector context -> compact diagnostics.
 
 Research only. No API keys. No private data. No order execution.
 """
@@ -107,10 +107,18 @@ def main() -> int:
         "--top-n", "40",
     ])
 
+    run_cmd([
+        sys.executable,
+        "scripts/summarize_symbol_universe_diagnostics.py",
+        "--matrix-root", str(matrix_dir),
+        "--out-dir", str(root),
+    ])
+
     print("\nDynamic symbol-universe research complete")
     for path in [
         root / "symbol_research_ranking.md",
         root / "dynamic_symbol_universe_candidate.json",
+        root / "symbol_universe_diagnostics.md",
         matrix_dir / "matrix_summary.md",
         wf_dir / "walk_forward_summary.md",
         decision_dir / "research_decision.md",
