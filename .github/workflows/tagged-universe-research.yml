@@ -1,0 +1,85 @@
+name: Tagged Universe Research
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'research_triggers/tagged_universe_research.txt'
+      - '.github/workflows/tagged-universe-research.yml'
+      - 'scripts/build_strategy_universe_layer.py'
+      - 'strategy_lab/universe/sector_groups.json'
+
+concurrency:
+  group: tagged-universe-research
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  tagged-universe-research:
+    name: tagged-universe-research
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Build strategy universe layer
+        run: |
+          python scripts/build_strategy_universe_layer.py \
+            --top-n-per-group 10 \
+            --out-dir results/strategy_universe_layer
+          echo '--- strategy_universe_layer.md ---'
+          cat results/strategy_universe_layer/strategy_universe_layer.md
+
+      - name: Run existing strategy research on tagged universe
+        run: |
+          python scripts/run_deep_research_suite.py \
+            --symbols-file results/strategy_universe_layer/combined_symbols.txt \
+            --interval 1h \
+            --limit 1500 \
+            --windows 4 \
+            --root results/tagged_universe_research \
+            --sleep-sec 0.05
+          echo '--- research_decision.md ---'
+          cat results/tagged_universe_research/decision/research_decision.md
+          echo '--- matrix_summary.md ---'
+          cat results/tagged_universe_research/matrix/matrix_summary.md
+          echo '--- walk_forward_summary.md ---'
+          cat results/tagged_universe_research/walk_forward/walk_forward_summary.md
+
+      - name: Upload tagged universe artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tagged-universe-research-results
+          path: |
+            results/strategy_universe_layer/strategy_universe_layer.md
+            results/strategy_universe_layer/strategy_universe_layer.json
+            results/strategy_universe_layer/strategy_universe_tags.csv
+            results/strategy_universe_layer/combined_symbols.txt
+            results/strategy_universe_layer/core_reference_symbols.txt
+            results/strategy_universe_layer/discovery_symbols.txt
+            results/tagged_universe_research/matrix/matrix_summary.csv
+            results/tagged_universe_research/matrix/matrix_summary.md
+            results/tagged_universe_research/matrix/baseline_candidate/baseline_candidate.json
+            results/tagged_universe_research/matrix/baseline_candidate/baseline_candidate.md
+            results/tagged_universe_research/walk_forward/walk_forward_summary.csv
+            results/tagged_universe_research/walk_forward/walk_forward_summary.md
+            results/tagged_universe_research/decision/research_decision.json
+            results/tagged_universe_research/decision/research_decision.md
