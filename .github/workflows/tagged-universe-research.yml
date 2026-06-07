@@ -10,6 +10,7 @@ on:
       - 'scripts/run_binance_tagged_universe_matrix.py'
       - 'scripts/run_tagged_universe_research_suite.py'
       - 'scripts/summarize_tagged_universe_selection.py'
+      - 'scripts/run_tagged_multi_wfo.py'
       - 'strategy_lab/universe/sector_groups.json'
 
 concurrency:
@@ -56,6 +57,8 @@ jobs:
           cat results/strategy_universe_layer/strategy_universe_layer.md
           echo '--- tagged_universe_selection.md ---'
           cat results/tagged_universe_research/tagged_universe_selection.md
+          echo '--- tagged_multi_wfo_summary.md ---'
+          cat results/tagged_universe_research/multi_wfo/tagged_multi_wfo_summary.md
           echo '--- research_decision.md ---'
           cat results/tagged_universe_research/decision/research_decision.md
           echo '--- matrix_summary.md ---'
@@ -79,6 +82,11 @@ jobs:
             results/tagged_universe_research/tagged_universe_selection_no_fixed.csv
             results/tagged_universe_research/tagged_universe_selection_all_configs.csv
             results/tagged_universe_research/tagged_universe_selection_by_config.csv
+            results/tagged_universe_research/multi_wfo/tagged_multi_wfo_summary.md
+            results/tagged_universe_research/multi_wfo/tagged_multi_wfo_summary.csv
+            results/tagged_universe_research/multi_wfo/tagged_multi_wfo_best.json
+            results/tagged_universe_research/multi_wfo/*/walk_forward_summary.csv
+            results/tagged_universe_research/multi_wfo/*/walk_forward_summary.md
             results/tagged_universe_research/matrix/matrix_summary.csv
             results/tagged_universe_research/matrix/matrix_summary.md
             results/tagged_universe_research/matrix/baseline_candidate/baseline_candidate.json
