@@ -1,6 +1,8 @@
 trigger tagged universe research
 mode: strategy unchanged
 universe: core plus sector-tagged discovery pool
+matrix: tagged universe suite with no-allowlist configs
 limit: 1500
 windows: 4
 top_n_per_group: 10
+trigger_id: 2026-06-07-01
