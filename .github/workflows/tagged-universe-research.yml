@@ -7,6 +7,8 @@ on:
       - 'research_triggers/tagged_universe_research.txt'
       - '.github/workflows/tagged-universe-research.yml'
       - 'scripts/build_strategy_universe_layer.py'
+      - 'scripts/run_binance_tagged_universe_matrix.py'
+      - 'scripts/run_tagged_universe_research_suite.py'
       - 'strategy_lab/universe/sector_groups.json'
 
 concurrency:
@@ -39,23 +41,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .
 
-      - name: Build strategy universe layer
+      - name: Run tagged universe research suite
         run: |
-          python scripts/build_strategy_universe_layer.py \
+          python scripts/run_tagged_universe_research_suite.py \
             --top-n-per-group 10 \
-            --out-dir results/strategy_universe_layer
-          echo '--- strategy_universe_layer.md ---'
-          cat results/strategy_universe_layer/strategy_universe_layer.md
-
-      - name: Run existing strategy research on tagged universe
-        run: |
-          python scripts/run_deep_research_suite.py \
-            --symbols-file results/strategy_universe_layer/combined_symbols.txt \
             --interval 1h \
             --limit 1500 \
             --windows 4 \
             --root results/tagged_universe_research \
+            --layer-root results/strategy_universe_layer \
             --sleep-sec 0.05
+          echo '--- strategy_universe_layer.md ---'
+          cat results/strategy_universe_layer/strategy_universe_layer.md
           echo '--- research_decision.md ---'
           cat results/tagged_universe_research/decision/research_decision.md
           echo '--- matrix_summary.md ---'
