@@ -8,6 +8,7 @@ Flow:
    - additional configs reuse the successful tactical logic without allowed_symbols.
 3. Run WFO on the best matrix candidate.
 4. Make research decision.
+5. Summarize what symbols were actually selected with core/discovery/sector tags.
 
 Research only. No API keys. No private account data. No order execution.
 """
@@ -100,6 +101,14 @@ def main() -> int:
         "--out-dir", str(decision_dir),
     ])
 
+    run_cmd([
+        sys.executable,
+        "scripts/summarize_tagged_universe_selection.py",
+        "--matrix-root", str(matrix_dir),
+        "--layer-json", str(layer_root / "strategy_universe_layer.json"),
+        "--out-dir", str(root),
+    ])
+
     print("\nTagged-universe research suite complete")
     for path in [
         layer_root / "strategy_universe_layer.md",
@@ -107,6 +116,7 @@ def main() -> int:
         matrix_dir / "baseline_candidate" / "baseline_candidate.md",
         walk_forward_dir / "walk_forward_summary.md",
         decision_dir / "research_decision.md",
+        root / "tagged_universe_selection.md",
     ]:
         print(path)
     return 0
