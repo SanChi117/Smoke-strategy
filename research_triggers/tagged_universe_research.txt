@@ -1,0 +1,6 @@
+trigger tagged universe research
+mode: strategy unchanged
+universe: core plus sector-tagged discovery pool
+limit: 1500
+windows: 4
+top_n_per_group: 10
