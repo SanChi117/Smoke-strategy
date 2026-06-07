@@ -6,6 +6,13 @@ This mode keeps old fixed-core configs as control rows, but adds explicit
 question: if we keep the successful strategy logic and only expand the tagged
 universe, which symbols does the strategy select?
 
+Correction pack v1 is intentionally conservative:
+- no universe reduction;
+- no sector-as-rule logic;
+- no deletion of old configs;
+- no live/paper promotion;
+- only extra strategy-filter variants are added for comparison.
+
 Research only. No API keys. No private account data. No order execution.
 """
 
@@ -14,12 +21,18 @@ from __future__ import annotations
 import run_binance_real_matrix as matrix
 
 
+GOOD_TREND_CONTEXTS = ("up", "sideways")
+BAD_TREND_CONTEXTS = ("down",)
+BAD_DIRECTION_CONTEXTS_EXTENDED = ("up", "hard_up")
+
+
 def cfg(name: str, **overrides: object) -> dict:
     item = matrix.base_cfg(name, **overrides)
     return item
 
 
-def tagged_configs() -> list[dict]:
+def tagged_baseline_configs() -> list[dict]:
+    """Current tagged-universe configs, kept unchanged for comparison."""
     return [
         cfg(
             "TAGGED_CORE_LOGIC_DIRECT",
@@ -72,6 +85,111 @@ def tagged_configs() -> list[dict]:
     ]
 
 
+def correction_pack_v1_configs() -> list[dict]:
+    """Strategy-logic correction pack for the tagged universe.
+
+    These variants keep the full tagged pool intact and only test safer entry
+    filters. The current best tagged baseline remains available as control.
+    """
+    return [
+        cfg(
+            "TAGGED_LOGIC_QUALITY_STRICT_V1",
+            require_rolling_top=False,
+            require_universe_gate=False,
+            min_confidence=50.0,
+            quality_take_threshold=72.0,
+            quality_watch_threshold=58.0,
+            structure_take_threshold=70.0,
+            structure_watch_threshold=58.0,
+            blocked_setup_types=("breakout",),
+            blocked_volatility_regimes=("high",),
+            blocked_candle_types=matrix.BAD_CANDLE_TYPES,
+            min_volume_ratio=0.84,
+        ),
+        cfg(
+            "TAGGED_LOGIC_TREND_PROTECTED_V1",
+            require_rolling_top=False,
+            require_universe_gate=False,
+            min_confidence=45.0,
+            quality_take_threshold=68.0,
+            quality_watch_threshold=55.0,
+            structure_take_threshold=66.0,
+            structure_watch_threshold=55.0,
+            blocked_setup_types=("breakout",),
+            blocked_volatility_regimes=("high",),
+            blocked_trend_contexts=BAD_TREND_CONTEXTS,
+            blocked_direction_contexts=matrix.BAD_DIRECTION_CONTEXTS,
+            blocked_candle_types=matrix.BAD_CANDLE_TYPES,
+            min_volume_ratio=0.84,
+        ),
+        cfg(
+            "TAGGED_LOGIC_LIQUIDITY_PROTECTED_V1",
+            require_rolling_top=False,
+            require_universe_gate=False,
+            min_confidence=45.0,
+            quality_take_threshold=68.0,
+            quality_watch_threshold=55.0,
+            structure_take_threshold=66.0,
+            structure_watch_threshold=55.0,
+            blocked_setup_types=("breakout",),
+            blocked_volatility_regimes=("high",),
+            blocked_liquidity_states=matrix.BAD_LIQUIDITY_STATES,
+            blocked_candle_types=matrix.BAD_CANDLE_TYPES,
+            min_volume_ratio=0.84,
+        ),
+        cfg(
+            "TAGGED_LOGIC_GOOD_SETUPS_ONLY_V1",
+            require_rolling_top=False,
+            require_universe_gate=False,
+            min_confidence=40.0,
+            quality_take_threshold=64.0,
+            quality_watch_threshold=52.0,
+            structure_take_threshold=62.0,
+            structure_watch_threshold=52.0,
+            allowed_setup_types=matrix.BEST_RESEARCH_SETUPS,
+            blocked_volatility_regimes=("high",),
+            blocked_liquidity_states=matrix.BAD_LIQUIDITY_STATES,
+            blocked_candle_types=matrix.BAD_CANDLE_TYPES,
+            min_volume_ratio=0.70,
+        ),
+        cfg(
+            "TAGGED_LOGIC_OVEREXTENSION_FILTER_V1",
+            require_rolling_top=False,
+            require_universe_gate=False,
+            min_confidence=45.0,
+            quality_take_threshold=68.0,
+            quality_watch_threshold=55.0,
+            structure_take_threshold=66.0,
+            structure_watch_threshold=55.0,
+            blocked_setup_types=("breakout",),
+            blocked_volatility_regimes=("high",),
+            blocked_direction_contexts=BAD_DIRECTION_CONTEXTS_EXTENDED,
+            blocked_candle_types=matrix.BAD_CANDLE_TYPES,
+            min_volume_ratio=0.84,
+        ),
+        cfg(
+            "TAGGED_LOGIC_COMBINED_V2",
+            require_rolling_top=False,
+            require_universe_gate=False,
+            min_confidence=50.0,
+            quality_take_threshold=72.0,
+            quality_watch_threshold=58.0,
+            structure_take_threshold=70.0,
+            structure_watch_threshold=58.0,
+            allowed_setup_types=matrix.BEST_RESEARCH_SETUPS,
+            blocked_volatility_regimes=("high",),
+            blocked_liquidity_states=matrix.BAD_LIQUIDITY_STATES,
+            blocked_candle_types=matrix.BAD_CANDLE_TYPES,
+            blocked_direction_contexts=matrix.BAD_DIRECTION_CONTEXTS,
+            min_volume_ratio=0.84,
+        ),
+    ]
+
+
+def tagged_configs() -> list[dict]:
+    return correction_pack_v1_configs() + tagged_baseline_configs()
+
+
 def main() -> int:
     original = list(matrix.MATRIX_CONFIGS)
     existing_names = {str(item.get("name", "")) for item in original}
@@ -80,6 +198,8 @@ def main() -> int:
     print("Tagged universe matrix mode")
     print("Old fixed-core configs: kept as control")
     print("Tagged no-allowlist configs: added")
+    print("Correction pack v1: added")
+    print("Universe/tags: unchanged")
     print("Added configs: " + ", ".join(str(item["name"]) for item in additions))
     return matrix.main()
 
