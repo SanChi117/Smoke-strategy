@@ -11,6 +11,7 @@ on:
       - 'scripts/run_tagged_universe_research_suite.py'
       - 'scripts/summarize_tagged_universe_selection.py'
       - 'scripts/run_tagged_multi_wfo.py'
+      - 'scripts/diagnose_tagged_wfo_fold.py'
       - 'strategy_lab/universe/sector_groups.json'
 
 concurrency:
@@ -59,6 +60,8 @@ jobs:
           cat results/tagged_universe_research/tagged_universe_selection.md
           echo '--- tagged_multi_wfo_summary.md ---'
           cat results/tagged_universe_research/multi_wfo/tagged_multi_wfo_summary.md
+          echo '--- fold_diagnostics.md ---'
+          cat results/tagged_universe_research/fold_diagnostics/fold_diagnostics.md
           echo '--- research_decision.md ---'
           cat results/tagged_universe_research/decision/research_decision.md
           echo '--- matrix_summary.md ---'
@@ -82,6 +85,11 @@ jobs:
             results/tagged_universe_research/tagged_universe_selection_no_fixed.csv
             results/tagged_universe_research/tagged_universe_selection_all_configs.csv
             results/tagged_universe_research/tagged_universe_selection_by_config.csv
+            results/tagged_universe_research/fold_diagnostics/fold_diagnostics.md
+            results/tagged_universe_research/fold_diagnostics/fold_diagnostics_meta.json
+            results/tagged_universe_research/fold_diagnostics/fold_positions_enriched.csv
+            results/tagged_universe_research/fold_diagnostics/fold_allowed_trades_enriched.csv
+            results/tagged_universe_research/fold_diagnostics/breakdown_by_*.csv
             results/tagged_universe_research/multi_wfo/tagged_multi_wfo_summary.md
             results/tagged_universe_research/multi_wfo/tagged_multi_wfo_summary.csv
             results/tagged_universe_research/multi_wfo/tagged_multi_wfo_best.json
