@@ -10,6 +10,7 @@ Flow:
 4. Make research decision.
 5. Summarize what symbols were actually selected with core/discovery/sector tags.
 6. Run multi-WFO comparison across several tagged candidates.
+7. Diagnose the weakest fold for the best multi-WFO candidate.
 
 Research only. No API keys. No private account data. No order execution.
 """
@@ -124,6 +125,15 @@ def main() -> int:
         "--sleep-sec", str(args.sleep_sec),
     ])
 
+    run_cmd([
+        sys.executable,
+        "scripts/diagnose_tagged_wfo_fold.py",
+        "--multi-wfo-root", str(root / "multi_wfo"),
+        "--best-json", str(root / "multi_wfo" / "tagged_multi_wfo_best.json"),
+        "--layer-json", str(layer_root / "strategy_universe_layer.json"),
+        "--out-dir", str(root / "fold_diagnostics"),
+    ])
+
     print("\nTagged-universe research suite complete")
     for path in [
         layer_root / "strategy_universe_layer.md",
@@ -133,6 +143,7 @@ def main() -> int:
         decision_dir / "research_decision.md",
         root / "tagged_universe_selection.md",
         root / "multi_wfo" / "tagged_multi_wfo_summary.md",
+        root / "fold_diagnostics" / "fold_diagnostics.md",
     ]:
         print(path)
     return 0
