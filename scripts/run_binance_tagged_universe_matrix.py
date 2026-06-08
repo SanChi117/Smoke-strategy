@@ -6,7 +6,7 @@ This mode keeps old fixed-core configs as control rows, but adds explicit
 question: if we keep the successful strategy logic and only expand the tagged
 universe, which symbols does the strategy select?
 
-Correction pack v1 is intentionally conservative:
+Correction packs are intentionally conservative:
 - no universe reduction;
 - no sector-as-rule logic;
 - no deletion of old configs;
@@ -186,8 +186,79 @@ def correction_pack_v1_configs() -> list[dict]:
     ]
 
 
+def correction_pack_v3_configs() -> list[dict]:
+    """Balanced v3 pack focused on WFO robustness, not prettier matrix.
+
+    The pack keeps the 103-symbol tagged universe untouched and tests two
+    directions:
+    - DIRECT_STRICTER variants with volume confirmation changes;
+    - TREND_PROTECTED variants with liquidity/quality balance.
+    """
+    return [
+        cfg(
+            "TAGGED_LOGIC_DIRECT_STRICTER_VR070_V2",
+            require_rolling_top=False,
+            require_universe_gate=False,
+            min_confidence=45.0,
+            quality_take_threshold=68.0,
+            quality_watch_threshold=55.0,
+            structure_take_threshold=66.0,
+            structure_watch_threshold=55.0,
+            blocked_setup_types=("breakout",),
+            blocked_volatility_regimes=("high",),
+            min_volume_ratio=0.70,
+        ),
+        cfg(
+            "TAGGED_LOGIC_DIRECT_STRICTER_VR084_V2",
+            require_rolling_top=False,
+            require_universe_gate=False,
+            min_confidence=45.0,
+            quality_take_threshold=68.0,
+            quality_watch_threshold=55.0,
+            structure_take_threshold=66.0,
+            structure_watch_threshold=55.0,
+            blocked_setup_types=("breakout",),
+            blocked_volatility_regimes=("high",),
+            min_volume_ratio=0.84,
+        ),
+        cfg(
+            "TAGGED_LOGIC_TREND_LIQUIDITY_BALANCED_V2",
+            require_rolling_top=False,
+            require_universe_gate=False,
+            min_confidence=45.0,
+            quality_take_threshold=68.0,
+            quality_watch_threshold=55.0,
+            structure_take_threshold=66.0,
+            structure_watch_threshold=55.0,
+            blocked_setup_types=("breakout",),
+            blocked_volatility_regimes=("high",),
+            blocked_trend_contexts=BAD_TREND_CONTEXTS,
+            blocked_direction_contexts=matrix.BAD_DIRECTION_CONTEXTS,
+            blocked_liquidity_states=matrix.BAD_LIQUIDITY_STATES,
+            blocked_candle_types=matrix.BAD_CANDLE_TYPES,
+            min_volume_ratio=0.70,
+        ),
+        cfg(
+            "TAGGED_LOGIC_TREND_QUALITY_BALANCED_V2",
+            require_rolling_top=False,
+            require_universe_gate=False,
+            min_confidence=48.0,
+            quality_take_threshold=70.0,
+            quality_watch_threshold=56.0,
+            structure_take_threshold=68.0,
+            structure_watch_threshold=56.0,
+            blocked_setup_types=("breakout",),
+            blocked_volatility_regimes=("high",),
+            blocked_trend_contexts=BAD_TREND_CONTEXTS,
+            blocked_direction_contexts=matrix.BAD_DIRECTION_CONTEXTS,
+            blocked_candle_types=matrix.BAD_CANDLE_TYPES,
+            min_volume_ratio=0.70,
+        ),
+    ]
+
+
 def tagged_configs() -> list[dict]:
-    return correction_pack_v1_configs() + tagged_baseline_configs()
+    return correction_pack_v3_configs() + correction_pack_v1_configs() + tagged_baseline_configs()
 
 
 def main() -> int:
@@ -199,6 +270,7 @@ def main() -> int:
     print("Old fixed-core configs: kept as control")
     print("Tagged no-allowlist configs: added")
     print("Correction pack v1: added")
+    print("Correction pack v3: added")
     print("Universe/tags: unchanged")
     print("Added configs: " + ", ".join(str(item["name"]) for item in additions))
     return matrix.main()
