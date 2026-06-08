@@ -29,11 +29,12 @@ if str(SCRIPT_DIR) not in sys.path:
 from promote_matrix_baseline import normalize_row  # noqa: E402
 
 DEFAULT_CANDIDATES = (
-    "TAGGED_LOGIC_LIQUIDITY_PROTECTED_V1,"
-    "TAGGED_LOGIC_TREND_PROTECTED_V1,"
-    "TAGGED_LOGIC_OVEREXTENSION_FILTER_V1,"
+    "TAGGED_LOGIC_DIRECT_STRICTER_VR070_V2,"
+    "TAGGED_LOGIC_DIRECT_STRICTER_VR084_V2,"
+    "TAGGED_LOGIC_TREND_LIQUIDITY_BALANCED_V2,"
+    "TAGGED_LOGIC_TREND_QUALITY_BALANCED_V2,"
     "TAGGED_CORE_LOGIC_DIRECT_STRICTER,"
-    "TAGGED_LOGIC_COMBINED_V2"
+    "TAGGED_LOGIC_TREND_PROTECTED_V1"
 )
 
 
@@ -108,7 +109,6 @@ def select_rows(matrix_rows: list[dict[str, str]], candidate_names: list[str]) -
     if rows:
         return rows
 
-    # Fallback: choose non-fixed tagged candidates with enough sample.
     fallback = []
     for row in matrix_rows:
         name = str(row.get("name", ""))
