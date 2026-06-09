@@ -24,6 +24,8 @@ import run_binance_real_matrix as matrix
 GOOD_TREND_CONTEXTS = ("up", "sideways")
 BAD_TREND_CONTEXTS = ("down",)
 BAD_DIRECTION_CONTEXTS_EXTENDED = ("up", "hard_up")
+BEST_V4_SETUPS = ("liquidity_reclaim", "pullback")
+BAD_CANDLE_TYPES_WITH_BEAR_IMPULSE = tuple(dict.fromkeys((*matrix.BAD_CANDLE_TYPES, "bear_impulse")))
 
 
 def cfg(name: str, **overrides: object) -> dict:
@@ -257,8 +259,87 @@ def correction_pack_v3_configs() -> list[dict]:
     ]
 
 
+def correction_pack_v4_configs() -> list[dict]:
+    """Fold-02 diagnostics pack.
+
+    Diagnostics showed fold_02 weakness from ignition, bear_impulse context,
+    and noisy pullback/range_rotation entries. These configs keep the full
+    tagged universe unchanged and test setup/candle filters only.
+    """
+    return [
+        cfg(
+            "TAGGED_LOGIC_TREND_LIQ_NO_IGNITION_V4",
+            require_rolling_top=False,
+            require_universe_gate=False,
+            min_confidence=45.0,
+            quality_take_threshold=68.0,
+            quality_watch_threshold=55.0,
+            structure_take_threshold=66.0,
+            structure_watch_threshold=55.0,
+            blocked_setup_types=("breakout", "ignition"),
+            blocked_volatility_regimes=("high",),
+            blocked_trend_contexts=BAD_TREND_CONTEXTS,
+            blocked_direction_contexts=matrix.BAD_DIRECTION_CONTEXTS,
+            blocked_liquidity_states=matrix.BAD_LIQUIDITY_STATES,
+            blocked_candle_types=matrix.BAD_CANDLE_TYPES,
+            min_volume_ratio=0.70,
+        ),
+        cfg(
+            "TAGGED_LOGIC_TREND_LIQ_BLOCK_BEAR_IMPULSE_V4",
+            require_rolling_top=False,
+            require_universe_gate=False,
+            min_confidence=45.0,
+            quality_take_threshold=68.0,
+            quality_watch_threshold=55.0,
+            structure_take_threshold=66.0,
+            structure_watch_threshold=55.0,
+            blocked_setup_types=("breakout",),
+            blocked_volatility_regimes=("high",),
+            blocked_trend_contexts=BAD_TREND_CONTEXTS,
+            blocked_direction_contexts=matrix.BAD_DIRECTION_CONTEXTS,
+            blocked_liquidity_states=matrix.BAD_LIQUIDITY_STATES,
+            blocked_candle_types=BAD_CANDLE_TYPES_WITH_BEAR_IMPULSE,
+            min_volume_ratio=0.70,
+        ),
+        cfg(
+            "TAGGED_LOGIC_TREND_LIQ_PULLBACK_FILTERED_V4",
+            require_rolling_top=False,
+            require_universe_gate=False,
+            min_confidence=45.0,
+            quality_take_threshold=68.0,
+            quality_watch_threshold=55.0,
+            structure_take_threshold=66.0,
+            structure_watch_threshold=55.0,
+            allowed_setup_types=BEST_V4_SETUPS,
+            blocked_volatility_regimes=("high",),
+            blocked_trend_contexts=BAD_TREND_CONTEXTS,
+            blocked_direction_contexts=matrix.BAD_DIRECTION_CONTEXTS,
+            blocked_liquidity_states=matrix.BAD_LIQUIDITY_STATES,
+            blocked_candle_types=BAD_CANDLE_TYPES_WITH_BEAR_IMPULSE,
+            min_volume_ratio=0.70,
+        ),
+        cfg(
+            "TAGGED_LOGIC_LIQUIDITY_RECLAIM_ONLY_V4",
+            require_rolling_top=False,
+            require_universe_gate=False,
+            min_confidence=45.0,
+            quality_take_threshold=68.0,
+            quality_watch_threshold=55.0,
+            structure_take_threshold=66.0,
+            structure_watch_threshold=55.0,
+            allowed_setup_types=("liquidity_reclaim",),
+            blocked_volatility_regimes=("high",),
+            blocked_trend_contexts=BAD_TREND_CONTEXTS,
+            blocked_direction_contexts=matrix.BAD_DIRECTION_CONTEXTS,
+            blocked_liquidity_states=matrix.BAD_LIQUIDITY_STATES,
+            blocked_candle_types=BAD_CANDLE_TYPES_WITH_BEAR_IMPULSE,
+            min_volume_ratio=0.70,
+        ),
+    ]
+
+
 def tagged_configs() -> list[dict]:
-    return correction_pack_v3_configs() + correction_pack_v1_configs() + tagged_baseline_configs()
+    return correction_pack_v4_configs() + correction_pack_v3_configs() + correction_pack_v1_configs() + tagged_baseline_configs()
 
 
 def main() -> int:
@@ -271,6 +352,7 @@ def main() -> int:
     print("Tagged no-allowlist configs: added")
     print("Correction pack v1: added")
     print("Correction pack v3: added")
+    print("Correction pack v4: added")
     print("Universe/tags: unchanged")
     print("Added configs: " + ", ".join(str(item["name"]) for item in additions))
     return matrix.main()
