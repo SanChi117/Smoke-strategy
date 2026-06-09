@@ -88,11 +88,7 @@ def tagged_baseline_configs() -> list[dict]:
 
 
 def correction_pack_v1_configs() -> list[dict]:
-    """Strategy-logic correction pack for the tagged universe.
-
-    These variants keep the full tagged pool intact and only test safer entry
-    filters. The current best tagged baseline remains available as control.
-    """
+    """Strategy-logic correction pack for the tagged universe."""
     return [
         cfg(
             "TAGGED_LOGIC_QUALITY_STRICT_V1",
@@ -189,13 +185,7 @@ def correction_pack_v1_configs() -> list[dict]:
 
 
 def correction_pack_v3_configs() -> list[dict]:
-    """Balanced v3 pack focused on WFO robustness, not prettier matrix.
-
-    The pack keeps the 103-symbol tagged universe untouched and tests two
-    directions:
-    - DIRECT_STRICTER variants with volume confirmation changes;
-    - TREND_PROTECTED variants with liquidity/quality balance.
-    """
+    """Balanced v3 pack focused on WFO robustness, not prettier matrix."""
     return [
         cfg(
             "TAGGED_LOGIC_DIRECT_STRICTER_VR070_V2",
@@ -260,12 +250,7 @@ def correction_pack_v3_configs() -> list[dict]:
 
 
 def correction_pack_v4_configs() -> list[dict]:
-    """Fold-02 diagnostics pack.
-
-    Diagnostics showed fold_02 weakness from ignition, bear_impulse context,
-    and noisy pullback/range_rotation entries. These configs keep the full
-    tagged universe unchanged and test setup/candle filters only.
-    """
+    """Fold-02 diagnostics pack testing setup/candle filters only."""
     return [
         cfg(
             "TAGGED_LOGIC_TREND_LIQ_NO_IGNITION_V4",
@@ -338,8 +323,75 @@ def correction_pack_v4_configs() -> list[dict]:
     ]
 
 
+def correction_pack_v5_configs() -> list[dict]:
+    """Range-rotation and quality diagnostics pack.
+
+    v4 showed that range_rotation was the weakest fold-02 setup. These variants
+    keep the tagged universe unchanged and test only setup/quality filters.
+    """
+    return [
+        cfg(
+            "TAGGED_LOGIC_TREND_LIQ_NO_RANGE_ROTATION_V5",
+            require_rolling_top=False,
+            require_universe_gate=False,
+            min_confidence=45.0,
+            quality_take_threshold=68.0,
+            quality_watch_threshold=55.0,
+            structure_take_threshold=66.0,
+            structure_watch_threshold=55.0,
+            blocked_setup_types=("breakout", "range_rotation"),
+            blocked_volatility_regimes=("high",),
+            blocked_trend_contexts=BAD_TREND_CONTEXTS,
+            blocked_direction_contexts=matrix.BAD_DIRECTION_CONTEXTS,
+            blocked_liquidity_states=matrix.BAD_LIQUIDITY_STATES,
+            blocked_candle_types=matrix.BAD_CANDLE_TYPES,
+            min_volume_ratio=0.70,
+        ),
+        cfg(
+            "TAGGED_LOGIC_TREND_LIQ_NO_RANGE_NO_IGNITION_V5",
+            require_rolling_top=False,
+            require_universe_gate=False,
+            min_confidence=45.0,
+            quality_take_threshold=68.0,
+            quality_watch_threshold=55.0,
+            structure_take_threshold=66.0,
+            structure_watch_threshold=55.0,
+            blocked_setup_types=("breakout", "range_rotation", "ignition"),
+            blocked_volatility_regimes=("high",),
+            blocked_trend_contexts=BAD_TREND_CONTEXTS,
+            blocked_direction_contexts=matrix.BAD_DIRECTION_CONTEXTS,
+            blocked_liquidity_states=matrix.BAD_LIQUIDITY_STATES,
+            blocked_candle_types=matrix.BAD_CANDLE_TYPES,
+            min_volume_ratio=0.70,
+        ),
+        cfg(
+            "TAGGED_LOGIC_TREND_LIQ_DISCOVERY_STRICT_V5",
+            require_rolling_top=False,
+            require_universe_gate=False,
+            min_confidence=48.0,
+            quality_take_threshold=70.0,
+            quality_watch_threshold=56.0,
+            structure_take_threshold=68.0,
+            structure_watch_threshold=56.0,
+            blocked_setup_types=("breakout", "range_rotation"),
+            blocked_volatility_regimes=("high",),
+            blocked_trend_contexts=BAD_TREND_CONTEXTS,
+            blocked_direction_contexts=matrix.BAD_DIRECTION_CONTEXTS,
+            blocked_liquidity_states=matrix.BAD_LIQUIDITY_STATES,
+            blocked_candle_types=matrix.BAD_CANDLE_TYPES,
+            min_volume_ratio=0.70,
+        ),
+    ]
+
+
 def tagged_configs() -> list[dict]:
-    return correction_pack_v4_configs() + correction_pack_v3_configs() + correction_pack_v1_configs() + tagged_baseline_configs()
+    return (
+        correction_pack_v5_configs()
+        + correction_pack_v4_configs()
+        + correction_pack_v3_configs()
+        + correction_pack_v1_configs()
+        + tagged_baseline_configs()
+    )
 
 
 def main() -> int:
@@ -353,6 +405,7 @@ def main() -> int:
     print("Correction pack v1: added")
     print("Correction pack v3: added")
     print("Correction pack v4: added")
+    print("Correction pack v5: added")
     print("Universe/tags: unchanged")
     print("Added configs: " + ", ".join(str(item["name"]) for item in additions))
     return matrix.main()
