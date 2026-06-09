@@ -5,9 +5,10 @@ matrix: tagged universe suite with no-allowlist configs
 selection_report: enabled
 correction_pack_v1: enabled
 correction_pack_v3: enabled
-multi_wfo_v3: enabled
+correction_pack_v4: enabled
+multi_wfo_v4: enabled
 fold_diagnostics: enabled
 limit: 1500
 windows: 4
 top_n_per_group: 10
-trigger_id: 2026-06-07-06
+trigger_id: 2026-06-07-07
