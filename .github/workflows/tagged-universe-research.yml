@@ -12,6 +12,8 @@ on:
       - 'scripts/summarize_tagged_universe_selection.py'
       - 'scripts/run_tagged_multi_wfo.py'
       - 'scripts/diagnose_tagged_wfo_fold.py'
+      - 'scripts/run_tagged_deep_validation.py'
+      - 'scripts/make_tagged_research_decision.py'
       - 'strategy_lab/universe/sector_groups.json'
 
 concurrency:
@@ -60,6 +62,10 @@ jobs:
           cat results/tagged_universe_research/tagged_universe_selection.md
           echo '--- tagged_multi_wfo_summary.md ---'
           cat results/tagged_universe_research/multi_wfo/tagged_multi_wfo_summary.md
+          echo '--- deep_validation_summary.md ---'
+          cat results/tagged_universe_research/deep_validation/deep_validation_summary.md
+          echo '--- tagged_research_decision.md ---'
+          cat results/tagged_universe_research/tagged_decision/tagged_research_decision.md
           echo '--- fold_diagnostics.md ---'
           cat results/tagged_universe_research/fold_diagnostics/fold_diagnostics.md
           echo '--- research_decision.md ---'
@@ -85,6 +91,13 @@ jobs:
             results/tagged_universe_research/tagged_universe_selection_no_fixed.csv
             results/tagged_universe_research/tagged_universe_selection_all_configs.csv
             results/tagged_universe_research/tagged_universe_selection_by_config.csv
+            results/tagged_universe_research/deep_validation/deep_validation_summary.md
+            results/tagged_universe_research/deep_validation/deep_validation_summary.json
+            results/tagged_universe_research/deep_validation/deep_baseline_candidate.json
+            results/tagged_universe_research/deep_validation/walk_forward_summary.csv
+            results/tagged_universe_research/deep_validation/walk_forward_summary.md
+            results/tagged_universe_research/tagged_decision/tagged_research_decision.md
+            results/tagged_universe_research/tagged_decision/tagged_research_decision.json
             results/tagged_universe_research/fold_diagnostics/fold_diagnostics.md
             results/tagged_universe_research/fold_diagnostics/fold_diagnostics_meta.json
             results/tagged_universe_research/fold_diagnostics/fold_positions_enriched.csv
