@@ -7,10 +7,12 @@ Flow:
    - old fixed-core configs remain as control rows;
    - additional configs reuse the successful tactical logic without allowed_symbols.
 3. Run WFO on the best matrix candidate.
-4. Make research decision.
+4. Make legacy matrix-based research decision.
 5. Summarize what symbols were actually selected with core/discovery/sector tags.
 6. Run multi-WFO comparison across several tagged candidates.
 7. Diagnose the weakest fold for the best multi-WFO candidate.
+8. Run deeper validation for the best multi-WFO candidate.
+9. Make tagged decision from multi-WFO + deep validation.
 
 Research only. No API keys. No private account data. No order execution.
 """
@@ -46,6 +48,8 @@ def main() -> int:
     matrix_dir = root / "matrix"
     walk_forward_dir = root / "walk_forward"
     decision_dir = root / "decision"
+    tagged_decision_dir = root / "tagged_decision"
+    deep_validation_dir = root / "deep_validation"
     candles_path = root / "data" / "tagged_universe_candles.csv"
     wf_candles_path = root / "data" / "walk_forward_candles.csv"
     symbols_file = layer_root / "combined_symbols.txt"
@@ -134,6 +138,29 @@ def main() -> int:
         "--out-dir", str(root / "fold_diagnostics"),
     ])
 
+    run_cmd([
+        sys.executable,
+        "scripts/run_tagged_deep_validation.py",
+        "--matrix", str(matrix_dir / "matrix_summary.csv"),
+        "--multi-best", str(root / "multi_wfo" / "tagged_multi_wfo_best.json"),
+        "--symbols-file", str(symbols_file),
+        "--out-dir", str(deep_validation_dir),
+        "--interval", args.interval,
+        "--limit", "2500",
+        "--windows", "6",
+        "--lookback-days", "60",
+        "--profile", args.profile,
+        "--sleep-sec", str(args.sleep_sec),
+    ])
+
+    run_cmd([
+        sys.executable,
+        "scripts/make_tagged_research_decision.py",
+        "--multi-best", str(root / "multi_wfo" / "tagged_multi_wfo_best.json"),
+        "--deep-summary", str(deep_validation_dir / "deep_validation_summary.json"),
+        "--out-dir", str(tagged_decision_dir),
+    ])
+
     print("\nTagged-universe research suite complete")
     for path in [
         layer_root / "strategy_universe_layer.md",
@@ -144,6 +171,8 @@ def main() -> int:
         root / "tagged_universe_selection.md",
         root / "multi_wfo" / "tagged_multi_wfo_summary.md",
         root / "fold_diagnostics" / "fold_diagnostics.md",
+        deep_validation_dir / "deep_validation_summary.md",
+        tagged_decision_dir / "tagged_research_decision.md",
     ]:
         print(path)
     return 0
