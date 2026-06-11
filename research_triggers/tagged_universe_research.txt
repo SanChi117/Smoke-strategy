@@ -10,6 +10,7 @@ correction_pack_v5: enabled
 multi_wfo_v5: enabled
 fold_diagnostics: enabled
 deep_validation: enabled
+deep_fold_diagnostics: enabled
 tagged_decision: enabled
 limit: 1500
 deep_limit: 2500
@@ -17,4 +18,4 @@ windows: 4
 deep_windows: 6
 deep_lookback_days: 60
 top_n_per_group: 10
-trigger_id: 2026-06-07-09
+trigger_id: 2026-06-07-10
