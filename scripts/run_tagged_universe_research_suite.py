@@ -12,7 +12,8 @@ Flow:
 6. Run multi-WFO comparison across several tagged candidates.
 7. Diagnose the weakest fold for the best multi-WFO candidate.
 8. Run deeper validation for the best multi-WFO candidate.
-9. Make tagged decision from multi-WFO + deep validation.
+9. Diagnose weak deep-validation folds.
+10. Make tagged decision from multi-WFO + deep validation.
 
 Research only. No API keys. No private account data. No order execution.
 """
@@ -50,6 +51,7 @@ def main() -> int:
     decision_dir = root / "decision"
     tagged_decision_dir = root / "tagged_decision"
     deep_validation_dir = root / "deep_validation"
+    deep_fold_diagnostics_dir = root / "deep_fold_diagnostics"
     candles_path = root / "data" / "tagged_universe_candles.csv"
     wf_candles_path = root / "data" / "walk_forward_candles.csv"
     symbols_file = layer_root / "combined_symbols.txt"
@@ -155,6 +157,16 @@ def main() -> int:
 
     run_cmd([
         sys.executable,
+        "scripts/diagnose_tagged_deep_validation_folds.py",
+        "--deep-root", str(deep_validation_dir),
+        "--deep-summary", str(deep_validation_dir / "deep_validation_summary.json"),
+        "--walk-forward", str(deep_validation_dir / "walk_forward_summary.csv"),
+        "--layer-json", str(layer_root / "strategy_universe_layer.json"),
+        "--out-dir", str(deep_fold_diagnostics_dir),
+    ])
+
+    run_cmd([
+        sys.executable,
         "scripts/make_tagged_research_decision.py",
         "--multi-best", str(root / "multi_wfo" / "tagged_multi_wfo_best.json"),
         "--deep-summary", str(deep_validation_dir / "deep_validation_summary.json"),
@@ -172,6 +184,7 @@ def main() -> int:
         root / "multi_wfo" / "tagged_multi_wfo_summary.md",
         root / "fold_diagnostics" / "fold_diagnostics.md",
         deep_validation_dir / "deep_validation_summary.md",
+        deep_fold_diagnostics_dir / "deep_fold_diagnostics.md",
         tagged_decision_dir / "tagged_research_decision.md",
     ]:
         print(path)
