@@ -10,6 +10,7 @@ on:
       - 'strategy_lab/setup_generator.py'
       - 'scripts/build_strategy_universe_layer.py'
       - 'scripts/run_binance_tagged_universe_matrix.py'
+      - 'scripts/run_binance_tagged_mtf_fast_matrix.py'
       - 'scripts/run_tagged_universe_research_suite.py'
       - 'scripts/summarize_tagged_universe_selection.py'
       - 'scripts/run_tagged_multi_wfo.py'
@@ -54,14 +55,14 @@ jobs:
           python scripts/run_tagged_universe_research_suite.py \
             --top-n-per-group 10 \
             --interval 15m \
-            --limit 4000 \
-            --windows 4 \
-            --deep-limit 6000 \
-            --deep-windows 6 \
-            --deep-lookback-days 60 \
+            --limit 2500 \
+            --windows 3 \
+            --deep-limit 3500 \
+            --deep-windows 4 \
+            --deep-lookback-days 35 \
             --root results/tagged_universe_research \
             --layer-root results/strategy_universe_layer \
-            --sleep-sec 0.05
+            --sleep-sec 0.02
           echo '--- strategy_universe_layer.md ---'
           cat results/strategy_universe_layer/strategy_universe_layer.md
           echo '--- tagged_universe_selection.md ---'
