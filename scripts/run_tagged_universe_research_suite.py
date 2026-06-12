@@ -1,19 +1,13 @@
 #!/usr/bin/env python3
-"""Run tagged-universe research without changing strategy logic.
+"""Run tagged-universe research in a runtime-safe MTF validation mode.
 
-Flow:
-1. Build strategy universe layer: core reference + discovery pool + sector tags.
-2. Run tagged-universe matrix:
-   - old fixed-core configs remain as control rows;
-   - additional configs reuse the successful tactical logic without allowed_symbols.
-3. Run WFO on the best matrix candidate.
-4. Make legacy matrix-based research decision.
-5. Summarize what symbols were actually selected with core/discovery/sector tags.
-6. Run multi-WFO comparison across several tagged candidates.
-7. Diagnose the weakest fold for the best multi-WFO candidate.
-8. Run deeper validation for the best multi-WFO candidate.
-9. Diagnose weak deep-validation folds.
-10. Make tagged decision from multi-WFO + deep validation.
+MTF architecture:
+- 1D/4H market context is built inside feature_builder;
+- 15m is the entry/setup timeframe;
+- 5m confirmation is planned next and is not faked in this run.
+
+This suite keeps the full tagged universe but avoids the old large control matrix
+so GitHub Actions can finish within the 6h limit.
 
 Research only. No API keys. No private account data. No order execution.
 """
@@ -26,25 +20,32 @@ import sys
 from pathlib import Path
 
 
+FAST_CANDIDATES = (
+    "TAGGED_LOGIC_TREND_LIQ_NO_RANGE_ROTATION_V5,"
+    "TAGGED_LOGIC_TREND_LIQ_NO_RANGE_NO_IGNITION_V5,"
+    "TAGGED_LOGIC_TREND_LIQ_DISCOVERY_STRICT_V5"
+)
+
+
 def run_cmd(cmd: list[str]) -> None:
     print("\n$ " + " ".join(cmd))
     subprocess.run(cmd, check=True)
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run tagged-universe research suite.")
+    parser = argparse.ArgumentParser(description="Run tagged-universe MTF research suite.")
     parser.add_argument("--top-n-per-group", type=int, default=10)
     parser.add_argument("--interval", default="15m")
-    parser.add_argument("--limit", type=int, default=4000)
-    parser.add_argument("--windows", type=int, default=4)
-    parser.add_argument("--lookback-days", type=int, default=30)
-    parser.add_argument("--deep-limit", type=int, default=6000)
-    parser.add_argument("--deep-windows", type=int, default=6)
-    parser.add_argument("--deep-lookback-days", type=int, default=60)
+    parser.add_argument("--limit", type=int, default=2500)
+    parser.add_argument("--windows", type=int, default=3)
+    parser.add_argument("--lookback-days", type=int, default=21)
+    parser.add_argument("--deep-limit", type=int, default=3500)
+    parser.add_argument("--deep-windows", type=int, default=4)
+    parser.add_argument("--deep-lookback-days", type=int, default=35)
     parser.add_argument("--profile", default="growth_100_20x")
     parser.add_argument("--root", default="results/tagged_universe_research")
     parser.add_argument("--layer-root", default="results/strategy_universe_layer")
-    parser.add_argument("--sleep-sec", type=float, default=0.05)
+    parser.add_argument("--sleep-sec", type=float, default=0.02)
     args = parser.parse_args()
 
     root = Path(args.root)
@@ -59,13 +60,13 @@ def main() -> int:
     wf_candles_path = root / "data" / "walk_forward_candles.csv"
     symbols_file = layer_root / "combined_symbols.txt"
 
-    print("Smoke Strategy Lab tagged-universe research suite")
+    print("Smoke Strategy Lab tagged-universe MTF research suite")
     print("Mode: research-only public market data")
     print("API keys: not used")
     print("Private account data: not used")
     print("Order execution: disabled / not implemented")
-    print("Strategy changed: False")
-    print("Sector is context tag only: True")
+    print("Universe: full tagged universe, not reduced")
+    print("Matrix mode: fast MTF candidates only")
     print("MTF context: 1D/4H market context + entry timeframe setup")
 
     run_cmd([
@@ -77,7 +78,7 @@ def main() -> int:
 
     run_cmd([
         sys.executable,
-        "scripts/run_binance_tagged_universe_matrix.py",
+        "scripts/run_binance_tagged_mtf_fast_matrix.py",
         "--symbols-file", str(symbols_file),
         "--interval", args.interval,
         "--limit", str(args.limit),
@@ -127,6 +128,7 @@ def main() -> int:
         "--matrix", str(matrix_dir / "matrix_summary.csv"),
         "--symbols-file", str(symbols_file),
         "--out-dir", str(root / "multi_wfo"),
+        "--candidate-names", FAST_CANDIDATES,
         "--interval", args.interval,
         "--limit", str(args.limit),
         "--windows", str(args.windows),
@@ -177,7 +179,7 @@ def main() -> int:
         "--out-dir", str(tagged_decision_dir),
     ])
 
-    print("\nTagged-universe research suite complete")
+    print("\nTagged-universe MTF research suite complete")
     for path in [
         layer_root / "strategy_universe_layer.md",
         matrix_dir / "matrix_summary.md",
