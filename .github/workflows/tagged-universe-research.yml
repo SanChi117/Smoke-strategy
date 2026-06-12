@@ -6,6 +6,8 @@ on:
     paths:
       - 'research_triggers/tagged_universe_research.txt'
       - '.github/workflows/tagged-universe-research.yml'
+      - 'strategy_lab/feature_builder.py'
+      - 'strategy_lab/setup_generator.py'
       - 'scripts/build_strategy_universe_layer.py'
       - 'scripts/run_binance_tagged_universe_matrix.py'
       - 'scripts/run_tagged_universe_research_suite.py'
@@ -51,9 +53,12 @@ jobs:
         run: |
           python scripts/run_tagged_universe_research_suite.py \
             --top-n-per-group 10 \
-            --interval 1h \
-            --limit 1500 \
+            --interval 15m \
+            --limit 4000 \
             --windows 4 \
+            --deep-limit 6000 \
+            --deep-windows 6 \
+            --deep-lookback-days 60 \
             --root results/tagged_universe_research \
             --layer-root results/strategy_universe_layer \
             --sleep-sec 0.05
