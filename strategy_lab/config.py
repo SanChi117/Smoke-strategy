@@ -58,6 +58,8 @@ class PipelineConfig:
     blocked_candle_types: tuple[str, ...] = ()
     allowed_direction_contexts: tuple[str, ...] = ()
     blocked_direction_contexts: tuple[str, ...] = ()
+    allowed_context_alignments: tuple[str, ...] = ()
+    blocked_context_alignments: tuple[str, ...] = ()
     min_volume_ratio: float = 0.0
     fee_rate: float = 0.0010
     slippage_rate: float = 0.0002
