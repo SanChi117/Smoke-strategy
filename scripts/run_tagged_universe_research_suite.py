@@ -34,10 +34,13 @@ def run_cmd(cmd: list[str]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run tagged-universe research suite.")
     parser.add_argument("--top-n-per-group", type=int, default=10)
-    parser.add_argument("--interval", default="1h")
-    parser.add_argument("--limit", type=int, default=1500)
+    parser.add_argument("--interval", default="15m")
+    parser.add_argument("--limit", type=int, default=4000)
     parser.add_argument("--windows", type=int, default=4)
     parser.add_argument("--lookback-days", type=int, default=30)
+    parser.add_argument("--deep-limit", type=int, default=6000)
+    parser.add_argument("--deep-windows", type=int, default=6)
+    parser.add_argument("--deep-lookback-days", type=int, default=60)
     parser.add_argument("--profile", default="growth_100_20x")
     parser.add_argument("--root", default="results/tagged_universe_research")
     parser.add_argument("--layer-root", default="results/strategy_universe_layer")
@@ -63,6 +66,7 @@ def main() -> int:
     print("Order execution: disabled / not implemented")
     print("Strategy changed: False")
     print("Sector is context tag only: True")
+    print("MTF context: 1D/4H market context + entry timeframe setup")
 
     run_cmd([
         sys.executable,
@@ -148,9 +152,9 @@ def main() -> int:
         "--symbols-file", str(symbols_file),
         "--out-dir", str(deep_validation_dir),
         "--interval", args.interval,
-        "--limit", "2500",
-        "--windows", "6",
-        "--lookback-days", "60",
+        "--limit", str(args.deep_limit),
+        "--windows", str(args.deep_windows),
+        "--lookback-days", str(args.deep_lookback_days),
         "--profile", args.profile,
         "--sleep-sec", str(args.sleep_sec),
     ])
