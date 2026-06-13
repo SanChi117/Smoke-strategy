@@ -6,9 +6,6 @@ MTF architecture:
 - 15m is the entry/setup timeframe;
 - 5m confirmation is planned next and is not faked in this run.
 
-This suite keeps the full tagged universe but avoids the old large control matrix
-so GitHub Actions can finish within the 6h limit.
-
 Research only. No API keys. No private account data. No order execution.
 """
 
@@ -56,6 +53,7 @@ def main() -> int:
     tagged_decision_dir = root / "tagged_decision"
     deep_validation_dir = root / "deep_validation"
     deep_fold_diagnostics_dir = root / "deep_fold_diagnostics"
+    paper_review_dir = root / "paper_review"
     candles_path = root / "data" / "tagged_universe_candles.csv"
     wf_candles_path = root / "data" / "walk_forward_candles.csv"
     symbols_file = layer_root / "combined_symbols.txt"
@@ -69,130 +67,32 @@ def main() -> int:
     print("Matrix mode: fast MTF candidates only")
     print("MTF context: 1D/4H market context + entry timeframe setup")
 
-    run_cmd([
-        sys.executable,
-        "scripts/build_strategy_universe_layer.py",
-        "--top-n-per-group", str(args.top_n_per_group),
-        "--out-dir", str(layer_root),
-    ])
+    run_cmd([sys.executable, "scripts/build_strategy_universe_layer.py", "--top-n-per-group", str(args.top_n_per_group), "--out-dir", str(layer_root)])
 
-    run_cmd([
-        sys.executable,
-        "scripts/run_binance_tagged_mtf_fast_matrix.py",
-        "--symbols-file", str(symbols_file),
-        "--interval", args.interval,
-        "--limit", str(args.limit),
-        "--candles-out", str(candles_path),
-        "--out-dir", str(matrix_dir),
-        "--profile", args.profile,
-        "--sleep-sec", str(args.sleep_sec),
-    ])
+    run_cmd([sys.executable, "scripts/run_binance_tagged_mtf_fast_matrix.py", "--symbols-file", str(symbols_file), "--interval", args.interval, "--limit", str(args.limit), "--candles-out", str(candles_path), "--out-dir", str(matrix_dir), "--profile", args.profile, "--sleep-sec", str(args.sleep_sec)])
 
     baseline_path = matrix_dir / "baseline_candidate" / "baseline_candidate.json"
 
-    run_cmd([
-        sys.executable,
-        "scripts/run_binance_walk_forward_v2.py",
-        "--symbols-file", str(symbols_file),
-        "--interval", args.interval,
-        "--limit", str(args.limit),
-        "--candles-out", str(wf_candles_path),
-        "--out-dir", str(walk_forward_dir),
-        "--baseline", str(baseline_path),
-        "--profile", args.profile,
-        "--windows", str(args.windows),
-        "--lookback-days", str(args.lookback_days),
-        "--sleep-sec", str(args.sleep_sec),
-    ])
+    run_cmd([sys.executable, "scripts/run_binance_walk_forward_v2.py", "--symbols-file", str(symbols_file), "--interval", args.interval, "--limit", str(args.limit), "--candles-out", str(wf_candles_path), "--out-dir", str(walk_forward_dir), "--baseline", str(baseline_path), "--profile", args.profile, "--windows", str(args.windows), "--lookback-days", str(args.lookback_days), "--sleep-sec", str(args.sleep_sec)])
 
-    run_cmd([
-        sys.executable,
-        "scripts/make_research_decision.py",
-        "--matrix", str(matrix_dir / "matrix_summary.csv"),
-        "--baseline", str(baseline_path),
-        "--walk-forward", str(walk_forward_dir / "walk_forward_summary.csv"),
-        "--out-dir", str(decision_dir),
-    ])
+    run_cmd([sys.executable, "scripts/make_research_decision.py", "--matrix", str(matrix_dir / "matrix_summary.csv"), "--baseline", str(baseline_path), "--walk-forward", str(walk_forward_dir / "walk_forward_summary.csv"), "--out-dir", str(decision_dir)])
 
-    run_cmd([
-        sys.executable,
-        "scripts/summarize_tagged_universe_selection.py",
-        "--matrix-root", str(matrix_dir),
-        "--layer-json", str(layer_root / "strategy_universe_layer.json"),
-        "--out-dir", str(root),
-    ])
+    run_cmd([sys.executable, "scripts/summarize_tagged_universe_selection.py", "--matrix-root", str(matrix_dir), "--layer-json", str(layer_root / "strategy_universe_layer.json"), "--out-dir", str(root)])
 
-    run_cmd([
-        sys.executable,
-        "scripts/run_tagged_multi_wfo.py",
-        "--matrix", str(matrix_dir / "matrix_summary.csv"),
-        "--symbols-file", str(symbols_file),
-        "--out-dir", str(root / "multi_wfo"),
-        "--candidate-names", FAST_CANDIDATES,
-        "--interval", args.interval,
-        "--limit", str(args.limit),
-        "--windows", str(args.windows),
-        "--lookback-days", str(args.lookback_days),
-        "--profile", args.profile,
-        "--sleep-sec", str(args.sleep_sec),
-    ])
+    run_cmd([sys.executable, "scripts/run_tagged_multi_wfo.py", "--matrix", str(matrix_dir / "matrix_summary.csv"), "--symbols-file", str(symbols_file), "--out-dir", str(root / "multi_wfo"), "--candidate-names", FAST_CANDIDATES, "--interval", args.interval, "--limit", str(args.limit), "--windows", str(args.windows), "--lookback-days", str(args.lookback_days), "--profile", args.profile, "--sleep-sec", str(args.sleep_sec)])
 
-    run_cmd([
-        sys.executable,
-        "scripts/diagnose_tagged_wfo_fold.py",
-        "--multi-wfo-root", str(root / "multi_wfo"),
-        "--best-json", str(root / "multi_wfo" / "tagged_multi_wfo_best.json"),
-        "--layer-json", str(layer_root / "strategy_universe_layer.json"),
-        "--out-dir", str(root / "fold_diagnostics"),
-    ])
+    run_cmd([sys.executable, "scripts/diagnose_tagged_wfo_fold.py", "--multi-wfo-root", str(root / "multi_wfo"), "--best-json", str(root / "multi_wfo" / "tagged_multi_wfo_best.json"), "--layer-json", str(layer_root / "strategy_universe_layer.json"), "--out-dir", str(root / "fold_diagnostics")])
 
-    run_cmd([
-        sys.executable,
-        "scripts/run_tagged_deep_validation.py",
-        "--matrix", str(matrix_dir / "matrix_summary.csv"),
-        "--multi-best", str(root / "multi_wfo" / "tagged_multi_wfo_best.json"),
-        "--symbols-file", str(symbols_file),
-        "--out-dir", str(deep_validation_dir),
-        "--interval", args.interval,
-        "--limit", str(args.deep_limit),
-        "--windows", str(args.deep_windows),
-        "--lookback-days", str(args.deep_lookback_days),
-        "--profile", args.profile,
-        "--sleep-sec", str(args.sleep_sec),
-    ])
+    run_cmd([sys.executable, "scripts/run_tagged_deep_validation.py", "--matrix", str(matrix_dir / "matrix_summary.csv"), "--multi-best", str(root / "multi_wfo" / "tagged_multi_wfo_best.json"), "--symbols-file", str(symbols_file), "--out-dir", str(deep_validation_dir), "--interval", args.interval, "--limit", str(args.deep_limit), "--windows", str(args.deep_windows), "--lookback-days", str(args.deep_lookback_days), "--profile", args.profile, "--sleep-sec", str(args.sleep_sec)])
 
-    run_cmd([
-        sys.executable,
-        "scripts/diagnose_tagged_deep_validation_folds.py",
-        "--deep-root", str(deep_validation_dir),
-        "--deep-summary", str(deep_validation_dir / "deep_validation_summary.json"),
-        "--walk-forward", str(deep_validation_dir / "walk_forward_summary.csv"),
-        "--layer-json", str(layer_root / "strategy_universe_layer.json"),
-        "--out-dir", str(deep_fold_diagnostics_dir),
-    ])
+    run_cmd([sys.executable, "scripts/diagnose_tagged_deep_validation_folds.py", "--deep-root", str(deep_validation_dir), "--deep-summary", str(deep_validation_dir / "deep_validation_summary.json"), "--walk-forward", str(deep_validation_dir / "walk_forward_summary.csv"), "--layer-json", str(layer_root / "strategy_universe_layer.json"), "--out-dir", str(deep_fold_diagnostics_dir)])
 
-    run_cmd([
-        sys.executable,
-        "scripts/make_tagged_research_decision.py",
-        "--multi-best", str(root / "multi_wfo" / "tagged_multi_wfo_best.json"),
-        "--deep-summary", str(deep_validation_dir / "deep_validation_summary.json"),
-        "--out-dir", str(tagged_decision_dir),
-    ])
+    run_cmd([sys.executable, "scripts/make_tagged_research_decision.py", "--multi-best", str(root / "multi_wfo" / "tagged_multi_wfo_best.json"), "--deep-summary", str(deep_validation_dir / "deep_validation_summary.json"), "--out-dir", str(tagged_decision_dir)])
+
+    run_cmd([sys.executable, "scripts/make_tagged_paper_review_plan.py", "--decision", str(tagged_decision_dir / "tagged_research_decision.json"), "--deep", str(deep_validation_dir / "deep_validation_summary.json"), "--multi", str(root / "multi_wfo" / "tagged_multi_wfo_best.json"), "--baseline", str(deep_validation_dir / "deep_baseline_candidate.json"), "--out-dir", str(paper_review_dir)])
 
     print("\nTagged-universe MTF research suite complete")
-    for path in [
-        layer_root / "strategy_universe_layer.md",
-        matrix_dir / "matrix_summary.md",
-        matrix_dir / "baseline_candidate" / "baseline_candidate.md",
-        walk_forward_dir / "walk_forward_summary.md",
-        decision_dir / "research_decision.md",
-        root / "tagged_universe_selection.md",
-        root / "multi_wfo" / "tagged_multi_wfo_summary.md",
-        root / "fold_diagnostics" / "fold_diagnostics.md",
-        deep_validation_dir / "deep_validation_summary.md",
-        deep_fold_diagnostics_dir / "deep_fold_diagnostics.md",
-        tagged_decision_dir / "tagged_research_decision.md",
-    ]:
+    for path in [layer_root / "strategy_universe_layer.md", matrix_dir / "matrix_summary.md", matrix_dir / "baseline_candidate" / "baseline_candidate.md", walk_forward_dir / "walk_forward_summary.md", decision_dir / "research_decision.md", root / "tagged_universe_selection.md", root / "multi_wfo" / "tagged_multi_wfo_summary.md", root / "fold_diagnostics" / "fold_diagnostics.md", deep_validation_dir / "deep_validation_summary.md", deep_fold_diagnostics_dir / "deep_fold_diagnostics.md", tagged_decision_dir / "tagged_research_decision.md", paper_review_dir / "paper_review_plan.md"]:
         print(path)
     return 0
 
