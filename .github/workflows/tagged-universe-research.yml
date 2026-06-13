@@ -8,16 +8,7 @@ on:
       - '.github/workflows/tagged-universe-research.yml'
       - 'strategy_lab/feature_builder.py'
       - 'strategy_lab/setup_generator.py'
-      - 'scripts/build_strategy_universe_layer.py'
-      - 'scripts/run_binance_tagged_universe_matrix.py'
-      - 'scripts/run_binance_tagged_mtf_fast_matrix.py'
-      - 'scripts/run_tagged_universe_research_suite.py'
-      - 'scripts/summarize_tagged_universe_selection.py'
-      - 'scripts/run_tagged_multi_wfo.py'
-      - 'scripts/diagnose_tagged_wfo_fold.py'
-      - 'scripts/run_tagged_deep_validation.py'
-      - 'scripts/diagnose_tagged_deep_validation_folds.py'
-      - 'scripts/make_tagged_research_decision.py'
+      - 'scripts/**'
       - 'strategy_lab/universe/sector_groups.json'
 
 concurrency:
@@ -33,23 +24,17 @@ env:
 
 jobs:
   tagged-universe-research:
-    name: tagged-universe-research
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: Install package
         run: |
           python -m pip install --upgrade pip
           pip install -e .
-
       - name: Run tagged universe research suite
         run: |
           python scripts/run_tagged_universe_research_suite.py \
@@ -63,71 +48,13 @@ jobs:
             --root results/tagged_universe_research \
             --layer-root results/strategy_universe_layer \
             --sleep-sec 0.02
-          echo '--- strategy_universe_layer.md ---'
-          cat results/strategy_universe_layer/strategy_universe_layer.md
-          echo '--- tagged_universe_selection.md ---'
-          cat results/tagged_universe_research/tagged_universe_selection.md
-          echo '--- tagged_multi_wfo_summary.md ---'
-          cat results/tagged_universe_research/multi_wfo/tagged_multi_wfo_summary.md
-          echo '--- deep_validation_summary.md ---'
-          cat results/tagged_universe_research/deep_validation/deep_validation_summary.md
-          echo '--- deep_fold_diagnostics.md ---'
-          cat results/tagged_universe_research/deep_fold_diagnostics/deep_fold_diagnostics.md
-          echo '--- tagged_research_decision.md ---'
           cat results/tagged_universe_research/tagged_decision/tagged_research_decision.md
-          echo '--- fold_diagnostics.md ---'
-          cat results/tagged_universe_research/fold_diagnostics/fold_diagnostics.md
-          echo '--- research_decision.md ---'
-          cat results/tagged_universe_research/decision/research_decision.md
-          echo '--- matrix_summary.md ---'
-          cat results/tagged_universe_research/matrix/matrix_summary.md
-          echo '--- walk_forward_summary.md ---'
-          cat results/tagged_universe_research/walk_forward/walk_forward_summary.md
-
+          cat results/tagged_universe_research/paper_review/paper_review_plan.md
       - name: Upload tagged universe artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: tagged-universe-research-results
           path: |
-            results/strategy_universe_layer/strategy_universe_layer.md
-            results/strategy_universe_layer/strategy_universe_layer.json
-            results/strategy_universe_layer/strategy_universe_tags.csv
-            results/strategy_universe_layer/combined_symbols.txt
-            results/strategy_universe_layer/core_reference_symbols.txt
-            results/strategy_universe_layer/discovery_symbols.txt
-            results/tagged_universe_research/tagged_universe_selection.md
-            results/tagged_universe_research/tagged_universe_selection_no_fixed.csv
-            results/tagged_universe_research/tagged_universe_selection_all_configs.csv
-            results/tagged_universe_research/tagged_universe_selection_by_config.csv
-            results/tagged_universe_research/deep_validation/deep_validation_summary.md
-            results/tagged_universe_research/deep_validation/deep_validation_summary.json
-            results/tagged_universe_research/deep_validation/deep_baseline_candidate.json
-            results/tagged_universe_research/deep_validation/walk_forward_summary.csv
-            results/tagged_universe_research/deep_validation/walk_forward_summary.md
-            results/tagged_universe_research/deep_fold_diagnostics/deep_fold_diagnostics.md
-            results/tagged_universe_research/deep_fold_diagnostics/deep_fold_diagnostics_meta.json
-            results/tagged_universe_research/deep_fold_diagnostics/weak_folds_selected.csv
-            results/tagged_universe_research/deep_fold_diagnostics/deep_weak_folds_rows_enriched.csv
-            results/tagged_universe_research/deep_fold_diagnostics/*_breakdown_by_*.csv
-            results/tagged_universe_research/deep_fold_diagnostics/*_rows_enriched.csv
-            results/tagged_universe_research/tagged_decision/tagged_research_decision.md
-            results/tagged_universe_research/tagged_decision/tagged_research_decision.json
-            results/tagged_universe_research/fold_diagnostics/fold_diagnostics.md
-            results/tagged_universe_research/fold_diagnostics/fold_diagnostics_meta.json
-            results/tagged_universe_research/fold_diagnostics/fold_positions_enriched.csv
-            results/tagged_universe_research/fold_diagnostics/fold_allowed_trades_enriched.csv
-            results/tagged_universe_research/fold_diagnostics/breakdown_by_*.csv
-            results/tagged_universe_research/multi_wfo/tagged_multi_wfo_summary.md
-            results/tagged_universe_research/multi_wfo/tagged_multi_wfo_summary.csv
-            results/tagged_universe_research/multi_wfo/tagged_multi_wfo_best.json
-            results/tagged_universe_research/multi_wfo/*/walk_forward_summary.csv
-            results/tagged_universe_research/multi_wfo/*/walk_forward_summary.md
-            results/tagged_universe_research/matrix/matrix_summary.csv
-            results/tagged_universe_research/matrix/matrix_summary.md
-            results/tagged_universe_research/matrix/baseline_candidate/baseline_candidate.json
-            results/tagged_universe_research/matrix/baseline_candidate/baseline_candidate.md
-            results/tagged_universe_research/walk_forward/walk_forward_summary.csv
-            results/tagged_universe_research/walk_forward/walk_forward_summary.md
-            results/tagged_universe_research/decision/research_decision.json
-            results/tagged_universe_research/decision/research_decision.md
+            results/strategy_universe_layer/**
+            results/tagged_universe_research/**
