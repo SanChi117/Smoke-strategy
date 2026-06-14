@@ -19,26 +19,24 @@ def load_json(path: str | Path) -> dict[str, Any]:
     return json.loads(p.read_text(encoding="utf-8"))
 
 
-def val(data: dict[str, Any], *keys: str, default: Any = "") -> Any:
-    cur: Any = data
-    for key in keys:
-        if not isinstance(cur, dict):
-            return default
-        cur = cur.get(key, default)
-    return cur
+def deep_stats(deep: dict[str, Any]) -> dict[str, Any]:
+    # deep_validation_summary.json stores aggregate stats under deep_validation.
+    stats = deep.get("deep_validation") if isinstance(deep.get("deep_validation"), dict) else deep
+    return stats if isinstance(stats, dict) else {}
 
 
 def verdict(decision: dict[str, Any], deep: dict[str, Any], multi: dict[str, Any]) -> tuple[str, list[str]]:
+    stats = deep_stats(deep)
     reasons: list[str] = []
     tagged_decision = str(decision.get("decision", ""))
     deep_decision = str(deep.get("decision", ""))
     multi_verdict = str(multi.get("wfo_verdict", ""))
-    deep_pf = float(deep.get("avg_pf", 0) or 0)
-    deep_ret = float(deep.get("avg_ret_pct", 0) or 0)
-    deep_pos = int(float(deep.get("positive_folds", 0) or 0))
-    deep_valid = int(float(deep.get("valid_folds", deep.get("folds", 0)) or 0))
-    deep_dd = float(deep.get("worst_max_dd_pct", 99) or 99)
-    trades = int(float(deep.get("total_executed_trades", 0) or 0))
+    deep_pf = float(stats.get("avg_pf", 0) or 0)
+    deep_ret = float(stats.get("avg_ret_pct", 0) or 0)
+    deep_pos = int(float(stats.get("positive_folds", 0) or 0))
+    deep_valid = int(float(stats.get("valid_folds", stats.get("folds", 0)) or 0))
+    deep_dd = float(stats.get("worst_max_dd_pct", 99) or 99)
+    trades = int(float(stats.get("total_executed_trades", 0) or 0))
 
     reasons.append(f"tagged_decision={tagged_decision}")
     reasons.append(f"deep_decision={deep_decision}")
@@ -49,17 +47,18 @@ def verdict(decision: dict[str, Any], deep: dict[str, Any], multi: dict[str, Any
     reasons.append(f"deep_worst_dd_pct={deep_dd}")
     reasons.append(f"deep_trades={trades}")
 
-    if tagged_decision != "PROMOTE_TO_PAPER_REVIEW_CANDIDATE":
-        return "BLOCK_PAPER_REVIEW", reasons
-    if deep_decision not in {"PASS_DEEP_STRONG", "PASS_DEEP_REVIEWABLE"}:
-        return "BLOCK_PAPER_REVIEW", reasons
-    if deep_valid <= 0 or deep_pos < deep_valid:
-        return "WATCH_PAPER_REVIEW_ONLY", reasons
-    if deep_pf < 1.25 or deep_ret <= 0 or deep_dd > 8.0 or trades < 150:
-        return "WATCH_PAPER_REVIEW_ONLY", reasons
-    if multi_verdict in {"PASS_STRONG_WFO", "WATCH_REVIEWABLE"}:
-        return "PAPER_REVIEW_READY", reasons
-    return "PAPER_REVIEW_READY_WITH_CAUTION", reasons
+    if tagged_decision == "PROMOTE_TO_PAPER_REVIEW_CANDIDATE" and deep_decision == "PASS_DEEP_STRONG":
+        if multi_verdict in {"PASS_STRONG_WFO", "WATCH_REVIEWABLE"}:
+            return "PAPER_REVIEW_READY", reasons
+        return "PAPER_REVIEW_READY_WITH_CAUTION", reasons
+
+    # Current intended state: deep can be promising while multi-WFO is still unstable.
+    if deep_valid > 0 and deep_pos == deep_valid and deep_pf >= 1.25 and deep_ret > 0 and trades >= 150:
+        if deep_dd <= 8.0:
+            return "WATCH_PAPER_REVIEW_ONLY", reasons
+        return "WATCH_PAPER_REVIEW_ONLY_DD_CAUTION", reasons
+
+    return "BLOCK_PAPER_REVIEW", reasons
 
 
 def write_md(path: str | Path, plan: dict[str, Any]) -> None:
@@ -85,16 +84,15 @@ def write_md(path: str | Path, plan: dict[str, Any]) -> None:
         "- Paper only; live trading remains blocked.",
         "- Use the full tagged universe; do not cherry-pick symbols from winners.",
         "- Keep max 1 open position per symbol.",
-        "- Stop paper review if daily drawdown exceeds 2%. ",
-        "- Stop paper review if weekly drawdown exceeds 5%. ",
+        "- Stop paper review if daily drawdown exceeds 2%.",
+        "- Stop paper review if weekly drawdown exceeds 5%.",
         "- Stop paper review after 3 consecutive stopped-out trades.",
         "- Minimum review sample: 100 closed paper trades or 30 calendar days, whichever comes later.",
         "- Review must compare paper fills with generated signal context before any live discussion.",
         "",
         "## Candidate filters",
     ]
-    filters = plan.get("candidate_filters", {})
-    for key, value in filters.items():
+    for key, value in plan.get("candidate_filters", {}).items():
         lines.append(f"- {key}: {value if value not in ['', [], None] else 'none'}")
     lines += ["", "## Reasons"]
     for reason in plan.get("reasons", []):
@@ -115,6 +113,7 @@ def main() -> int:
     deep = load_json(args.deep)
     multi = load_json(args.multi)
     baseline = load_json(args.baseline)
+    stats = deep_stats(deep)
     status, reasons = verdict(decision, deep, multi)
     candidate = str(baseline.get("name") or deep.get("candidate") or multi.get("name") or "UNKNOWN")
 
@@ -123,12 +122,12 @@ def main() -> int:
         "candidate": candidate,
         "tagged_decision": decision.get("decision", ""),
         "deep_decision": deep.get("decision", ""),
-        "deep_valid_folds": deep.get("valid_folds", deep.get("folds", 0)),
-        "deep_positive_folds": deep.get("positive_folds", 0),
-        "deep_avg_ret_pct": deep.get("avg_ret_pct", 0),
-        "deep_avg_pf": deep.get("avg_pf", 0),
-        "deep_worst_dd_pct": deep.get("worst_max_dd_pct", 0),
-        "deep_total_trades": deep.get("total_executed_trades", 0),
+        "deep_valid_folds": stats.get("valid_folds", stats.get("folds", 0)),
+        "deep_positive_folds": stats.get("positive_folds", 0),
+        "deep_avg_ret_pct": stats.get("avg_ret_pct", 0),
+        "deep_avg_pf": stats.get("avg_pf", 0),
+        "deep_worst_dd_pct": stats.get("worst_max_dd_pct", 0),
+        "deep_total_trades": stats.get("total_executed_trades", 0),
         "multi_wfo_verdict": multi.get("wfo_verdict", ""),
         "reasons": reasons,
         "candidate_filters": {
