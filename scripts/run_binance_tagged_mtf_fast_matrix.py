@@ -32,25 +32,32 @@ def mtf_cfg(name: str, **overrides: object) -> dict:
     return item
 
 
-MTF_V1_CONFIGS = [
-    mtf_cfg("TAGGED_MTF_NO_DIRECTION_BLOCK_V1"),
+# These names are kept because run_tagged_universe_research_suite selects them
+# for multi-WFO/deep validation. Their logic is now V2.
+MTF_SELECTED_CONFIGS = [
+    mtf_cfg(
+        "TAGGED_MTF_NO_DIRECTION_BLOCK_V1",
+        blocked_setup_types=("breakout", "range_rotation", "watch_impulse"),
+    ),
     mtf_cfg(
         "TAGGED_MTF_NO_DIRECTION_NO_IGNITION_V1",
-        blocked_setup_types=("breakout", "range_rotation", "ignition"),
+        blocked_setup_types=("breakout", "range_rotation", "watch_impulse", "liquidity_reclaim"),
     ),
     mtf_cfg(
         "TAGGED_MTF_ENTRY_CONFIRM_V1",
-        min_confidence=48.0,
-        quality_take_threshold=70.0,
-        quality_watch_threshold=56.0,
-        structure_take_threshold=68.0,
-        structure_watch_threshold=56.0,
-        blocked_setup_types=("breakout", "range_rotation", "ignition"),
+        allowed_setup_types=("pullback", "ignition"),
+        allowed_direction_contexts=("down",),
+        blocked_setup_types=("breakout", "range_rotation", "watch_impulse", "liquidity_reclaim"),
+        min_confidence=43.0,
+        quality_take_threshold=66.0,
+        quality_watch_threshold=54.0,
+        structure_take_threshold=64.0,
+        structure_watch_threshold=54.0,
     ),
 ]
 
 
-MTF_V2_CONFIGS = [
+MTF_V2_DIAGNOSTIC_CONFIGS = [
     mtf_cfg(
         "TAGGED_MTF_V2_NO_WATCH_IMPULSE",
         blocked_setup_types=("breakout", "range_rotation", "watch_impulse"),
@@ -63,18 +70,6 @@ MTF_V2_CONFIGS = [
         "TAGGED_MTF_V2_PULLBACK_IGNITION_ONLY",
         allowed_setup_types=("pullback", "ignition"),
         blocked_setup_types=("breakout", "range_rotation", "watch_impulse", "liquidity_reclaim"),
-        min_confidence=45.0,
-    ),
-    mtf_cfg(
-        "TAGGED_MTF_V2_SHORT_CONTEXT_PULLBACK_IGNITION",
-        allowed_setup_types=("pullback", "ignition"),
-        allowed_direction_contexts=("down",),
-        blocked_setup_types=("breakout", "range_rotation", "watch_impulse", "liquidity_reclaim"),
-        min_confidence=43.0,
-        quality_take_threshold=66.0,
-        quality_watch_threshold=54.0,
-        structure_take_threshold=64.0,
-        structure_watch_threshold=54.0,
     ),
     mtf_cfg(
         "TAGGED_MTF_V2_SHORT_CONTEXT_PULLBACK_ONLY",
@@ -90,7 +85,7 @@ MTF_V2_CONFIGS = [
 ]
 
 
-MTF_FAST_CONFIGS = MTF_V2_CONFIGS + MTF_V1_CONFIGS
+MTF_FAST_CONFIGS = MTF_SELECTED_CONFIGS + MTF_V2_DIAGNOSTIC_CONFIGS
 
 
 def main() -> int:
@@ -99,7 +94,7 @@ def main() -> int:
     print("Universe/tags: unchanged")
     print("Context: 1D/4H market context")
     print("Entry timeframe: caller interval, expected 15m")
-    print("V2 focus: no watch_impulse, test no liquidity_reclaim, pullback/ignition, short 4H/down bias")
+    print("V2 focus: no watch_impulse, no liquidity_reclaim, pullback/ignition, short down-context")
     print("Configs: " + ", ".join(str(item["name"]) for item in MTF_FAST_CONFIGS))
     return matrix.main()
 
