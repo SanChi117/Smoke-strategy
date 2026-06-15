@@ -37,14 +37,17 @@ def mtf_cfg(name: str, **overrides: object) -> dict:
 MTF_SELECTED_CONFIGS = [
     mtf_cfg(
         "TAGGED_MTF_NO_DIRECTION_BLOCK_V1",
+        blocked_trend_contexts=(),
         blocked_setup_types=("breakout", "range_rotation", "watch_impulse"),
     ),
     mtf_cfg(
         "TAGGED_MTF_NO_DIRECTION_NO_IGNITION_V1",
+        blocked_trend_contexts=(),
         blocked_setup_types=("breakout", "range_rotation", "watch_impulse", "liquidity_reclaim"),
     ),
     mtf_cfg(
         "TAGGED_MTF_ENTRY_CONFIRM_V1",
+        blocked_trend_contexts=(),
         allowed_setup_types=("pullback", "ignition"),
         allowed_direction_contexts=("down",),
         blocked_setup_types=("breakout", "range_rotation", "watch_impulse", "liquidity_reclaim"),
@@ -60,19 +63,23 @@ MTF_SELECTED_CONFIGS = [
 MTF_V2_DIAGNOSTIC_CONFIGS = [
     mtf_cfg(
         "TAGGED_MTF_V2_NO_WATCH_IMPULSE",
+        blocked_trend_contexts=(),
         blocked_setup_types=("breakout", "range_rotation", "watch_impulse"),
     ),
     mtf_cfg(
         "TAGGED_MTF_V2_NO_LIQ_RECLAIM",
+        blocked_trend_contexts=(),
         blocked_setup_types=("breakout", "range_rotation", "watch_impulse", "liquidity_reclaim"),
     ),
     mtf_cfg(
         "TAGGED_MTF_V2_PULLBACK_IGNITION_ONLY",
+        blocked_trend_contexts=(),
         allowed_setup_types=("pullback", "ignition"),
         blocked_setup_types=("breakout", "range_rotation", "watch_impulse", "liquidity_reclaim"),
     ),
     mtf_cfg(
         "TAGGED_MTF_V2_SHORT_CONTEXT_PULLBACK_ONLY",
+        blocked_trend_contexts=(),
         allowed_setup_types=("pullback",),
         allowed_direction_contexts=("down",),
         blocked_setup_types=("breakout", "range_rotation", "watch_impulse", "liquidity_reclaim", "ignition"),
@@ -94,6 +101,7 @@ def main() -> int:
     print("Universe/tags: unchanged")
     print("Context: 1D/4H market context")
     print("Entry timeframe: caller interval, expected 15m")
+    print("V2 fix: trend context is not blocked; direction down-context can be allowed")
     print("V2 focus: no watch_impulse, no liquidity_reclaim, pullback/ignition, short down-context")
     print("Configs: " + ", ".join(str(item["name"]) for item in MTF_FAST_CONFIGS))
     return matrix.main()
