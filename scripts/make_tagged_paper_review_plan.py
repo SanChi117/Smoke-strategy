@@ -20,7 +20,6 @@ def load_json(path: str | Path) -> dict[str, Any]:
 
 
 def deep_stats(deep: dict[str, Any]) -> dict[str, Any]:
-    # deep_validation_summary.json stores aggregate stats under deep_validation.
     stats = deep.get("deep_validation") if isinstance(deep.get("deep_validation"), dict) else deep
     return stats if isinstance(stats, dict) else {}
 
@@ -52,13 +51,16 @@ def verdict(decision: dict[str, Any], deep: dict[str, Any], multi: dict[str, Any
             return "PAPER_REVIEW_READY", reasons
         return "PAPER_REVIEW_READY_WITH_CAUTION", reasons
 
-    # Current intended state: deep can be promising while multi-WFO is still unstable.
     if deep_valid > 0 and deep_pos == deep_valid and deep_pf >= 1.25 and deep_ret > 0 and trades >= 150:
         if deep_dd <= 8.0:
             return "WATCH_PAPER_REVIEW_ONLY", reasons
         return "WATCH_PAPER_REVIEW_ONLY_DD_CAUTION", reasons
 
     return "BLOCK_PAPER_REVIEW", reasons
+
+
+def fmt_value(value: Any) -> Any:
+    return value if value not in ["", [], None] else "none"
 
 
 def write_md(path: str | Path, plan: dict[str, Any]) -> None:
@@ -93,7 +95,7 @@ def write_md(path: str | Path, plan: dict[str, Any]) -> None:
         "## Candidate filters",
     ]
     for key, value in plan.get("candidate_filters", {}).items():
-        lines.append(f"- {key}: {value if value not in ['', [], None] else 'none'}")
+        lines.append(f"- {key}: {fmt_value(value)}")
     lines += ["", "## Reasons"]
     for reason in plan.get("reasons", []):
         lines.append(f"- {reason}")
@@ -137,12 +139,20 @@ def main() -> int:
             "structure_take_threshold": baseline.get("structure_take_threshold"),
             "structure_watch_threshold": baseline.get("structure_watch_threshold"),
             "min_volume_ratio": baseline.get("min_volume_ratio"),
+            "allowed_setup_types": baseline.get("allowed_setup_types", []),
             "blocked_setup_types": baseline.get("blocked_setup_types", []),
-            "blocked_volatility_regimes": baseline.get("blocked_volatility_regimes", []),
+            "allowed_trend_contexts": baseline.get("allowed_trend_contexts", []),
             "blocked_trend_contexts": baseline.get("blocked_trend_contexts", []),
+            "allowed_direction_contexts": baseline.get("allowed_direction_contexts", []),
+            "blocked_direction_contexts": baseline.get("blocked_direction_contexts", []),
+            "allowed_volatility_regimes": baseline.get("allowed_volatility_regimes", []),
+            "blocked_volatility_regimes": baseline.get("blocked_volatility_regimes", []),
+            "allowed_liquidity_states": baseline.get("allowed_liquidity_states", []),
             "blocked_liquidity_states": baseline.get("blocked_liquidity_states", []),
+            "allowed_candle_types": baseline.get("allowed_candle_types", []),
             "blocked_candle_types": baseline.get("blocked_candle_types", []),
             "allowed_symbols": baseline.get("allowed_symbols", []),
+            "blocked_symbols": baseline.get("blocked_symbols", []),
         },
         "paper_review_rules": {
             "live_trading": "blocked",
