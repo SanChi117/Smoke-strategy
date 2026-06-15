@@ -32,13 +32,22 @@ def mtf_cfg(name: str, **overrides: object) -> dict:
     return item
 
 
-# These names are kept because run_tagged_universe_research_suite selects them
-# for multi-WFO/deep validation. Their logic is now V2.
+# Suite still selects these 3 legacy names for multi-WFO/deep validation.
+# Mapping is intentional and documented in docs/TAGGED_MTF_DECISION_LOG.md:
+# - ENTRY_CONFIRM = strict v2 baseline, current best research baseline.
+# - NO_DIRECTION_NO_IGNITION = broad v2 diagnostic.
+# - NO_DIRECTION_BLOCK = hybrid v2 diagnostic.
 MTF_SELECTED_CONFIGS = [
     mtf_cfg(
-        "TAGGED_MTF_NO_DIRECTION_BLOCK_V1",
-        blocked_trend_contexts=(),
-        blocked_setup_types=("breakout", "range_rotation", "watch_impulse"),
+        "TAGGED_MTF_ENTRY_CONFIRM_V1",
+        allowed_setup_types=("pullback", "ignition"),
+        allowed_direction_contexts=("down",),
+        blocked_setup_types=("breakout", "range_rotation", "watch_impulse", "liquidity_reclaim"),
+        min_confidence=43.0,
+        quality_take_threshold=66.0,
+        quality_watch_threshold=54.0,
+        structure_take_threshold=64.0,
+        structure_watch_threshold=54.0,
     ),
     mtf_cfg(
         "TAGGED_MTF_NO_DIRECTION_NO_IGNITION_V1",
@@ -46,7 +55,7 @@ MTF_SELECTED_CONFIGS = [
         blocked_setup_types=("breakout", "range_rotation", "watch_impulse", "liquidity_reclaim"),
     ),
     mtf_cfg(
-        "TAGGED_MTF_ENTRY_CONFIRM_V1",
+        "TAGGED_MTF_NO_DIRECTION_BLOCK_V1",
         blocked_trend_contexts=(),
         allowed_setup_types=("pullback", "ignition"),
         allowed_direction_contexts=("down",),
@@ -60,39 +69,7 @@ MTF_SELECTED_CONFIGS = [
 ]
 
 
-MTF_V2_DIAGNOSTIC_CONFIGS = [
-    mtf_cfg(
-        "TAGGED_MTF_V2_NO_WATCH_IMPULSE",
-        blocked_trend_contexts=(),
-        blocked_setup_types=("breakout", "range_rotation", "watch_impulse"),
-    ),
-    mtf_cfg(
-        "TAGGED_MTF_V2_NO_LIQ_RECLAIM",
-        blocked_trend_contexts=(),
-        blocked_setup_types=("breakout", "range_rotation", "watch_impulse", "liquidity_reclaim"),
-    ),
-    mtf_cfg(
-        "TAGGED_MTF_V2_PULLBACK_IGNITION_ONLY",
-        blocked_trend_contexts=(),
-        allowed_setup_types=("pullback", "ignition"),
-        blocked_setup_types=("breakout", "range_rotation", "watch_impulse", "liquidity_reclaim"),
-    ),
-    mtf_cfg(
-        "TAGGED_MTF_V2_SHORT_CONTEXT_PULLBACK_ONLY",
-        blocked_trend_contexts=(),
-        allowed_setup_types=("pullback",),
-        allowed_direction_contexts=("down",),
-        blocked_setup_types=("breakout", "range_rotation", "watch_impulse", "liquidity_reclaim", "ignition"),
-        min_confidence=42.0,
-        quality_take_threshold=65.0,
-        quality_watch_threshold=53.0,
-        structure_take_threshold=63.0,
-        structure_watch_threshold=53.0,
-    ),
-]
-
-
-MTF_FAST_CONFIGS = MTF_SELECTED_CONFIGS + MTF_V2_DIAGNOSTIC_CONFIGS
+MTF_FAST_CONFIGS = MTF_SELECTED_CONFIGS
 
 
 def main() -> int:
@@ -101,8 +78,7 @@ def main() -> int:
     print("Universe/tags: unchanged")
     print("Context: 1D/4H market context")
     print("Entry timeframe: caller interval, expected 15m")
-    print("V2 fix: trend context is not blocked; direction down-context can be allowed")
-    print("V2 focus: no watch_impulse, no liquidity_reclaim, pullback/ignition, short down-context")
+    print("A/B mapping: ENTRY_CONFIRM=strict baseline, NO_DIRECTION_NO_IGNITION=broad, NO_DIRECTION_BLOCK=hybrid")
     print("Configs: " + ", ".join(str(item["name"]) for item in MTF_FAST_CONFIGS))
     return matrix.main()
 
