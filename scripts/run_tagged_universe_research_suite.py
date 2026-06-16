@@ -49,6 +49,7 @@ def main() -> int:
     deep_validation_dir = root / "deep_validation"
     deep_fold_diagnostics_dir = root / "deep_fold_diagnostics"
     paper_review_dir = root / "paper_review"
+    micro_root = root / "micro_5m"
     candles_path = root / "data" / "tagged_universe_candles.csv"
     wf_candles_path = root / "data" / "walk_forward_candles.csv"
     symbols_file = layer_root / "combined_symbols.txt"
@@ -74,8 +75,10 @@ def main() -> int:
     run_cmd([sys.executable, "scripts/make_tagged_paper_review_plan.py", "--decision", str(tagged_decision_dir / "tagged_research_decision.json"), "--deep", str(deep_validation_dir / "deep_validation_summary.json"), "--multi", str(root / "multi_wfo" / "tagged_multi_wfo_best.json"), "--baseline", str(deep_validation_dir / "deep_baseline_candidate.json"), "--out-dir", str(paper_review_dir)])
     run_cmd([sys.executable, "scripts/make_tagged_paper_review_templates.py", "--plan-json", str(paper_review_dir / "paper_review_plan.json"), "--out-dir", str(paper_review_dir)])
 
+    run_cmd([sys.executable, "scripts/run_tagged_mtf_5m_confirmation_matrix.py", "--symbols-file", str(symbols_file), "--limit", str(max(args.limit * 3, 3000)), "--raw-5m-out", str(micro_root / "data" / "raw_5m_candles.csv"), "--candles-15m-out", str(micro_root / "data" / "rebuilt_15m_candles.csv"), "--out-dir", str(micro_root / "matrix"), "--profile", args.profile, "--sleep-sec", str(args.sleep_sec)])
+
     print("\nTagged-universe MTF research suite complete")
-    for path in [layer_root / "strategy_universe_layer.md", matrix_dir / "matrix_summary.md", walk_forward_dir / "walk_forward_summary.md", root / "multi_wfo" / "tagged_multi_wfo_summary.md", deep_validation_dir / "deep_validation_summary.md", deep_fold_diagnostics_dir / "deep_fold_diagnostics.md", tagged_decision_dir / "tagged_research_decision.md", paper_review_dir / "paper_review_plan.md", paper_review_dir / "paper_review_protocol.md", paper_review_dir / "paper_review_journal_template.csv"]:
+    for path in [layer_root / "strategy_universe_layer.md", matrix_dir / "matrix_summary.md", walk_forward_dir / "walk_forward_summary.md", root / "multi_wfo" / "tagged_multi_wfo_summary.md", deep_validation_dir / "deep_validation_summary.md", deep_fold_diagnostics_dir / "deep_fold_diagnostics.md", tagged_decision_dir / "tagged_research_decision.md", paper_review_dir / "paper_review_plan.md", paper_review_dir / "paper_review_protocol.md", paper_review_dir / "paper_review_journal_template.csv", micro_root / "matrix" / "matrix_summary.md"]:
         print(path)
     return 0
 
