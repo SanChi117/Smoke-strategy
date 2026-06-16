@@ -1,0 +1,15 @@
+[Unit]
+Description=Smoke Strategy Paper Review Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/smoke-strategy
+EnvironmentFile=/opt/smoke-strategy/.env.paper
+ExecStart=/usr/bin/python3 /opt/smoke-strategy/scripts/smoke_paper_server.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
