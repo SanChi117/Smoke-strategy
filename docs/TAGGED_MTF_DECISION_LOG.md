@@ -8,9 +8,9 @@ Research/paper-review only. No live trading approval is implied by this file.
 
 ## Best current research baseline
 
-`TAGGED_MTF_ENTRY_CONFIRM_V1` is the current strict MTF v2 baseline.
+`TAGGED_MTF_NO_DIRECTION_BLOCK_V1` is the current tagged MTF v2 baseline.
 
-In the fast matrix file this legacy name intentionally maps to:
+This is the HYBRID v2 branch from the controlled A/B comparison:
 
 - allowed setup types: `pullback`, `ignition`
 - allowed direction context: `down`
@@ -18,79 +18,78 @@ In the fast matrix file this legacy name intentionally maps to:
 - blocked volatility regimes: `high`
 - blocked liquidity states: `high_sweep_reject`
 - blocked candle types: `bear_rejection`
-- trend context block: left as the strategy default
+- blocked trend context: none
 
-Best observed deep validation for this strict v2 baseline:
+Best observed validation for this hybrid v2 baseline:
 
-- decision: `PASS_DEEP_STRONG`
-- positive folds: `4/4`
-- average return: `+4.3%`
-- average PF: `1.8743`
-- worst DD: `4.07%`
-- executed trades: `254`
+- tagged decision: `PROMOTE_TO_PAPER_REVIEW_CANDIDATE`
+- paper-review status: `PAPER_REVIEW_READY`
+- multi-WFO verdict: `PASS_STRONG_WFO`
+- multi-WFO folds: `3/3`
+- multi-WFO average return: `+0.6033%`
+- multi-WFO average PF: `1.6331`
+- multi-WFO worst DD: `3.69%`
+- deep decision: `PASS_DEEP_STRONG`
+- deep positive folds: `4/4`
+- deep average return: `+4.915%`
+- deep average PF: `1.9357`
+- deep worst DD: `4.59%`
+- deep executed trades: `264`
 
 Paper-review interpretation:
 
-- paper-review can be considered only with caution
-- live trading remains blocked
-- reason: Multi-WFO / matrix were still weak and overfiltered in the same artifact
+- paper-review is ready under the protocol files generated in `results/tagged_universe_research/paper_review/`.
+- live trading remains blocked.
+- minimum review sample: 100 closed paper trades or 30 calendar days, whichever comes later.
 
-## Diagnostic branches
+## Controlled A/B branches
 
 The suite still selects three legacy names for multi-WFO and deep validation. Their current intended mapping is:
 
-1. `TAGGED_MTF_ENTRY_CONFIRM_V1`
-   - strict MTF v2 baseline
-   - current best research baseline
-
-2. `TAGGED_MTF_NO_DIRECTION_NO_IGNITION_V1`
-   - broad v2 diagnostic
-   - no trend context block
-   - blocks `watch_impulse` and `liquidity_reclaim`
-   - no direction restriction
-
-3. `TAGGED_MTF_NO_DIRECTION_BLOCK_V1`
-   - hybrid v2 diagnostic
+1. `TAGGED_MTF_NO_DIRECTION_BLOCK_V1`
+   - hybrid v2 baseline
    - no trend context block
    - keeps `pullback`/`ignition`
    - keeps `direction=down`
+   - current best research baseline
 
-## Why the trend-context fix is not the new baseline
+2. `TAGGED_MTF_ENTRY_CONFIRM_V1`
+   - strict v2 diagnostic
+   - keeps strategy default trend-context block
+   - keeps `pullback`/`ignition`
+   - keeps `direction=down`
 
-The trend-context free test removed the apparent conflict between:
+3. `TAGGED_MTF_NO_DIRECTION_NO_IGNITION_V1`
+   - broad v2 diagnostic
+   - no trend context block
+   - no direction restriction
+   - blocks `watch_impulse` and `liquidity_reclaim`
 
-- `blocked_trend_contexts=down`
-- `allowed_direction_contexts=down`
+## Why broad v2 is not the baseline
 
-That test increased matrix trade count but reduced deep quality.
+Broad v2 can win a short matrix by having more trades, but it failed robustness checks in the controlled A/B artifact:
 
-Observed after freeing trend context:
+- multi-WFO verdict: `BLOCK_WEAK_WFO`
+- positive folds: `1/3`
+- average return: `+0.0767%`
+- average PF: `1.1694`
+- worst DD: `5.13%`
 
-- deep decision: `PASS_DEEP_STRONG`
-- positive folds: `4/4`
-- average return: `+2.91%`
-- average PF: `1.4469`
-- worst DD: `5.14%`
-- executed trades: `302`
-
-This is weaker than the strict baseline. Therefore the trend-context free version is diagnostic only, not the new baseline.
+Therefore broad v2 remains diagnostic only.
 
 ## Do not do next
 
 Do not keep adding filters from a single artifact without A/B comparison.
 Do not manually pick winner symbols as a final solution.
-Do not move to live trading while Multi-WFO remains weak.
-Do not treat a broader matrix with lower PF as improvement just because it has more trades.
+Do not move to live trading from this decision log.
+Do not treat a broader matrix with lower WFO quality as improvement just because it has more trades.
 
 ## Next acceptable step
 
-Run the three-branch A/B test above and compare:
+Use the generated paper-review files:
 
-- matrix trades
-- Multi-WFO folds
-- Deep folds
-- average PF
-- worst DD
-- paper-review status
+- `paper_review_protocol.md`
+- `paper_review_journal_template.csv`
+- `paper_review_daily_checklist_template.csv`
 
-A branch can replace the strict baseline only if it improves robustness without materially degrading deep PF/DD.
+Paper review must track every signal, rule violation, drawdown stop and context field before any further deployment discussion.
