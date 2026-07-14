@@ -5,6 +5,7 @@ on:
     paths:
       - 'strategy_lab/**'
       - 'scripts/smoke_control_server.py'
+      - 'scripts/smoke_control_server_v2.py'
       - 'deployment/**'
       - 'docs/LIVE_PAPER_V2_RU.md'
       - 'docs/MULTI_PROJECT_CONTROL_PANEL_RU.md'
@@ -48,10 +49,13 @@ jobs:
 
       - name: Compile Python
         run: |
-          python -m compileall -q strategy_lab scripts/smoke_control_server.py
+          python -m compileall -q strategy_lab scripts/smoke_control_server.py scripts/smoke_control_server_v2.py
 
       - name: Test causal history
         run: python -m strategy_lab.causal_history_smoke_test
+
+      - name: Test completed higher-timeframe context
+        run: python -m strategy_lab.closed_context_smoke_test
 
       - name: Test layered decision engine
         run: python -m strategy_lab.decision_engine_smoke_test
