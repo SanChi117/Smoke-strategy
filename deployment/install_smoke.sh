@@ -83,14 +83,30 @@ SMOKE_MAX_STOP_STREAK=3
 SMOKE_MAX_OPEN_PER_SYMBOL=1
 SMOKE_MAX_OPEN_TOTAL=2
 EOF
-  chmod 600 "${ENV_FILE}"
 else
   ADMIN_PASSWORD="$(grep '^SMOKE_ADMIN_PASSWORD=' "${ENV_FILE}" | cut -d= -f2- || true)"
   ADMIN_USER="$(grep '^SMOKE_ADMIN_USER=' "${ENV_FILE}" | cut -d= -f2- || echo smoke)"
   if ! grep -q '^SMOKE_MAX_OPEN_TOTAL=' "${ENV_FILE}"; then
     echo 'SMOKE_MAX_OPEN_TOTAL=2' >> "${ENV_FILE}"
   fi
+  if [ -z "${ADMIN_PASSWORD}" ]; then
+    ADMIN_PASSWORD="$(python3 - <<'PY'
+import secrets
+print(secrets.token_urlsafe(16))
+PY
+)"
+    if grep -q '^SMOKE_ADMIN_PASSWORD=' "${ENV_FILE}"; then
+      sed -i "s|^SMOKE_ADMIN_PASSWORD=.*|SMOKE_ADMIN_PASSWORD=${ADMIN_PASSWORD}|" "${ENV_FILE}"
+    else
+      echo "SMOKE_ADMIN_PASSWORD=${ADMIN_PASSWORD}" >> "${ENV_FILE}"
+    fi
+  fi
 fi
+
+# The service runs as the dedicated smoke user and the Python process also reads
+# this file on startup. Keep secrets private but readable by that user.
+chown "${APP_USER}:${APP_USER}" "${ENV_FILE}"
+chmod 600 "${ENV_FILE}"
 
 sudo -u "${APP_USER}" "${APP_DIR}/.venv/bin/python" scripts/build_strategy_universe_layer.py \
   --top-n-per-group 10 \
