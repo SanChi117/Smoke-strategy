@@ -27,10 +27,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: live-paper-hardening-${{ github.ref }}
-  cancel-in-progress: false
-
 env:
   PYTHONUNBUFFERED: '1'
 
