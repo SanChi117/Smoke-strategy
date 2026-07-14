@@ -1,0 +1,100 @@
+name: Live Paper Hardening
+
+on:
+  pull_request:
+    paths:
+      - 'strategy_lab/**'
+      - 'scripts/smoke_control_server.py'
+      - 'deployment/**'
+      - 'docs/LIVE_PAPER_V2_RU.md'
+      - 'docs/MULTI_PROJECT_CONTROL_PANEL_RU.md'
+      - '.github/workflows/live-paper-hardening.yml'
+  workflow_dispatch:
+    inputs:
+      run_full_causal_revalidation:
+        description: 'Run full tagged MTF matrix, multi-WFO and deep validation with causal history'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-paper-hardening-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  fast-checks:
+    name: causal-and-vps-fast-checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Compile Python
+        run: |
+          python -m compileall -q strategy_lab scripts/smoke_control_server.py
+
+      - name: Test causal history
+        run: python -m strategy_lab.causal_history_smoke_test
+
+      - name: Test layered decision engine
+        run: python -m strategy_lab.decision_engine_smoke_test
+
+      - name: Test closed-candle incremental storage
+        run: python -m strategy_lab.live_market_smoke_test
+
+      - name: Test existing integrated pipeline
+        run: python -m strategy_lab.pipeline_smoke_test
+
+      - name: Validate one-command installer syntax
+        run: bash -n deployment/install_smoke.sh
+
+  full-causal-revalidation:
+    name: full-causal-tagged-revalidation
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_full_causal_revalidation == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Run complete causal tagged validation
+        run: |
+          python scripts/run_tagged_universe_research_suite.py \
+            --root results/causal_tagged_revalidation \
+            --layer-root results/causal_strategy_universe_layer
+
+      - name: Upload causal validation
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-causal-tagged-revalidation
+          path: |
+            results/causal_tagged_revalidation/**
+            results/causal_strategy_universe_layer/**
