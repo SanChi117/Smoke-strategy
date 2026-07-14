@@ -81,11 +81,15 @@ SMOKE_DAILY_DD_STOP_PCT=2.0
 SMOKE_WEEKLY_DD_STOP_PCT=5.0
 SMOKE_MAX_STOP_STREAK=3
 SMOKE_MAX_OPEN_PER_SYMBOL=1
+SMOKE_MAX_OPEN_TOTAL=2
 EOF
   chmod 600 "${ENV_FILE}"
 else
   ADMIN_PASSWORD="$(grep '^SMOKE_ADMIN_PASSWORD=' "${ENV_FILE}" | cut -d= -f2- || true)"
   ADMIN_USER="$(grep '^SMOKE_ADMIN_USER=' "${ENV_FILE}" | cut -d= -f2- || echo smoke)"
+  if ! grep -q '^SMOKE_MAX_OPEN_TOTAL=' "${ENV_FILE}"; then
+    echo 'SMOKE_MAX_OPEN_TOTAL=2' >> "${ENV_FILE}"
+  fi
 fi
 
 sudo -u "${APP_USER}" "${APP_DIR}/.venv/bin/python" scripts/build_strategy_universe_layer.py \
@@ -93,8 +97,10 @@ sudo -u "${APP_USER}" "${APP_DIR}/.venv/bin/python" scripts/build_strategy_unive
   --out-dir results/strategy_universe_layer
 
 sudo -u "${APP_USER}" "${APP_DIR}/.venv/bin/python" -m strategy_lab.causal_history_smoke_test
+sudo -u "${APP_USER}" "${APP_DIR}/.venv/bin/python" -m strategy_lab.closed_context_smoke_test
 sudo -u "${APP_USER}" "${APP_DIR}/.venv/bin/python" -m strategy_lab.decision_engine_smoke_test
 sudo -u "${APP_USER}" "${APP_DIR}/.venv/bin/python" -m strategy_lab.live_market_smoke_test
+sudo -u "${APP_USER}" "${APP_DIR}/.venv/bin/python" -m py_compile scripts/smoke_control_server.py scripts/smoke_control_server_v2.py
 
 cat > "/etc/systemd/system/${SERVICE_NAME}.service" <<EOF
 [Unit]
@@ -108,7 +114,7 @@ User=${APP_USER}
 Group=${APP_USER}
 WorkingDirectory=${APP_DIR}
 EnvironmentFile=${ENV_FILE}
-ExecStart=${APP_DIR}/.venv/bin/python ${APP_DIR}/scripts/smoke_control_server.py
+ExecStart=${APP_DIR}/.venv/bin/python ${APP_DIR}/scripts/smoke_control_server_v2.py
 Restart=always
 RestartSec=5
 TimeoutStopSec=20
