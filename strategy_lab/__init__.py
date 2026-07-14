@@ -6,8 +6,10 @@ from strategy_lab import rolling_symbol_strength as _rolling_symbol_strength
 from strategy_lab import structure_learning as _structure_learning
 from strategy_lab import trade_quality_score as _trade_quality_score
 from strategy_lab.causal_history import apply_causal_patches as _apply_causal_patches
+from strategy_lab.closed_context import apply_closed_context_patch as _apply_closed_context_patch
 
 _apply_causal_patches()
+_apply_closed_context_patch()
 
 __all__ = [
     "config",
@@ -46,6 +48,7 @@ __all__ = [
     "trade_quality_score",
     "structure_learning",
     "causal_history",
+    "closed_context",
     "decision_engine",
     "live_market",
     "strategy_assembly",
