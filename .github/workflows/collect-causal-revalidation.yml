@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 360
     env:
       GH_TOKEN: ${{ github.token }}
-      TARGET_SHA: c2e649b37cc5bd79e33446e763d58782f74d2e89
+      TARGET_SHA: 28e29ea252a65601895e8eb5996949c088a04615
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
@@ -95,7 +95,7 @@ jobs:
           deep_stats = deep.get('deep_validation') if isinstance(deep.get('deep_validation'), dict) else deep
           result = {
               'source_run_id': '${{ steps.find.outputs.run_id }}',
-              'source_head_sha': 'c2e649b37cc5bd79e33446e763d58782f74d2e89',
+              'source_head_sha': '28e29ea252a65601895e8eb5996949c088a04615',
               'workflow_watch_outcome': '${{ steps.watch.outcome }}',
               'tagged_decision': tagged.get('decision', ''),
               'candidate': tagged.get('candidate', '') or deep.get('candidate', '') or multi.get('name', ''),
@@ -149,5 +149,5 @@ jobs:
             echo "No result changes to commit"
             exit 0
           fi
-          git commit -m "Record frozen final causal tagged revalidation result"
+          git commit -m "Record non-cancelling frozen causal revalidation result"
           git push origin HEAD:agent/live-paper-hardening
