@@ -72,10 +72,12 @@ def main() -> None:
         assert result.symbols_traded <= 4, "smoke selector should keep symbols bounded"
 
     from strategy_lab.causal_history_smoke_test import main as causal_main
+    from strategy_lab.closed_context_smoke_test import main as closed_context_main
     from strategy_lab.decision_engine_smoke_test import main as decision_main
     from strategy_lab.live_market_smoke_test import main as live_market_main
 
     causal_main()
+    closed_context_main()
     decision_main()
     live_market_main()
     print("SMOKE TEST OK")
