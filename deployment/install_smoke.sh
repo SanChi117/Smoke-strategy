@@ -98,6 +98,7 @@ sudo -u "${APP_USER}" "${APP_DIR}/.venv/bin/python" scripts/build_strategy_unive
 
 sudo -u "${APP_USER}" "${APP_DIR}/.venv/bin/python" -m strategy_lab.causal_history_smoke_test
 sudo -u "${APP_USER}" "${APP_DIR}/.venv/bin/python" -m strategy_lab.closed_context_smoke_test
+sudo -u "${APP_USER}" "${APP_DIR}/.venv/bin/python" -m strategy_lab.shadow_history_smoke_test
 sudo -u "${APP_USER}" "${APP_DIR}/.venv/bin/python" -m strategy_lab.decision_engine_smoke_test
 sudo -u "${APP_USER}" "${APP_DIR}/.venv/bin/python" -m strategy_lab.live_market_smoke_test
 sudo -u "${APP_USER}" "${APP_DIR}/.venv/bin/python" -m py_compile scripts/smoke_control_server.py scripts/smoke_control_server_v2.py
