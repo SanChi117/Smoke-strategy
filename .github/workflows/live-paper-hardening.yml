@@ -10,6 +10,11 @@ on:
       - 'docs/LIVE_PAPER_V2_RU.md'
       - 'docs/MULTI_PROJECT_CONTROL_PANEL_RU.md'
       - '.github/workflows/live-paper-hardening.yml'
+  push:
+    branches:
+      - 'agent/live-paper-hardening'
+    paths:
+      - 'research_triggers/causal_full_revalidation.txt'
   workflow_dispatch:
     inputs:
       run_full_causal_revalidation:
@@ -74,7 +79,7 @@ jobs:
 
   full-causal-revalidation:
     name: full-causal-tagged-revalidation
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_full_causal_revalidation == true }}
+    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.run_full_causal_revalidation == true) }}
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
