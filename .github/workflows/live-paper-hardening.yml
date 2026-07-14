@@ -79,7 +79,7 @@ jobs:
 
   full-causal-revalidation:
     name: full-causal-tagged-revalidation
-    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.run_full_causal_revalidation == true) }}
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.run_full_causal_revalidation == true) }}
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
