@@ -2,6 +2,9 @@
 """Causal replacements for adaptive research layers.
 
 A result may influence a later decision only after the source trade has closed.
+The original lookback meaning is preserved: the source trade entry must belong
+to the configured lookback window, and its exit must already be known.
+
 This module patches the existing public APIs from ``strategy_lab.__init__`` so
 all current research scripts use the same no-lookahead behavior without a
 second parallel pipeline.
@@ -24,12 +27,13 @@ def score_quality_trades(trades: list[quality.TradeRow], cfg: quality.QualityCon
     for trade in ordered:
         start = trade.entry_time - timedelta(days=cfg.lookback_days)
         history = [
-            t
-            for t in ordered
-            if t is not trade
-            and t.symbol == trade.symbol
-            and t.exit_time is not None
-            and start <= t.exit_time <= trade.entry_time
+            item
+            for item in ordered
+            if item is not trade
+            and item.symbol == trade.symbol
+            and item.exit_time is not None
+            and start <= item.entry_time < trade.entry_time
+            and item.exit_time <= trade.entry_time
         ]
         ss, hp, hw, ha, hs = quality.symbol_score(history, cfg)
         stop_pct = abs(trade.entry - trade.stop) / trade.entry * 100 if trade.entry > 0 else 0.0
@@ -76,26 +80,30 @@ def score_structure_trades(
     cfg: structure.StructureLearningConfig | None = None,
 ) -> list[structure.ScoredStructureTrade]:
     cfg = cfg or structure.StructureLearningConfig()
-    ordered = sorted(trades, key=lambda r: (r.entry_time, r.symbol, r.side))
+    ordered = sorted(trades, key=lambda row: (row.entry_time, row.symbol, row.side))
     completed = sorted(
-        (t for t in ordered if t.exit_time is not None),
-        key=lambda r: (r.exit_time, r.entry_time, r.symbol, r.side),
+        (row for row in ordered if row.exit_time is not None),
+        key=lambda row: (row.exit_time, row.entry_time, row.symbol, row.side),
     )
-    history: deque[structure.TradeRow] = deque()
+    known: list[structure.TradeRow] = []
     pointer = 0
     out: list[structure.ScoredStructureTrade] = []
 
     for trade in ordered:
         while pointer < len(completed) and completed[pointer].exit_time <= trade.entry_time:
-            known = completed[pointer]
-            if known is not trade:
-                history.append(known)
+            completed_trade = completed[pointer]
+            if completed_trade is not trade:
+                known.append(completed_trade)
             pointer += 1
 
         cutoff = trade.entry_time - timedelta(days=cfg.lookback_days)
-        while history and history[0].exit_time is not None and history[0].exit_time < cutoff:
-            history.popleft()
-
+        history = deque(
+            item
+            for item in known
+            if cutoff <= item.entry_time < trade.entry_time
+            and item.exit_time is not None
+            and item.exit_time <= trade.entry_time
+        )
         stats = structure.choose_history_stats(trade, history, cfg)
         dec = structure.decision(stats.score, cfg)
         out.append(
@@ -138,7 +146,7 @@ def build_rolling_trades(
     rcfg: rolling.RollingConfig,
     cost: rolling.CostConfig,
 ) -> tuple[list[rolling.Trade], int, float]:
-    all_symbols = sorted({t.symbol for t in trades})
+    all_symbols = sorted({trade.symbol for trade in trades})
     eligible: list[rolling.Trade] = []
     seen = set()
     selected_counts: list[int] = []
@@ -148,8 +156,12 @@ def build_rolling_trades(
     while cur < end:
         lb_start = cur - timedelta(days=rcfg.lookback_days)
         fwd_end = min(end, cur + timedelta(days=rcfg.rebalance_days))
-        # Use outcomes known by rebalance time, not trades merely entered earlier.
-        lookback = [t for t in trades if lb_start <= t.exit_time < cur]
+        lookback = [
+            trade
+            for trade in trades
+            if lb_start <= trade.entry_time < cur
+            and trade.exit_time <= cur
+        ]
         selected = set(rolling.select_symbols(lookback, all_symbols, rcfg.top_n, cost))
         selected_counts.append(len(selected))
         windows += 1
@@ -164,7 +176,7 @@ def build_rolling_trades(
         cur = fwd_end
 
     avg_selected = sum(selected_counts) / len(selected_counts) if selected_counts else 0.0
-    return sorted(eligible, key=lambda t: (t.entry_time, t.symbol, t.side)), windows, avg_selected
+    return sorted(eligible, key=lambda trade: (trade.entry_time, trade.symbol, trade.side)), windows, avg_selected
 
 
 def apply_causal_patches() -> None:
