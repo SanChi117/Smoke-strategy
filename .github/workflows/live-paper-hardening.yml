@@ -6,6 +6,7 @@ on:
       - 'strategy_lab/**'
       - 'scripts/smoke_control_server.py'
       - 'scripts/smoke_control_server_v2.py'
+      - 'scripts/run_causal_paper_review_validation.py'
       - 'deployment/**'
       - 'docs/LIVE_PAPER_V2_RU.md'
       - 'docs/MULTI_PROJECT_CONTROL_PANEL_RU.md'
@@ -18,7 +19,7 @@ on:
   workflow_dispatch:
     inputs:
       run_full_causal_revalidation:
-        description: 'Run full tagged MTF matrix, multi-WFO and deep validation with causal history'
+        description: 'Run mandatory causal matrix, multi-WFO, deep validation and paper decision'
         required: false
         default: false
         type: boolean
@@ -54,7 +55,7 @@ jobs:
 
       - name: Compile Python
         run: |
-          python -m compileall -q strategy_lab scripts/smoke_control_server.py scripts/smoke_control_server_v2.py
+          python -m compileall -q strategy_lab scripts/smoke_control_server.py scripts/smoke_control_server_v2.py scripts/run_causal_paper_review_validation.py
 
       - name: Test causal history
         run: python -m strategy_lab.causal_history_smoke_test
@@ -78,7 +79,7 @@ jobs:
         run: bash -n deployment/install_smoke.sh
 
   full-causal-revalidation:
-    name: full-causal-tagged-revalidation
+    name: mandatory-causal-paper-validation
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.run_full_causal_revalidation == true) }}
     runs-on: ubuntu-latest
     timeout-minutes: 360
@@ -96,17 +97,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .
 
-      - name: Run complete causal tagged validation
+      - name: Run mandatory causal paper validation
         run: |
-          python scripts/run_tagged_universe_research_suite.py \
-            --root results/causal_tagged_revalidation \
-            --layer-root results/causal_strategy_universe_layer
+          python scripts/run_causal_paper_review_validation.py \
+            --root results/causal_paper_review_validation \
+            --layer-root results/causal_paper_review_universe
 
       - name: Upload causal validation
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: smoke-causal-tagged-revalidation
+          name: smoke-causal-paper-review-validation
           path: |
-            results/causal_tagged_revalidation/**
-            results/causal_strategy_universe_layer/**
+            results/causal_paper_review_validation/**
+            results/causal_paper_review_universe/**
