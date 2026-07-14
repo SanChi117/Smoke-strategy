@@ -3,7 +3,8 @@
 
 A closed 15m/1h entry candle can still belong to a forming 4h or 1d candle.
 This replacement exposes a higher-timeframe bucket only after its final source
-bar has closed, preventing unstable context and historical lookahead.
+bar has closed and every expected source bar is present, preventing unstable
+context and historical lookahead.
 """
 
 from __future__ import annotations
@@ -32,6 +33,7 @@ def resample_closed_candles(rows: list[Candle], hours: int) -> list[Candle]:
     if not ordered:
         return []
     source_seconds = infer_source_bar_seconds(ordered)
+    expected_bars = max(1, round(hours * 3600 / source_seconds))
     buckets: dict[object, list[Candle]] = {}
     for candle in ordered:
         buckets.setdefault(mtf.timeframe_bucket(candle.time, hours), []).append(candle)
@@ -44,6 +46,17 @@ def resample_closed_candles(rows: list[Candle], hours: int) -> list[Candle]:
         # after one source interval has elapsed.
         known_through = bucket_rows[-1].time + timedelta(seconds=source_seconds)
         if known_through < bucket_end:
+            continue
+        if len(bucket_rows) < expected_bars:
+            continue
+        # Reject duplicated/gapped source timestamps even when the last bar is
+        # present. A full count alone is not enough if the series is malformed.
+        expected_times = {
+            bucket_start + timedelta(seconds=source_seconds * index)
+            for index in range(expected_bars)
+        }
+        actual_times = {candle.time for candle in bucket_rows}
+        if not expected_times.issubset(actual_times):
             continue
         first = bucket_rows[0]
         last = bucket_rows[-1]
