@@ -1,0 +1,24 @@
+{
+  "source_run_id": "29369143446",
+  "source_head_sha": "0fa7a4b2e14aa1a841083fa0044453eec10283ef",
+  "workflow_watch_outcome": "failure",
+  "tagged_decision": "",
+  "candidate": "",
+  "multi_wfo_verdict": "",
+  "multi_positive_folds": "",
+  "multi_valid_folds": "",
+  "deep_decision": "",
+  "deep_positive_folds": "",
+  "deep_valid_folds": "",
+  "deep_avg_return_pct": "",
+  "deep_avg_pf": "",
+  "deep_worst_dd_pct": "",
+  "deep_total_trades": "",
+  "paper_review_status": "",
+  "files_found": {
+    "tagged": "",
+    "deep": "",
+    "multi": "",
+    "paper": ""
+  }
+}
