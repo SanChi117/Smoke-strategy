@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 360
     env:
       GH_TOKEN: ${{ github.token }}
-      TARGET_SHA: c612084b80086a68845f23d5477badcaac1dd571
+      TARGET_SHA: 0fa7a4b2e14aa1a841083fa0044453eec10283ef
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
@@ -95,6 +95,7 @@ jobs:
           deep_stats = deep.get('deep_validation') if isinstance(deep.get('deep_validation'), dict) else deep
           result = {
               'source_run_id': '${{ steps.find.outputs.run_id }}',
+              'source_head_sha': '0fa7a4b2e14aa1a841083fa0044453eec10283ef',
               'workflow_watch_outcome': '${{ steps.watch.outcome }}',
               'tagged_decision': tagged.get('decision', ''),
               'candidate': tagged.get('candidate', '') or deep.get('candidate', '') or multi.get('name', ''),
@@ -120,6 +121,7 @@ jobs:
           lines = [
               '# Causal revalidation result',
               '',
+              f"- Source head: `{result['source_head_sha']}`",
               f"- GitHub run: `{result['source_run_id']}`",
               f"- Workflow outcome: **{result['workflow_watch_outcome']}**",
               f"- Candidate: **{result['candidate'] or 'not produced'}**",
@@ -141,10 +143,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin agent/live-paper-hardening
           git add results/causal_revalidation_status/result.json results/causal_revalidation_status/result.md
           if git diff --cached --quiet; then
             echo "No result changes to commit"
             exit 0
           fi
-          git commit -m "Record causal tagged revalidation result"
+          git commit -m "Record final causal tagged revalidation result"
           git push origin HEAD:agent/live-paper-hardening
