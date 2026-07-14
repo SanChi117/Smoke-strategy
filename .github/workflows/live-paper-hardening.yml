@@ -28,7 +28,7 @@ permissions:
 
 concurrency:
   group: live-paper-hardening-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   PYTHONUNBUFFERED: '1'
