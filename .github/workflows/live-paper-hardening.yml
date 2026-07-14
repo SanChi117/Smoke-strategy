@@ -57,6 +57,9 @@ jobs:
       - name: Test completed higher-timeframe context
         run: python -m strategy_lab.closed_context_smoke_test
 
+      - name: Test all-candidate shadow learning
+        run: python -m strategy_lab.shadow_history_smoke_test
+
       - name: Test layered decision engine
         run: python -m strategy_lab.decision_engine_smoke_test
 
