@@ -1,0 +1,182 @@
+name: Collect Strategy Tuning
+
+on:
+  push:
+    branches:
+      - 'agent/live-paper-hardening'
+    paths:
+      - 'research_triggers/collect_strategy_tuning_v1.txt'
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: collect-strategy-tuning-v1
+  cancel-in-progress: true
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TARGET_SHA: 248c3d829a61164ee29024d85dd5311afe7773a6
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/live-paper-hardening
+          fetch-depth: 0
+
+      - name: Find tuning run
+        id: find
+        run: |
+          RUN_ID="$(gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow causal-strategy-tuning.yml \
+            --event push \
+            --branch agent/live-paper-hardening \
+            --limit 20 \
+            --json databaseId,headSha \
+            --jq '.[] | select(.headSha == env.TARGET_SHA) | .databaseId' \
+            | head -n 1)"
+          if [ -z "$RUN_ID" ]; then
+            echo "Tuning run not found for $TARGET_SHA" >&2
+            exit 1
+          fi
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          echo "Found tuning run $RUN_ID"
+
+      - name: Follow tuning to completion
+        id: watch
+        continue-on-error: true
+        run: gh run watch "${{ steps.find.outputs.run_id }}" --repo "$GITHUB_REPOSITORY" --exit-status
+
+      - name: Download tuning artifact
+        continue-on-error: true
+        run: |
+          rm -rf collected
+          mkdir -p collected
+          gh run download "${{ steps.find.outputs.run_id }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name smoke-causal-strategy-tuning-v1 \
+            --dir collected
+
+      - name: Build compact tuning result
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import csv
+          import json
+          from pathlib import Path
+
+          root = Path('collected')
+          out = Path('results/causal_strategy_tuning_status_v1')
+          out.mkdir(parents=True, exist_ok=True)
+
+          def find(name: str):
+              matches = list(root.rglob(name)) if root.exists() else []
+              return matches[0] if matches else None
+
+          def load_json(name: str):
+              path = find(name)
+              if not path or not path.exists() or path.stat().st_size == 0:
+                  return {}, None
+              try:
+                  return json.loads(path.read_text(encoding='utf-8')), path
+              except Exception:
+                  return {}, path
+
+          def load_csv(name: str):
+              path = find(name)
+              if not path or not path.exists() or path.stat().st_size == 0:
+                  return [], None
+              with path.open('r', newline='', encoding='utf-8') as f:
+                  return list(csv.DictReader(f)), path
+
+          matrix, matrix_path = load_csv('matrix_summary.csv')
+          multi, multi_path = load_json('tagged_multi_wfo_best.json')
+          deep, deep_path = load_json('deep_validation_summary.json')
+          decision, decision_path = load_json('tagged_research_decision.json')
+          plan, plan_path = load_json('paper_review_plan.json')
+          deep_stats = deep.get('deep_validation') if isinstance(deep.get('deep_validation'), dict) else {}
+
+          matrix_top = []
+          for row in matrix[:10]:
+              matrix_top.append({
+                  'name': row.get('name', ''),
+                  'ret_pct': row.get('ret_pct', ''),
+                  'pf': row.get('pf', ''),
+                  'max_dd_pct': row.get('max_dd_pct', ''),
+                  'executed_trades': row.get('executed_trades', ''),
+                  'score': row.get('score', ''),
+              })
+
+          result = {
+              'source_run_id': '${{ steps.find.outputs.run_id }}',
+              'source_head_sha': '248c3d829a61164ee29024d85dd5311afe7773a6',
+              'workflow_outcome': '${{ steps.watch.outcome }}',
+              'matrix_top': matrix_top,
+              'multi_candidate': multi.get('name', ''),
+              'multi_verdict': multi.get('wfo_verdict', ''),
+              'multi_positive_folds': multi.get('positive_folds', ''),
+              'multi_valid_folds': multi.get('valid_folds', ''),
+              'multi_avg_return_pct': multi.get('wfo_avg_ret_pct', ''),
+              'multi_avg_pf': multi.get('wfo_avg_pf', ''),
+              'multi_worst_dd_pct': multi.get('wfo_worst_dd_pct', ''),
+              'multi_total_trades': multi.get('wfo_total_trades', ''),
+              'deep_candidate': deep.get('candidate', ''),
+              'deep_decision': deep.get('decision', ''),
+              'deep_positive_folds': deep_stats.get('positive_folds', ''),
+              'deep_valid_folds': deep_stats.get('valid_folds', ''),
+              'deep_avg_return_pct': deep_stats.get('avg_ret_pct', ''),
+              'deep_avg_pf': deep_stats.get('avg_pf', ''),
+              'deep_worst_dd_pct': deep_stats.get('worst_max_dd_pct', ''),
+              'deep_total_trades': deep_stats.get('total_executed_trades', ''),
+              'tagged_decision': decision.get('decision', ''),
+              'paper_review_status': plan.get('status', ''),
+              'files_found': {
+                  'matrix': str(matrix_path or ''),
+                  'multi': str(multi_path or ''),
+                  'deep': str(deep_path or ''),
+                  'decision': str(decision_path or ''),
+                  'paper': str(plan_path or ''),
+              },
+          }
+          (out / 'result.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          lines = [
+              '# Causal strategy tuning v1',
+              '',
+              f"- Workflow outcome: **{result['workflow_outcome']}**",
+              f"- Multi-WFO candidate: **{result['multi_candidate'] or 'not produced'}**",
+              f"- Multi-WFO verdict: **{result['multi_verdict'] or 'not produced'}** ({result['multi_positive_folds']}/{result['multi_valid_folds']} positive)",
+              f"- Multi avg return/PF/DD: `{result['multi_avg_return_pct']}` / `{result['multi_avg_pf']}` / `{result['multi_worst_dd_pct']}`",
+              f"- Deep candidate: **{result['deep_candidate'] or 'not produced'}**",
+              f"- Deep verdict: **{result['deep_decision'] or 'not produced'}** ({result['deep_positive_folds']}/{result['deep_valid_folds']} positive)",
+              f"- Deep avg return/PF/DD: `{result['deep_avg_return_pct']}` / `{result['deep_avg_pf']}` / `{result['deep_worst_dd_pct']}`",
+              f"- Deep trades: `{result['deep_total_trades']}`",
+              f"- Final tagged decision: **{result['tagged_decision'] or 'not produced'}**",
+              f"- Paper-review status: **{result['paper_review_status'] or 'not produced'}**",
+              '',
+              '## Matrix top',
+          ]
+          for row in matrix_top:
+              lines.append(
+                  f"- {row['name']}: ret={row['ret_pct']}%, PF={row['pf']}, DD={row['max_dd_pct']}%, trades={row['executed_trades']}, score={row['score']}"
+              )
+          (out / 'result.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit compact result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "4189826+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin agent/live-paper-hardening
+          git add results/causal_strategy_tuning_status_v1/result.json results/causal_strategy_tuning_status_v1/result.md
+          if git diff --cached --quiet; then
+            echo "No tuning result changes"
+            exit 0
+          fi
+          git commit -m "Record causal strategy tuning v1 result"
+          git push origin HEAD:agent/live-paper-hardening
