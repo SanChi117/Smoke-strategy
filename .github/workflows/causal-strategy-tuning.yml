@@ -1,0 +1,52 @@
+name: Causal Strategy Tuning
+
+on:
+  push:
+    branches:
+      - 'agent/live-paper-hardening'
+    paths:
+      - 'research_triggers/causal_strategy_tuning_v1.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  tune:
+    name: pullback-short-causal-tuning-v1
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Verify causal and OOS boundaries
+        run: |
+          python -m strategy_lab.causal_history_smoke_test
+          python -m strategy_lab.closed_context_smoke_test
+          python -m strategy_lab.walk_forward_boundary_smoke_test
+
+      - name: Run causal strategy tuning iteration
+        run: python scripts/run_causal_strategy_tuning.py
+
+      - name: Upload tuning reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-causal-strategy-tuning-v1
+          path: |
+            results/causal_strategy_tuning_v1/**
+            results/causal_strategy_tuning_universe_v1/**
