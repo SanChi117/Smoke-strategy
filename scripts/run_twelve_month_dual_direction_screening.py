@@ -302,7 +302,7 @@ def main() -> int:
         "leader": candidates[0] if candidates else {},
         "candidates": candidates,
         "leader_diagnostics": diagnostics.get(str(candidates[0]["name"]), {}) if candidates else {},
-        "promotion_allowed": false,
+        "promotion_allowed": False,
         "next_required_step": "Freeze one leader and validate on an untouched earlier period or symbol holdout.",
     }
     root.mkdir(parents=True, exist_ok=True)
