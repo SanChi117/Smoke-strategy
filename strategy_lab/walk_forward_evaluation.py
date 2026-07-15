@@ -150,6 +150,9 @@ def evaluate_validation_window(
     )
 
     generated_fields = list(generated_rows[0].keys()) if generated_rows else []
+    decision_fields = list(decision_rows[0].keys()) if decision_rows else []
+    write_csv(root / "pipeline_decisions_with_warmup.csv", decision_rows, decision_fields)
+    write_csv(root / "pipeline_decisions.csv", validation_decisions, decision_fields)
     write_csv(root / "pipeline_allowed_trades.csv", allowed_generated_rows, generated_fields)
     write_csv(root / "pipeline_summary.csv", [asdict(summary)])
     metadata = {
