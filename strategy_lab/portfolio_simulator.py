@@ -87,6 +87,21 @@ def simulate_dynamic_portfolio(
             "kind": t.kind,
             "source": t.source,
             "priority_score": float(priorities.get(key, 0.0)),
+            "event": "",
+            "reason": "",
+            "risk_pct": "",
+            "margin": "",
+            "notional": "",
+            "opened_equity": "",
+            "entry_fee": "",
+            "exit_fee": "",
+            "total_fee": "",
+            "gross_pnl": "",
+            "net_pnl": "",
+            "cash_after": "",
+            "active_positions": "",
+            "cash": "",
+            "risk_distance": "",
         }
 
     def emit(t: Trade, event: str, reason: str = "", **extra: Any) -> None:
