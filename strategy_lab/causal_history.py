@@ -5,9 +5,10 @@ A result may influence a later decision only after the source trade has closed.
 The original lookback meaning is preserved: the source trade entry must belong
 to the configured lookback window, and its exit must already be known.
 
-This module patches the existing public APIs from ``strategy_lab.__init__`` so
-all current research scripts use the same no-lookahead behavior without a
-second parallel pipeline.
+A structure veto is allowed only when the history is specific enough to the current
+setup (exact or setup-level fallback). Loose/global history may reduce conviction,
+but it cannot block a newly introduced setup merely because unrelated patterns were
+weak.
 """
 
 from __future__ import annotations
@@ -75,6 +76,20 @@ def score_quality_trades(trades: list[quality.TradeRow], cfg: quality.QualityCon
     return out
 
 
+def structure_decision_for_scope(stats: structure.StructureStats, cfg: structure.StructureLearningConfig) -> tuple[str, float]:
+    """Return decision and effective score for risk/target policy.
+
+    Exact and setup-level fallback histories are relevant enough to veto. Loose,
+    global and cold-start histories are context only, so they produce WATCH rather
+    than a hard SKIP. Their raw score is still reported for auditability.
+    """
+
+    if stats.key_scope in {"exact", "fallback"}:
+        return structure.decision(stats.score, cfg), stats.score
+    effective = max(float(stats.score), float(cfg.watch_threshold))
+    return "WATCH", effective
+
+
 def score_structure_trades(
     trades: list[structure.TradeRow],
     cfg: structure.StructureLearningConfig | None = None,
@@ -105,7 +120,7 @@ def score_structure_trades(
             and item.exit_time <= trade.entry_time
         )
         stats = structure.choose_history_stats(trade, history, cfg)
-        dec = structure.decision(stats.score, cfg)
+        dec, effective_score = structure_decision_for_scope(stats, cfg)
         out.append(
             structure.ScoredStructureTrade(
                 trade.symbol,
@@ -132,8 +147,8 @@ def score_structure_trades(
                 stats.max_loss_streak,
                 stats.score,
                 dec,
-                structure.target_policy(trade, stats.score),
-                structure.risk_modifier(stats.score, cfg),
+                structure.target_policy(trade, effective_score),
+                structure.risk_modifier(effective_score, cfg),
             )
         )
     return out
