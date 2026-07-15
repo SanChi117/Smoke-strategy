@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Walk-forward runner with baseline tactical gate support.
+"""Walk-forward runner with tactical gates and strict out-of-sample scoring.
 
-Small compatibility wrapper around run_binance_walk_forward.py.
-It preserves existing fold execution behavior, but ensures baseline_candidate.json
-can control PipelineConfig tactical filters.
+The underlying pipeline still receives warm-up candles so causal Quality,
+Structure Learning and rolling-universe layers can learn. Reported P&L, paper
+signals and fold statistics are rebuilt from validation-window entries only.
 
 Research only. No API keys. No private account data. No order execution.
 """
@@ -12,10 +12,21 @@ from __future__ import annotations
 
 from dataclasses import replace
 from datetime import datetime, timedelta
+from pathlib import Path
 from statistics import mean
 
 import run_binance_walk_forward as base
 from strategy_lab.config import PipelineConfig
+from strategy_lab.end_to_end_pipeline import write_summary
+from strategy_lab.paper_mode import run_paper_mode
+from strategy_lab.report_sanity import write_report_sanity
+from strategy_lab.walk_forward_evaluation import evaluate_validation_window
+
+
+_ORIGINAL_MAKE_WINDOWS = base.make_windows
+_ORIGINAL_RUN_END_TO_END = base.run_end_to_end_pipeline
+_EVALUATION_WINDOWS: dict[str, tuple[datetime, datetime]] = {}
+_KNOWN_WINDOWS: dict[tuple[datetime, datetime], datetime] = {}
 
 
 def to_bool(value: object, default: bool = True) -> bool:
@@ -24,12 +35,32 @@ def to_bool(value: object, default: bool = True) -> bool:
     return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
 
 
+def patched_make_windows(
+    min_time: datetime,
+    max_time: datetime,
+    lookback_days: int,
+    windows: int,
+) -> list[tuple[datetime, datetime, datetime]]:
+    folds = _ORIGINAL_MAKE_WINDOWS(min_time, max_time, lookback_days, windows)
+    _KNOWN_WINDOWS.clear()
+    for warmup_start, validation_start, validation_end in folds:
+        _KNOWN_WINDOWS[(warmup_start, validation_end)] = validation_start
+    return folds
+
+
 def patched_baseline_to_cfg(
     baseline: dict[str, object],
     name: str,
     warmup_start: datetime,
     validation_end: datetime,
 ) -> PipelineConfig:
+    validation_start = _KNOWN_WINDOWS.get((warmup_start, validation_end))
+    if validation_start is None:
+        raise RuntimeError(
+            "Walk-forward validation boundary was not registered for "
+            f"{warmup_start.isoformat()} -> {validation_end.isoformat()}"
+        )
+    _EVALUATION_WINDOWS[name] = (validation_start, validation_end)
     return replace(
         PipelineConfig(),
         name=name,
@@ -57,7 +88,64 @@ def patched_baseline_to_cfg(
         blocked_candle_types=base.to_tuple(baseline.get("blocked_candle_types")),
         allowed_direction_contexts=base.to_tuple(baseline.get("allowed_direction_contexts")),
         blocked_direction_contexts=base.to_tuple(baseline.get("blocked_direction_contexts")),
+        allowed_context_alignments=base.to_tuple(baseline.get("allowed_context_alignments")),
+        blocked_context_alignments=base.to_tuple(baseline.get("blocked_context_alignments")),
     )
+
+
+def patched_run_end_to_end_pipeline(
+    candles_csv: str | Path,
+    out_dir: str | Path = "results",
+    profile: str = "growth_100_20x",
+    min_confidence: float = 50.0,
+    cfg: PipelineConfig | None = None,
+):
+    original_summary = _ORIGINAL_RUN_END_TO_END(
+        candles_csv=candles_csv,
+        out_dir=out_dir,
+        profile=profile,
+        min_confidence=min_confidence,
+        cfg=cfg,
+    )
+    if cfg is None or cfg.name not in _EVALUATION_WINDOWS:
+        return original_summary
+
+    validation_start, validation_end = _EVALUATION_WINDOWS[cfg.name]
+    fair = evaluate_validation_window(
+        run_dir=out_dir,
+        validation_start=validation_start,
+        validation_end=validation_end,
+        profile_name=profile,
+        cfg=cfg,
+    )
+
+    root = Path(out_dir)
+    paper_summary = run_paper_mode(
+        generated_trades_csv=root / "pipeline_allowed_trades.csv",
+        out_dir=root / "paper",
+    )
+    sanity = write_report_sanity(root)
+    summary = replace(
+        original_summary,
+        pipeline_candidates=fair.candidates,
+        allowed_candidates=fair.allowed_candidates,
+        executed_trades=fair.executed_trades,
+        final_cash=fair.final_cash,
+        ret_pct=fair.ret_pct,
+        max_dd_pct=fair.max_dd_pct,
+        pf=fair.pf,
+        winrate=fair.winrate,
+        avg_risk_pct=fair.avg_risk_pct,
+        paper_signals=paper_summary.paper_signals,
+        paper_filled=paper_summary.filled_paper,
+        paper_closed=paper_summary.closed_paper,
+        paper_avg_pnl_pct=paper_summary.avg_pnl_pct,
+        sanity_status=sanity.status,
+        sanity_errors=sanity.errors,
+        sanity_warnings=sanity.warnings,
+    )
+    write_summary(root / "end_to_end_summary.csv", summary)
+    return summary
 
 
 def patched_build_markdown(summary_rows: list[dict[str, object]], baseline: dict[str, object]) -> str:
@@ -87,6 +175,7 @@ def patched_build_markdown(summary_rows: list[dict[str, object]], baseline: dict
     lines = [
         "# Binance Walk-Forward Summary",
         "",
+        "Evaluation mode: **STRICT OUT-OF-SAMPLE** (warm-up trades excluded from P&L)",
         f"Verdict: **{verdict}**",
         "",
         "## Baseline candidate",
@@ -128,15 +217,13 @@ def patched_build_markdown(summary_rows: list[dict[str, object]], baseline: dict
             lines.append(f"  - error: {row.get('error')}")
     lines.extend(["", "## Next step"])
     if verdict == "PASS_WALK_FORWARD_REVIEW":
-        lines.append("- Candidate can move to deeper paper-mode review. WARN-only sanity is reviewable because all folds are non-fail and performance is stable.")
+        lines.append("- Candidate can move to deeper paper-mode review. Warm-up trades were excluded from performance.")
     elif verdict == "WATCH_REVIEWABLE_BUT_UNSTABLE":
-        lines.append("- Candidate is reviewable, but compare fold diagnostics before promotion.")
+        lines.append("- Candidate is reviewable, but compare strict out-of-sample fold diagnostics before promotion.")
     elif verdict == "WATCH_TOO_SPARSE":
-        lines.append("- Increase candle limit, symbols, or reduce window count before judging stability.")
-    elif verdict == "WATCH_UNSTABLE":
-        lines.append("- Compare fold diagnostics and disable weak setup/regime groups before promotion.")
+        lines.append("- Increase validation history or reduce window count before judging stability.")
     else:
-        lines.append("- Fix data/window generation or baseline configuration before continuing.")
+        lines.append("- Continue strategy diagnostics; do not promote this candidate.")
     return "\n".join(lines) + "\n"
 
 
@@ -144,7 +231,9 @@ def main() -> int:
     base.DEFAULT_BASELINE["require_rolling_top"] = True
     base.DEFAULT_BASELINE["require_universe_gate"] = True
     base.DEFAULT_BASELINE["min_volume_ratio"] = 0.0
+    base.make_windows = patched_make_windows
     base.baseline_to_cfg = patched_baseline_to_cfg
+    base.run_end_to_end_pipeline = patched_run_end_to_end_pipeline
     base.build_markdown = patched_build_markdown
     return base.main()
 
