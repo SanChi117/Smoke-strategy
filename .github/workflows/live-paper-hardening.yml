@@ -53,6 +53,9 @@ jobs:
       - name: Test causal history
         run: python -m strategy_lab.causal_history_smoke_test
 
+      - name: Test optimized causal history equivalence
+        run: python -m strategy_lab.causal_history_fast_smoke_test
+
       - name: Test completed higher-timeframe context
         run: python -m strategy_lab.closed_context_smoke_test
 
