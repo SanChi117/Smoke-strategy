@@ -1,0 +1,92 @@
+name: Causal SHORT Refinement V1
+
+on:
+  push:
+    branches:
+      - agent/live-paper-hardening
+    paths:
+      - research_triggers/short_refinement_v1.txt
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  short-refinement:
+    name: twelve-month-causal-short-refinement
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/live-paper-hardening
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Verify causal and syntax invariants
+        run: |
+          python -m py_compile scripts/run_twelve_month_short_refinement.py
+          python -m strategy_lab.causal_history_fast_smoke_test
+          python -m strategy_lab.closed_context_smoke_test
+          python -m strategy_lab.walk_forward_boundary_smoke_test
+          python -m strategy_lab.research_metrics_smoke_test
+
+      - name: Download fixed official futures archives
+        run: |
+          python scripts/download_binance_vision_futures_archives.py \
+            --symbols-file results/twelve_month_dual_screening_universe_v1/combined_symbols.txt \
+            --interval 15m \
+            --start-date '2025-07-01' \
+            --end-date '2026-07-14' \
+            --out-dir "$RUNNER_TEMP/short-refinement-usdm" \
+            --summary-json results/twelve_month_short_refinement_v1/archive_download_summary.json \
+            --workers 8 \
+            --retries 2 \
+            --timeout 30
+
+      - name: Merge and verify fixed closed candles
+        run: |
+          python scripts/merge_binance_vision_futures_klines.py \
+            --input-dir "$RUNNER_TEMP/short-refinement-usdm" \
+            --out "$RUNNER_TEMP/short-refinement-usdm-15m.csv" \
+            --symbols-file results/twelve_month_dual_screening_universe_v1/combined_symbols.txt \
+            --interval 15m \
+            --start-date '2025-07-01' \
+            --end-date '2026-07-14' \
+            --summary-json results/twelve_month_short_refinement_v1/archive_merge_summary.json \
+            --min-coverage 0.75
+
+      - name: Refine SHORT with frozen LONG rules
+        run: |
+          python scripts/run_twelve_month_short_refinement.py \
+            --candles "$RUNNER_TEMP/short-refinement-usdm-15m.csv" \
+            --out-dir results/twelve_month_short_refinement_v1 \
+            --windows 8 \
+            --lookback-days 30 \
+            --profile research_500 \
+            --pool-min-confidence 40
+
+      - name: Upload SHORT refinement audit
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-twelve-month-short-refinement-v1
+          path: |
+            results/twelve_month_short_refinement_v1/result.json
+            results/twelve_month_short_refinement_v1/candidate_summary.csv
+            results/twelve_month_short_refinement_v1/candidate_folds/*.csv
+            results/twelve_month_short_refinement_v1/short_trades/*.csv
+            results/twelve_month_short_refinement_v1/archive_download_summary.json
+            results/twelve_month_short_refinement_v1/archive_merge_summary.json
+          if-no-files-found: warn
