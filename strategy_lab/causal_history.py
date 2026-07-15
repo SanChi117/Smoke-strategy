@@ -13,8 +13,9 @@ weak.
 
 from __future__ import annotations
 
-from collections import deque
+from collections import defaultdict, deque
 from datetime import timedelta
+import heapq
 
 from strategy_lab import rolling_symbol_strength as rolling
 from strategy_lab import structure_learning as structure
@@ -22,19 +23,27 @@ from strategy_lab import trade_quality_score as quality
 
 
 def score_quality_trades(trades: list[quality.TradeRow], cfg: quality.QualityConfig | None = None) -> list[quality.ScoredTrade]:
+    """Causal quality scoring with a per-symbol rolling window.
+
+    This is decision-identical to the previous reference implementation, but it
+    avoids scanning every trade for every later trade. The per-symbol deque is in
+    entry-time order, exactly matching the order used by ``loss_streak``.
+    """
+
     cfg = cfg or quality.QualityConfig()
     ordered = sorted(trades, key=lambda t: (t.entry_time, t.symbol, t.side))
+    windows: dict[str, deque[quality.TradeRow]] = defaultdict(deque)
     out: list[quality.ScoredTrade] = []
+
     for trade in ordered:
         start = trade.entry_time - timedelta(days=cfg.lookback_days)
+        window = windows[trade.symbol]
+        while window and window[0].entry_time < start:
+            window.popleft()
         history = [
             item
-            for item in ordered
-            if item is not trade
-            and item.symbol == trade.symbol
-            and item.exit_time is not None
-            and start <= item.entry_time < trade.entry_time
-            and item.exit_time <= trade.entry_time
+            for item in window
+            if item.exit_time is not None and item.exit_time <= trade.entry_time
         ]
         ss, hp, hw, ha, hs = quality.symbol_score(history, cfg)
         stop_pct = abs(trade.entry - trade.stop) / trade.entry * 100 if trade.entry > 0 else 0.0
@@ -73,6 +82,7 @@ def score_quality_trades(trades: list[quality.TradeRow], cfg: quality.QualityCon
                 quality.risk_mod(conf, cfg),
             )
         )
+        window.append(trade)
     return out
 
 
@@ -94,32 +104,99 @@ def score_structure_trades(
     trades: list[structure.TradeRow],
     cfg: structure.StructureLearningConfig | None = None,
 ) -> list[structure.ScoredStructureTrade]:
+    """Causal structure scoring with indexed active histories.
+
+    Completed trades become visible in the same ``exit_time, entry_time, symbol,
+    side`` order as the reference implementation. An entry-time heap expires rows
+    outside the rolling lookback. Category lists are compacted lazily while keeping
+    completion order, so statistics and loss-streak calculations remain identical.
+    """
+
     cfg = cfg or structure.StructureLearningConfig()
     ordered = sorted(trades, key=lambda row: (row.entry_time, row.symbol, row.side))
+    uid_by_object = {id(row): uid for uid, row in enumerate(ordered)}
+    by_uid = {uid: row for uid, row in enumerate(ordered)}
     completed = sorted(
-        (row for row in ordered if row.exit_time is not None),
-        key=lambda row: (row.exit_time, row.entry_time, row.symbol, row.side),
+        (
+            row.exit_time,
+            row.entry_time,
+            row.symbol,
+            row.side,
+            uid_by_object[id(row)],
+        )
+        for row in ordered
+        if row.exit_time is not None
     )
-    known: list[structure.TradeRow] = []
+
+    exact_index: dict[str, list[int]] = defaultdict(list)
+    fallback_index: dict[str, list[int]] = defaultdict(list)
+    loose_index: dict[str, list[int]] = defaultdict(list)
+    global_order: list[int] = []
+    active: set[int] = set()
+    entry_heap: list[tuple[object, int]] = []
     pointer = 0
     out: list[structure.ScoredStructureTrade] = []
 
-    for trade in ordered:
-        while pointer < len(completed) and completed[pointer].exit_time <= trade.entry_time:
-            completed_trade = completed[pointer]
-            if completed_trade is not trade:
-                known.append(completed_trade)
+    def activate(uid: int) -> None:
+        row = by_uid[uid]
+        active.add(uid)
+        heapq.heappush(entry_heap, (row.entry_time, uid))
+        exact_index[structure.structure_key(row)].append(uid)
+        fallback_index[structure.fallback_key(row)].append(uid)
+        loose_index[structure.loose_key(row)].append(uid)
+        global_order.append(uid)
+
+    def values(index: dict[str, list[int]], key: str) -> list[float]:
+        ids = index.get(key, [])
+        if not ids:
+            return []
+        compact = [uid for uid in ids if uid in active]
+        if len(compact) != len(ids):
+            index[key] = compact
+        return [by_uid[uid].r_mult for uid in compact]
+
+    def global_values() -> list[float]:
+        nonlocal global_order
+        compact = [uid for uid in global_order if uid in active]
+        if len(compact) != len(global_order):
+            global_order = compact
+        return [by_uid[uid].r_mult for uid in compact]
+
+    def indexed_stats(trade: structure.TradeRow) -> structure.StructureStats:
+        exact_key = structure.structure_key(trade)
+        exact = values(exact_index, exact_key)
+        if len(exact) >= cfg.min_exact_trades:
+            return structure.calculate_stats(exact, "exact", exact_key)
+        fallback_key = structure.fallback_key(trade)
+        fallback = values(fallback_index, fallback_key)
+        if len(fallback) >= cfg.min_fallback_trades:
+            return structure.calculate_stats(fallback, "fallback", fallback_key)
+        loose_key = structure.loose_key(trade)
+        loose = values(loose_index, loose_key)
+        if len(loose) >= cfg.min_fallback_trades:
+            return structure.calculate_stats(loose, "loose", loose_key)
+        recent = global_values()
+        if len(recent) >= cfg.min_fallback_trades:
+            return structure.calculate_stats(recent, "global", "all_recent_trades")
+        return structure.StructureStats(
+            "cold_start", exact_key, len(recent), 0.0, 0.0, 0.0, 0, 45.0
+        )
+
+    for current_uid, trade in enumerate(ordered):
+        while pointer < len(completed) and completed[pointer][0] <= trade.entry_time:
+            completed_uid = completed[pointer][4]
+            # Preserve the reference behavior for pathological zero/negative-duration
+            # rows: the current row is never allowed to train its own decision.
+            if completed_uid != current_uid:
+                activate(completed_uid)
             pointer += 1
 
         cutoff = trade.entry_time - timedelta(days=cfg.lookback_days)
-        history = deque(
-            item
-            for item in known
-            if cutoff <= item.entry_time < trade.entry_time
-            and item.exit_time is not None
-            and item.exit_time <= trade.entry_time
-        )
-        stats = structure.choose_history_stats(trade, history, cfg)
+        while entry_heap and entry_heap[0][0] < cutoff:
+            _entry_time, expired_uid = heapq.heappop(entry_heap)
+            active.discard(expired_uid)
+
+        stats = indexed_stats(trade)
         dec, effective_score = structure_decision_for_scope(stats, cfg)
         out.append(
             structure.ScoredStructureTrade(
