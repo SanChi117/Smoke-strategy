@@ -36,114 +36,86 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: Install package
         run: |
           python -m pip install --upgrade pip
           pip install -e .
-
       - name: Compile Python
         run: python -m compileall -q strategy_lab scripts
-
       - name: Test causal history
         run: python -m strategy_lab.causal_history_smoke_test
-
       - name: Test optimized causal history equivalence
         run: python -m strategy_lab.causal_history_fast_smoke_test
-
       - name: Test completed higher-timeframe context
         run: python -m strategy_lab.closed_context_smoke_test
-
       - name: Test adaptive structure scope
         run: python -m strategy_lab.structure_scope_smoke_test
-
       - name: Test pullback resumption entry
         run: python -m strategy_lab.pullback_resumption_smoke_test
-
       - name: Test context alignment pipeline gate
         run: python -m strategy_lab.context_alignment_gate_smoke_test
-
       - name: Test matrix baseline filter roundtrip
         run: python -m strategy_lab.baseline_filter_roundtrip_smoke_test
-
       - name: Test Binance Vision archive planner and downloader
         run: python -m strategy_lab.binance_vision_download_smoke_test
-
       - name: Test Binance Vision archive merger
         run: python -m strategy_lab.binance_vision_archive_smoke_test
-
       - name: Test portfolio execution audit
         run: python -m strategy_lab.portfolio_audit_smoke_test
-
       - name: Test pooled research metrics
         run: python -m strategy_lab.research_metrics_smoke_test
-
       - name: Test all-candidate shadow learning
         run: python -m strategy_lab.shadow_history_smoke_test
-
       - name: Test layered decision engine
         run: python -m strategy_lab.decision_engine_smoke_test
-
       - name: Test closed-candle incremental storage
         run: python -m strategy_lab.live_market_smoke_test
-
       - name: Test strict walk-forward boundaries
         run: python -m strategy_lab.walk_forward_boundary_smoke_test
-
       - name: Test strict OOS rejection funnel
         run: python -m strategy_lab.walk_forward_funnel_smoke_test
-
       - name: Test simultaneous candidate priority
         run: python -m strategy_lab.portfolio_priority_smoke_test
-
       - name: Test existing integrated pipeline
         run: python -m strategy_lab.pipeline_smoke_test
-
       - name: Analyze committed pullback OOS funnel
         run: python scripts/analyze_long_history_pullback_funnel.py
-
       - name: Validate one-command installer syntax
         run: bash -n deployment/install_smoke.sh
 
-  pooled-pf-calibration-v3:
-    name: pooled-pf-cooldown-calibration-v3-fast
+  legacy-guard-calibration-v4:
+    name: causal-legacy-pullback-guard-screening-v4
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: Install package
         run: |
           python -m pip install --upgrade pip
           pip install -e .
-
       - name: Verify pooled metric regression
         run: python -m strategy_lab.research_metrics_smoke_test
-
-      - name: Run optimized pooled-PF cooldown calibration v3
-        run: python scripts/run_causal_long_history_calibration_v3_fast.py
-
-      - name: Upload optimized pooled-PF calibration v3
+      - name: Run causal legacy-guard screening v4
+        run: python scripts/run_causal_long_history_calibration_v4.py
+      - name: Upload causal legacy-guard screening v4
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: smoke-causal-long-history-calibration-v3-fast
+          name: smoke-causal-long-history-calibration-v4
           path: |
-            results/causal_long_history_calibration_v3_fast/result.json
-            results/causal_long_history_calibration_v3_fast/candidate_summary.csv
-            results/causal_long_history_calibration_v3_fast/candidate_folds/*.csv
+            results/causal_long_history_calibration_v4/result.json
+            results/causal_long_history_calibration_v4/candidate_summary.csv
+            results/causal_long_history_calibration_v4/candidate_folds/*.csv
 
   full-causal-revalidation:
     name: mandatory-causal-paper-validation
@@ -153,23 +125,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: Install package
         run: |
           python -m pip install --upgrade pip
           pip install -e .
-
       - name: Run mandatory causal paper validation
         run: |
           python scripts/run_causal_paper_review_validation.py \
             --root results/causal_paper_review_validation \
             --layer-root results/causal_paper_review_universe
-
       - name: Upload causal validation
         uses: actions/upload-artifact@v4
         if: always()
