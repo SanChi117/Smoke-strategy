@@ -87,36 +87,6 @@ jobs:
       - name: Validate one-command installer syntax
         run: bash -n deployment/install_smoke.sh
 
-  legacy-guard-calibration-v4:
-    name: causal-legacy-pullback-guard-screening-v4
-    if: ${{ github.event_name == 'pull_request' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 180
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install package
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e .
-      - name: Verify pooled metric regression
-        run: python -m strategy_lab.research_metrics_smoke_test
-      - name: Run causal legacy-guard screening v4
-        run: python scripts/run_causal_long_history_calibration_v4.py
-      - name: Upload causal legacy-guard screening v4
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: smoke-causal-long-history-calibration-v4
-          path: |
-            results/causal_long_history_calibration_v4/result.json
-            results/causal_long_history_calibration_v4/candidate_summary.csv
-            results/causal_long_history_calibration_v4/candidate_folds/*.csv
-
   full-causal-revalidation:
     name: mandatory-causal-paper-validation
     if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.run_full_causal_revalidation == true) }}
