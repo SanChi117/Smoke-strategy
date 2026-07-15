@@ -7,7 +7,8 @@ must never contribute to the reported fold P&L.
 
 This module reuses the decisions learned on the full warm-up + validation dataset,
 but sends only candidates whose entry belongs to the validation interval into the
-portfolio simulator.
+portfolio simulator. Simultaneous candidates are ranked using entry-time facts
+only; symbol alphabet order is never used as a quality proxy.
 
 Research/paper only. No API keys. No order execution.
 """
@@ -33,6 +34,47 @@ def parse_dt(value: object) -> datetime:
 
 def bool_value(value: object) -> bool:
     return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
+def safe_float(value: object, default: float = 0.0) -> float:
+    try:
+        return float(str(value).strip())
+    except (TypeError, ValueError):
+        return default
+
+
+def reason_values(text: object) -> dict[str, str]:
+    out: dict[str, str] = {}
+    for token in str(text or "").split("|"):
+        if "=" not in token:
+            continue
+        key, value = token.split("=", 1)
+        out[key.strip().lower()] = value.strip().lower()
+    return out
+
+
+def causal_priority(decision: dict[str, str], generated: dict[str, str]) -> float:
+    """Entry-time ranking score with no outcome-derived fields.
+
+    Components are intentionally generic: original confidence, current causal
+    TAKE/WATCH states, candle-plan quality, volume participation and higher-timeframe
+    alignment. No symbol, realised R, exit price or future result is used.
+    """
+
+    meta = reason_values(generated.get("risk_plan_reason"))
+    score = safe_float(generated.get("confidence_hint"), 0.0)
+    if str(decision.get("quality_decision", "")).upper() == "TAKE":
+        score += 5.0
+    if str(decision.get("structure_decision", "")).upper() == "TAKE":
+        score += 5.0
+    score += min(100.0, max(0.0, safe_float(meta.get("quality"), 0.0))) * 0.05
+    score += min(3.0, max(0.0, safe_float(meta.get("vr"), 0.0)))
+    alignment = meta.get("ctx_align", "")
+    if alignment == "full_align":
+        score += 2.0
+    elif alignment in {"h4_only", "d1_only"}:
+        score += 1.0
+    return round(score, 6)
 
 
 def read_csv(path: str | Path) -> list[dict[str, str]]:
@@ -67,12 +109,7 @@ def evaluate_validation_window(
     profile_name: str,
     cfg: PipelineConfig,
 ) -> PipelineSummary:
-    """Recalculate fold metrics using validation entries only.
-
-    The full pipeline has already been executed on warm-up + validation rows. Its
-    decisions are therefore causal and history-aware. This function only changes
-    what is allowed to reach the P&L simulator.
-    """
+    """Recalculate fold metrics using validation entries only."""
 
     root = Path(run_dir)
     generated_path = root / "generated_trades.csv"
@@ -98,6 +135,8 @@ def evaluate_validation_window(
 
     allowed_trades = []
     risk_pcts: dict[tuple[str, str, object], float] = {}
+    priority_scores: dict[tuple[str, str, object], float] = {}
+    priority_rows: list[dict[str, object]] = []
     allowed_generated_rows: list[dict[str, object]] = []
     missing: list[str] = []
     for decision in allowed_decisions:
@@ -107,8 +146,21 @@ def evaluate_validation_window(
         if trade is None or generated is None:
             missing.append("|".join([key[0], key[1], key[2].isoformat()]))
             continue
+        score = causal_priority(decision, generated)
         allowed_trades.append(trade)
-        risk_pcts[(trade.symbol.upper(), trade.side.lower(), trade.entry_time)] = float(decision.get("risk_pct") or 0.0)
+        simulator_key = (trade.symbol.upper(), trade.side.lower(), trade.entry_time)
+        risk_pcts[simulator_key] = float(decision.get("risk_pct") or 0.0)
+        priority_scores[simulator_key] = score
+        priority_rows.append({
+            "symbol": trade.symbol,
+            "side": trade.side,
+            "entry_time": trade.entry_time.isoformat(),
+            "priority_score": score,
+            "quality_decision": decision.get("quality_decision", ""),
+            "structure_decision": decision.get("structure_decision", ""),
+            "confidence_hint": generated.get("confidence_hint", ""),
+            "risk_plan_reason": generated.get("risk_plan_reason", ""),
+        })
         allowed_generated_rows.append(generated)
 
     profile = get_risk_profile(profile_name)
@@ -118,7 +170,8 @@ def evaluate_validation_window(
         risk_pcts,
         profile,
         cost,
-        f"{cfg.name}_{profile.name}_STRICT_OOS",
+        f"{cfg.name}_{profile.name}_STRICT_OOS_PRIORITY",
+        priority_scores=priority_scores,
     )
 
     summary = PipelineSummary(
@@ -154,14 +207,16 @@ def evaluate_validation_window(
     write_csv(root / "pipeline_decisions_with_warmup.csv", decision_rows, decision_fields)
     write_csv(root / "pipeline_decisions.csv", validation_decisions, decision_fields)
     write_csv(root / "pipeline_allowed_trades.csv", allowed_generated_rows, generated_fields)
+    write_csv(root / "walk_forward_candidate_priorities.csv", priority_rows)
     write_csv(root / "pipeline_summary.csv", [asdict(summary)])
     metadata = {
-        "mode": "STRICT_OUT_OF_SAMPLE",
+        "mode": "STRICT_OUT_OF_SAMPLE_PRIORITY",
         "validation_start": validation_start.isoformat(),
         "validation_end": validation_end.isoformat(),
         "warmup_candidates_excluded_from_pnl": len(decision_rows) - len(validation_decisions),
         "validation_candidates": len(validation_decisions),
         "validation_allowed_candidates": len(allowed_trades),
+        "priority_mode": "causal_entry_quality",
         "missing_join_keys": missing,
     }
     (root / "walk_forward_evaluation_window.json").write_text(
