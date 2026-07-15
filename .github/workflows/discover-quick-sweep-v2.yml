@@ -16,149 +16,40 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
-      SOURCE_RUN_ID: '29410024555'
+      TARGET_SHA: a09983e5403e0e6f0a72c84633c968cff9b5b06b
     steps:
       - uses: actions/checkout@v4
         with:
           ref: agent/live-paper-hardening
           fetch-depth: 0
 
-      - name: Read completed quick sweep log
+      - name: Find diagnostic quick sweep
         run: |
-          mkdir -p collected results/causal_quick_sweep_status_v3
-          gh run view "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --log > collected/run.log
-
-      - name: Parse all WFO candidates
-        run: |
-          python - <<'PY'
-          from __future__ import annotations
+          RUN_ID="$(gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow causal-quick-sweep.yml \
+            --event push \
+            --branch agent/live-paper-hardening \
+            --limit 30 \
+            --json databaseId,headSha \
+            --jq '.[] | select(.headSha == env.TARGET_SHA) | .databaseId' \
+            | head -n 1)"
+          test -n "$RUN_ID"
+          mkdir -p results/causal_quick_sweep_status_v4
+          python - <<PY
           import json
-          import re
           from pathlib import Path
-
-          log = Path('collected/run.log').read_text(encoding='utf-8', errors='replace')
-          messages = []
-          for raw in log.splitlines():
-              parts = raw.split('\t', 2)
-              msg = parts[2] if len(parts) == 3 else raw
-              if 'Z ' in msg:
-                  msg = msg.split('Z ', 1)[1]
-              messages.append(msg.lstrip('\ufeff').strip())
-
-          matrix = []
-          matrix_re = re.compile(
-              r'^(TAGGED_[A-Z0-9_]+): ret=([-0-9.]+)% dd=([-0-9.]+)% '
-              r'pf=([-0-9.]+) executed=(\d+) sanity=([A-Z]+) score=([-0-9.]+)$'
+          Path('results/causal_quick_sweep_status_v4/monitor.json').write_text(
+              json.dumps({'source_head_sha':'$TARGET_SHA','run_id':int('$RUN_ID')}, indent=2) + '\n',
+              encoding='utf-8',
           )
-          for msg in messages:
-              m = matrix_re.match(msg)
-              if m:
-                  matrix.append({
-                      'name': m.group(1), 'ret_pct': float(m.group(2)),
-                      'max_dd_pct': float(m.group(3)), 'pf': float(m.group(4)),
-                      'executed_trades': int(m.group(5)), 'sanity_status': m.group(6),
-                      'score': float(m.group(7)),
-                  })
-
-          blocks = []
-          cur = None
-          for msg in messages:
-              if msg == '# Binance Walk-Forward Summary':
-                  if cur and cur.get('name'):
-                      blocks.append(cur)
-                  cur = {}
-                  continue
-              if cur is None:
-                  continue
-              checks = [
-                  ('verdict', r'^Verdict: \*\*(.+)\*\*$'),
-                  ('name', r'^- Name: (.+)$'),
-                  ('valid', r'^- Valid folds: (\d+) / (\d+)$'),
-                  ('positive', r'^- Positive folds: (\d+) \('),
-                  ('trades', r'^- Total executed trades: (\d+)$'),
-                  ('ret', r'^- Average return pct: ([-0-9.]+)%$'),
-                  ('pf', r'^- Average PF: ([-0-9.]+)$'),
-                  ('dd', r'^- Worst max DD pct: ([-0-9.]+)%$'),
-              ]
-              for key, pattern in checks:
-                  m = re.match(pattern, msg)
-                  if not m:
-                      continue
-                  if key == 'valid':
-                      cur['valid_folds'] = int(m.group(1)); cur['total_folds'] = int(m.group(2))
-                  elif key == 'positive': cur['positive_folds'] = int(m.group(1))
-                  elif key == 'trades': cur['total_trades'] = int(m.group(1))
-                  elif key == 'ret': cur['avg_return_pct'] = float(m.group(1))
-                  elif key == 'pf': cur['avg_pf'] = float(m.group(1))
-                  elif key == 'dd': cur['worst_dd_pct'] = float(m.group(1))
-                  else: cur[key] = m.group(1)
-                  break
-          if cur and cur.get('name'):
-              blocks.append(cur)
-
-          # Final block per candidate is the complete printed summary.
-          by_name = {}
-          for row in blocks:
-              by_name[row['name']] = row
-          blocks = list(by_name.values())
-          matrix_by_name = {row['name']: row for row in matrix}
-          for row in blocks:
-              row['matrix'] = matrix_by_name.get(row['name'], {})
-
-          verdict_rank = {
-              'PASS_WALK_FORWARD_REVIEW': 4,
-              'WATCH_REVIEWABLE_BUT_UNSTABLE': 3,
-              'WATCH_TOO_SPARSE': 2,
-              'WATCH_UNSTABLE': 1,
-          }
-          blocks.sort(key=lambda row: (
-              verdict_rank.get(row.get('verdict', ''), 0),
-              row.get('positive_folds', 0), row.get('avg_return_pct', -999.0),
-              row.get('avg_pf', 0.0), row.get('total_trades', 0)
-          ), reverse=True)
-          leader = blocks[0] if blocks else {}
-          result = {
-              'source_run_id': int('29410024555'),
-              'status': 'completed',
-              'screening_leader': leader.get('name', ''),
-              'leader_verdict': leader.get('verdict', ''),
-              'leader_positive_folds': leader.get('positive_folds', 0),
-              'leader_valid_folds': leader.get('valid_folds', 0),
-              'leader_trades': leader.get('total_trades', 0),
-              'leader_avg_return_pct': leader.get('avg_return_pct', 0.0),
-              'leader_avg_pf': leader.get('avg_pf', 0.0),
-              'leader_worst_dd_pct': leader.get('worst_dd_pct', 0.0),
-              'wfo_candidates': blocks,
-              'matrix_candidates': matrix,
-          }
-          out = Path('results/causal_quick_sweep_status_v3')
-          (out / 'result.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-          lines = [
-              '# Causal quick sweep v3 result', '',
-              f"- Source run: `{result['source_run_id']}`",
-              f"- Screening leader: **{result['screening_leader'] or 'none'}**",
-              f"- Verdict: **{result['leader_verdict'] or 'none'}**",
-              f"- Positive folds: `{result['leader_positive_folds']}/{result['leader_valid_folds']}`",
-              f"- Trades: `{result['leader_trades']}`",
-              f"- Average return: `{result['leader_avg_return_pct']}%`",
-              f"- Average PF: `{result['leader_avg_pf']}`",
-              f"- Worst DD: `{result['leader_worst_dd_pct']}%`", '',
-              '## All candidates',
-          ]
-          for row in blocks:
-              lines.append(
-                  f"- {row.get('name')}: {row.get('verdict')}, folds={row.get('positive_folds', 0)}/{row.get('valid_folds', 0)}, "
-                  f"trades={row.get('total_trades', 0)}, return={row.get('avg_return_pct', 0.0)}%, "
-                  f"PF={row.get('avg_pf', 0.0)}, DD={row.get('worst_dd_pct', 0.0)}%"
-              )
-          (out / 'result.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
           PY
 
-      - name: Commit parsed result
+      - name: Commit run id
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git pull --rebase origin agent/live-paper-hardening
-          git add results/causal_quick_sweep_status_v3/result.json results/causal_quick_sweep_status_v3/result.md
-          git commit -m "Record all causal quick sweep v3 candidates" || exit 0
+          git add results/causal_quick_sweep_status_v4/monitor.json
+          git commit -m "Record diagnostic quick sweep run id" || exit 0
           git push origin HEAD:agent/live-paper-hardening
