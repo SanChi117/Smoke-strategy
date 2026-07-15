@@ -1,0 +1,42 @@
+name: SHORT Refinement Monitor
+
+on:
+  push:
+    branches:
+      - agent/live-paper-hardening
+    paths:
+      - research_triggers/short_refinement_monitor.txt
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/live-paper-hardening
+          fetch-depth: 0
+
+      - name: Record latest SHORT refinement run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p results/twelve_month_short_refinement_status_v1
+          gh run list \
+            --workflow 'Causal SHORT Refinement V1' \
+            --branch agent/live-paper-hardening \
+            --limit 1 \
+            --json databaseId,status,conclusion,headSha,createdAt \
+            --jq '.[0]' \
+            > results/twelve_month_short_refinement_status_v1/monitor.json
+          cat results/twelve_month_short_refinement_status_v1/monitor.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase origin agent/live-paper-hardening
+          git add results/twelve_month_short_refinement_status_v1/monitor.json
+          git commit -m 'Record SHORT refinement workflow id' || exit 0
+          git push origin HEAD:agent/live-paper-hardening
