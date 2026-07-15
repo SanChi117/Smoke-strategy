@@ -1,4 +1,6 @@
 {
-  "source_head_sha": "7656ddce65c254c896d4877e3b981ac88bd885de",
-  "run_id": 29433392660
+  "source_head_sha": "a8b55db3439632705b4409304408c3c322f72680",
+  "run_id": 29434703157,
+  "status": "running",
+  "data_source": "BINANCE_VISION_USDM_FUTURES_ARCHIVE"
 }
