@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import csv
 import json
+from collections import Counter
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
@@ -102,6 +103,65 @@ def trade_key(symbol: object, side: object, entry_time: object) -> tuple[str, st
     return (str(symbol).strip().upper(), str(side).strip().lower(), parse_dt(entry_time))
 
 
+def build_layer_funnel(
+    validation_decisions: list[dict[str, str]],
+    generated_by_key: dict[tuple[str, str, datetime], dict[str, str]],
+) -> tuple[list[dict[str, object]], dict[str, object]]:
+    """Summarise strict-OOS candidate flow without using future outcomes.
+
+    The first blocking reason in ``pipeline_decisions.csv`` is the exact layer that
+    stopped the candidate. Counts are also split by setup type so a sparse entry
+    generator is distinguishable from an over-strict downstream gate.
+    """
+
+    reason_counts: Counter[str] = Counter()
+    setup_counts: Counter[str] = Counter()
+    setup_reason_counts: Counter[tuple[str, str]] = Counter()
+    allowed_by_setup: Counter[str] = Counter()
+
+    for decision in validation_decisions:
+        key = trade_key(decision.get("symbol"), decision.get("side"), decision.get("entry_time"))
+        generated = generated_by_key.get(key, {})
+        setup = str(decision.get("setup_type") or generated.get("setup_type") or "unknown").strip().lower()
+        reason = str(decision.get("reason") or "unknown").strip().lower()
+        setup_counts[setup] += 1
+        reason_counts[reason] += 1
+        setup_reason_counts[(setup, reason)] += 1
+        if bool_value(decision.get("allowed")):
+            allowed_by_setup[setup] += 1
+
+    rows: list[dict[str, object]] = []
+    total = len(validation_decisions)
+    for reason, count in reason_counts.most_common():
+        rows.append({
+            "scope": "all",
+            "setup_type": "all",
+            "reason": reason,
+            "count": count,
+            "pct_of_scope": round(count / total * 100.0, 4) if total else 0.0,
+        })
+    for setup, setup_total in sorted(setup_counts.items()):
+        for (row_setup, reason), count in sorted(setup_reason_counts.items()):
+            if row_setup != setup:
+                continue
+            rows.append({
+                "scope": "setup",
+                "setup_type": setup,
+                "reason": reason,
+                "count": count,
+                "pct_of_scope": round(count / setup_total * 100.0, 4) if setup_total else 0.0,
+            })
+
+    summary = {
+        "validation_candidates": total,
+        "validation_allowed": sum(1 for row in validation_decisions if bool_value(row.get("allowed"))),
+        "setup_counts": dict(sorted(setup_counts.items())),
+        "allowed_by_setup": dict(sorted(allowed_by_setup.items())),
+        "blocking_reasons": dict(reason_counts.most_common()),
+    }
+    return rows, summary
+
+
 def evaluate_validation_window(
     run_dir: str | Path,
     validation_start: datetime,
@@ -132,6 +192,7 @@ def evaluate_validation_window(
         if validation_start <= parse_dt(row.get("entry_time")) < validation_end
     ]
     allowed_decisions = [row for row in validation_decisions if bool_value(row.get("allowed"))]
+    funnel_rows, funnel_summary = build_layer_funnel(validation_decisions, generated_by_key)
 
     allowed_trades = []
     risk_pcts: dict[tuple[str, str, object], float] = {}
@@ -208,6 +269,11 @@ def evaluate_validation_window(
     write_csv(root / "pipeline_decisions.csv", validation_decisions, decision_fields)
     write_csv(root / "pipeline_allowed_trades.csv", allowed_generated_rows, generated_fields)
     write_csv(root / "walk_forward_candidate_priorities.csv", priority_rows)
+    write_csv(root / "walk_forward_layer_funnel.csv", funnel_rows)
+    (root / "walk_forward_layer_funnel.json").write_text(
+        json.dumps(funnel_summary, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
     write_csv(root / "pipeline_summary.csv", [asdict(summary)])
     metadata = {
         "mode": "STRICT_OUT_OF_SAMPLE_PRIORITY",
@@ -217,6 +283,7 @@ def evaluate_validation_window(
         "validation_candidates": len(validation_decisions),
         "validation_allowed_candidates": len(allowed_trades),
         "priority_mode": "causal_entry_quality",
+        "layer_funnel_file": "walk_forward_layer_funnel.json",
         "missing_join_keys": missing,
     }
     (root / "walk_forward_evaluation_window.json").write_text(
