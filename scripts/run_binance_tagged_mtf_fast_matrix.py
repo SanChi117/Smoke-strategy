@@ -11,6 +11,13 @@ import run_binance_real_matrix as matrix
 import run_binance_tagged_universe_matrix as tagged
 
 
+# The generic matrix predates completed 4H/1D alignment filters. Register them
+# here so tagged matrix rows export the exact configuration later consumed by WFO.
+for _filter_key in ("allowed_context_alignments", "blocked_context_alignments"):
+    if _filter_key not in matrix.TACTICAL_FILTER_KEYS:
+        matrix.TACTICAL_FILTER_KEYS.append(_filter_key)
+
+
 PULLBACK_FAMILY = ("pullback", "pullback_resumption", "pullback_resumption_strict")
 RESUMPTION_FAMILY = ("pullback_resumption", "pullback_resumption_strict")
 
