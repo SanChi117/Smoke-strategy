@@ -6,6 +6,7 @@ on:
       - 'strategy_lab/**'
       - 'scripts/smoke_control_server.py'
       - 'scripts/smoke_control_server_v2.py'
+      - 'scripts/run_binance_walk_forward_v2.py'
       - 'scripts/run_causal_paper_review_validation.py'
       - 'deployment/**'
       - 'docs/LIVE_PAPER_V2_RU.md'
@@ -51,7 +52,7 @@ jobs:
 
       - name: Compile Python
         run: |
-          python -m compileall -q strategy_lab scripts/smoke_control_server.py scripts/smoke_control_server_v2.py scripts/run_causal_paper_review_validation.py
+          python -m compileall -q strategy_lab scripts/smoke_control_server.py scripts/smoke_control_server_v2.py scripts/run_binance_walk_forward_v2.py scripts/run_causal_paper_review_validation.py
 
       - name: Test causal history
         run: python -m strategy_lab.causal_history_smoke_test
@@ -68,6 +69,9 @@ jobs:
       - name: Test closed-candle incremental storage
         run: python -m strategy_lab.live_market_smoke_test
 
+      - name: Test strict walk-forward boundaries
+        run: python -m strategy_lab.walk_forward_boundary_smoke_test
+
       - name: Test existing integrated pipeline
         run: python -m strategy_lab.pipeline_smoke_test
 
@@ -76,7 +80,7 @@ jobs:
 
   full-causal-revalidation:
     name: mandatory-causal-paper-validation
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.run_full_causal_revalidation == true) }}
+    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.run_full_causal_revalidation == true) }}
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
