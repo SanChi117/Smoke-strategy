@@ -32,12 +32,27 @@ def mtf_cfg(name: str, **overrides: object) -> dict:
     return item
 
 
-# Suite still selects these 3 legacy names for multi-WFO/deep validation.
-# Mapping is intentional and documented in docs/TAGGED_MTF_DECISION_LOG.md:
-# - ENTRY_CONFIRM = strict v2 baseline, current best research baseline.
-# - NO_DIRECTION_NO_IGNITION = broad v2 diagnostic.
-# - NO_DIRECTION_BLOCK = hybrid v2 diagnostic.
+def pullback_short_cfg(name: str, **overrides: object) -> dict:
+    """Causal hypothesis derived from fold diagnostics, not final promotion."""
+    item = mtf_cfg(
+        name,
+        blocked_trend_contexts=(),
+        allowed_setup_types=("pullback",),
+        allowed_direction_contexts=("down",),
+        blocked_setup_types=("breakout", "range_rotation", "watch_impulse", "liquidity_reclaim", "ignition"),
+        min_confidence=43.0,
+        quality_take_threshold=64.0,
+        quality_watch_threshold=52.0,
+        structure_take_threshold=63.0,
+        structure_watch_threshold=52.0,
+        min_volume_ratio=0.70,
+    )
+    item.update(overrides)
+    return item
+
+
 MTF_SELECTED_CONFIGS = [
+    # Legacy controls retained so every iteration can be compared with the prior baseline.
     mtf_cfg(
         "TAGGED_MTF_ENTRY_CONFIRM_V1",
         allowed_setup_types=("pullback", "ignition"),
@@ -66,6 +81,32 @@ MTF_SELECTED_CONFIGS = [
         structure_take_threshold=64.0,
         structure_watch_threshold=54.0,
     ),
+
+    # Iteration 1: remove the two persistently weak branches (long and ignition).
+    pullback_short_cfg("TAGGED_PULLBACK_SHORT_BALANCED_V1"),
+    pullback_short_cfg(
+        "TAGGED_PULLBACK_SHORT_NEUTRAL_INDECISION_V1",
+        allowed_candle_types=("neutral", "indecision"),
+    ),
+    pullback_short_cfg(
+        "TAGGED_PULLBACK_SHORT_INDECISION_V1",
+        allowed_candle_types=("indecision",),
+    ),
+    pullback_short_cfg(
+        "TAGGED_PULLBACK_SHORT_INDECISION_VR09_V1",
+        allowed_candle_types=("indecision",),
+        min_volume_ratio=0.90,
+    ),
+    pullback_short_cfg(
+        "TAGGED_PULLBACK_SHORT_STRICT_V1",
+        allowed_candle_types=("neutral", "indecision"),
+        min_confidence=48.0,
+        quality_take_threshold=68.0,
+        quality_watch_threshold=56.0,
+        structure_take_threshold=66.0,
+        structure_watch_threshold=55.0,
+        min_volume_ratio=0.84,
+    ),
 ]
 
 
@@ -78,7 +119,7 @@ def main() -> int:
     print("Universe/tags: unchanged")
     print("Context: 1D/4H market context")
     print("Entry timeframe: caller interval, expected 15m")
-    print("A/B mapping: ENTRY_CONFIRM=strict baseline, NO_DIRECTION_NO_IGNITION=broad, NO_DIRECTION_BLOCK=hybrid")
+    print("Iteration: causal pullback-short family + legacy controls")
     print("Configs: " + ", ".join(str(item["name"]) for item in MTF_FAST_CONFIGS))
     return matrix.main()
 
