@@ -56,6 +56,12 @@ jobs:
       - name: Test completed higher-timeframe context
         run: python -m strategy_lab.closed_context_smoke_test
 
+      - name: Test adaptive structure scope
+        run: python -m strategy_lab.structure_scope_smoke_test
+
+      - name: Test pullback resumption entry
+        run: python -m strategy_lab.pullback_resumption_smoke_test
+
       - name: Test all-candidate shadow learning
         run: python -m strategy_lab.shadow_history_smoke_test
 
