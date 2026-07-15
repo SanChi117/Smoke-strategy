@@ -12,7 +12,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 from datetime import date
-from typing import Sequence
+from typing import Any, Sequence
 
 from strategy_lab.config import RiskProfile
 from strategy_lab.rolling_symbol_strength import CostConfig, Trade, adjusted_return_pct, pf, risk_distance_pct, max_loss_streak
@@ -53,19 +53,49 @@ def simulate_dynamic_portfolio(
     cost: CostConfig,
     setup: str,
     priority_scores: dict[tuple[str, str, object], float] | None = None,
+    audit_events: list[dict[str, Any]] | None = None,
 ) -> DynamicPortfolioResult:
-    """Simulate the portfolio with optional causal candidate priority.
+    """Simulate the portfolio with optional causal candidate priority and audit.
 
     When several candidates have the same entry timestamp, the old implementation
-    selected them by symbol name. If `priority_scores` is supplied, higher-scored
-    candidates are evaluated first. Scores must contain entry-time information
-    only; this function never derives priority from trade outcome.
+    selected them by symbol name. If ``priority_scores`` is supplied, higher-scored
+    candidates are evaluated first. Scores must contain entry-time information only;
+    this function never derives priority from trade outcome.
+
+    ``audit_events`` is an optional caller-owned list. Supplying it does not alter
+    selection or P&L; the simulator appends OPEN, CLOSE and SKIP events so research
+    can reconstruct exactly which allowed candidates became portfolio trades.
     """
 
     priorities = priority_scores or {}
+    audit = audit_events
 
     def key_for(t: Trade) -> tuple[str, str, object]:
         return (t.symbol.upper(), t.side.lower(), t.entry_time)
+
+    def base_event(t: Trade) -> dict[str, Any]:
+        key = key_for(t)
+        return {
+            "symbol": t.symbol,
+            "side": t.side,
+            "entry_time": t.entry_time.isoformat() if hasattr(t.entry_time, "isoformat") else str(t.entry_time),
+            "exit_time": t.exit_time.isoformat() if hasattr(t.exit_time, "isoformat") else str(t.exit_time),
+            "entry": t.entry,
+            "stop": t.stop,
+            "exit": t.exit,
+            "r_mult": t.r_mult,
+            "kind": t.kind,
+            "source": t.source,
+            "priority_score": float(priorities.get(key, 0.0)),
+        }
+
+    def emit(t: Trade, event: str, reason: str = "", **extra: Any) -> None:
+        if audit is None:
+            return
+        row = base_event(t)
+        row.update({"event": event, "reason": reason})
+        row.update(extra)
+        audit.append(row)
 
     ordered = sorted(
         trades,
@@ -79,7 +109,7 @@ def simulate_dynamic_portfolio(
     cash = profile.initial_cash
     peak = profile.initial_cash
     max_dd = 0.0
-    active: list[tuple[Trade, float, float, float, float]] = []
+    active: list[tuple[Trade, float, float, float, float, float]] = []
     taken: list[tuple[Trade, float]] = []
     pnl_values: list[float] = []
     risk_values: list[float] = []
@@ -111,8 +141,8 @@ def simulate_dynamic_portfolio(
 
     def close_until(dt) -> None:
         nonlocal cash, active, total_fees
-        remaining: list[tuple[Trade, float, float, float, float]] = []
-        for t, margin, notional, opened_equity, risk_pct in active:
+        remaining: list[tuple[Trade, float, float, float, float, float]] = []
+        for t, margin, notional, opened_equity, risk_pct, entry_fee in active:
             if t.exit_time <= dt:
                 gross_pnl = notional * adjusted_return_pct(t, cost)
                 exit_fee = notional * cost.fee_rate
@@ -123,9 +153,24 @@ def simulate_dynamic_portfolio(
                 pnl_values.append(pnl)
                 risk_values.append(risk_pct)
                 record_pnl(t, pnl)
+                emit(
+                    t,
+                    "CLOSE",
+                    "executed",
+                    risk_pct=risk_pct,
+                    margin=margin,
+                    notional=notional,
+                    opened_equity=opened_equity,
+                    entry_fee=entry_fee,
+                    exit_fee=exit_fee,
+                    total_fee=entry_fee + exit_fee,
+                    gross_pnl=gross_pnl,
+                    net_pnl=pnl,
+                    cash_after=cash,
+                )
                 mark_dd()
             else:
-                remaining.append((t, margin, notional, opened_equity, risk_pct))
+                remaining.append((t, margin, notional, opened_equity, risk_pct, entry_fee))
         active = remaining
 
     def daily_halted(t: Trade) -> bool:
@@ -144,32 +189,39 @@ def simulate_dynamic_portfolio(
         if risk_pct <= 0:
             skipped += 1
             skipped_no_risk += 1
+            emit(t, "SKIP", "no_risk", risk_pct=risk_pct)
             continue
         if daily_halted(t):
             skipped += 1
             skipped_daily_halt += 1
+            emit(t, "SKIP", "daily_halt", risk_pct=risk_pct)
             continue
         if weekly_halted(t):
             skipped += 1
             skipped_weekly_halt += 1
+            emit(t, "SKIP", "weekly_halt", risk_pct=risk_pct)
             continue
         if len(active) >= profile.max_positions:
             skipped += 1
             skipped_max_positions += 1
+            emit(t, "SKIP", "max_positions", risk_pct=risk_pct, active_positions=len(active))
             continue
         if sum(1 for item in active if item[0].symbol == t.symbol) >= profile.max_symbol_positions:
             skipped += 1
             skipped_symbol_limit += 1
+            emit(t, "SKIP", "symbol_limit", risk_pct=risk_pct, active_positions=len(active))
             continue
         if cash <= 0:
             skipped += 1
             skipped_cash += 1
+            emit(t, "SKIP", "cash_non_positive", risk_pct=risk_pct, cash=cash)
             continue
 
         dist = risk_distance_pct(t, cost)
         if dist <= 0 or not math.isfinite(dist):
             skipped += 1
             skipped_cash += 1
+            emit(t, "SKIP", "invalid_risk_distance", risk_pct=risk_pct, risk_distance=dist)
             continue
 
         used_margin = sum(item[1] for item in active)
@@ -185,18 +237,39 @@ def simulate_dynamic_portfolio(
         if margin <= 1e-9 or notional <= 1e-9 or cash < margin + entry_fee:
             skipped += 1
             skipped_cash += 1
+            emit(
+                t,
+                "SKIP",
+                "insufficient_cash_or_size",
+                risk_pct=risk_pct,
+                cash=cash,
+                margin=margin,
+                notional=notional,
+                entry_fee=entry_fee,
+            )
             continue
 
         cash -= margin + entry_fee
         total_fees += entry_fee
-        active.append((t, margin, notional, equity, risk_pct))
+        active.append((t, margin, notional, equity, risk_pct, entry_fee))
+        emit(
+            t,
+            "OPEN",
+            "executed",
+            risk_pct=risk_pct,
+            margin=margin,
+            notional=notional,
+            opened_equity=equity,
+            entry_fee=entry_fee,
+            cash_after=cash,
+        )
         mark_dd()
 
     if ordered:
         close_until(max(t.exit_time for t in ordered))
 
     if active:
-        for t, margin, notional, opened_equity, risk_pct in active:
+        for t, margin, notional, opened_equity, risk_pct, entry_fee in active:
             gross_pnl = notional * adjusted_return_pct(t, cost)
             exit_fee = notional * cost.fee_rate
             total_fees += exit_fee
@@ -206,10 +279,25 @@ def simulate_dynamic_portfolio(
             pnl_values.append(pnl)
             risk_values.append(risk_pct)
             record_pnl(t, pnl)
+            emit(
+                t,
+                "CLOSE",
+                "executed_final_close",
+                risk_pct=risk_pct,
+                margin=margin,
+                notional=notional,
+                opened_equity=opened_equity,
+                entry_fee=entry_fee,
+                exit_fee=exit_fee,
+                total_fee=entry_fee + exit_fee,
+                gross_pnl=gross_pnl,
+                net_pnl=pnl,
+                cash_after=cash,
+            )
         active = []
     mark_dd()
 
-    wins = sum(1 for v in pnl_values if v > 0)
+    wins = sum(1 for value in pnl_values if value > 0)
     by_symbol: dict[str, float] = {}
     for t, pnl in taken:
         by_symbol[t.symbol] = by_symbol.get(t.symbol, 0.0) + pnl
@@ -231,7 +319,7 @@ def simulate_dynamic_portfolio(
         winrate=wins / len(pnl_values) * 100.0 if pnl_values else 0.0,
         max_loss_streak=max_loss_streak(pnl_values),
         symbols_traded=len(by_symbol),
-        symbols_positive=sum(1 for v in by_symbol.values() if v > 0),
+        symbols_positive=sum(1 for value in by_symbol.values() if value > 0),
         total_fees=total_fees,
         avg_risk_pct=sum(risk_values) / len(risk_values) if risk_values else 0.0,
     )
