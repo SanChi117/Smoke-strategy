@@ -72,6 +72,9 @@ jobs:
       - name: Test strict walk-forward boundaries
         run: python -m strategy_lab.walk_forward_boundary_smoke_test
 
+      - name: Test simultaneous candidate priority
+        run: python -m strategy_lab.portfolio_priority_smoke_test
+
       - name: Test existing integrated pipeline
         run: python -m strategy_lab.pipeline_smoke_test
 
