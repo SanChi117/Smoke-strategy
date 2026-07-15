@@ -4,10 +4,7 @@ on:
   pull_request:
     paths:
       - 'strategy_lab/**'
-      - 'scripts/smoke_control_server.py'
-      - 'scripts/smoke_control_server_v2.py'
-      - 'scripts/run_binance_walk_forward_v2.py'
-      - 'scripts/run_causal_paper_review_validation.py'
+      - 'scripts/**'
       - 'deployment/**'
       - 'docs/LIVE_PAPER_V2_RU.md'
       - 'docs/MULTI_PROJECT_CONTROL_PANEL_RU.md'
@@ -51,8 +48,7 @@ jobs:
           pip install -e .
 
       - name: Compile Python
-        run: |
-          python -m compileall -q strategy_lab scripts/smoke_control_server.py scripts/smoke_control_server_v2.py scripts/run_binance_walk_forward_v2.py scripts/run_causal_paper_review_validation.py
+        run: python -m compileall -q strategy_lab scripts
 
       - name: Test causal history
         run: python -m strategy_lab.causal_history_smoke_test
