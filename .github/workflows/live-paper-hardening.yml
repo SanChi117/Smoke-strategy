@@ -101,6 +101,9 @@ jobs:
       - name: Test existing integrated pipeline
         run: python -m strategy_lab.pipeline_smoke_test
 
+      - name: Analyze committed pullback OOS funnel
+        run: python scripts/analyze_long_history_pullback_funnel.py
+
       - name: Validate one-command installer syntax
         run: bash -n deployment/install_smoke.sh
 
