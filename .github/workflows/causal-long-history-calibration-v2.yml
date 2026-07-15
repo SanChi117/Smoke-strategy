@@ -1,0 +1,60 @@
+name: Causal Long History Calibration V2
+
+on:
+  push:
+    branches:
+      - 'agent/live-paper-hardening'
+    paths:
+      - 'research_triggers/causal_long_history_calibration_v2.txt'
+
+permissions:
+  contents: write
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  calibrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/live-paper-hardening
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Verify causal protections
+        run: |
+          python -m strategy_lab.causal_history_smoke_test
+          python -m strategy_lab.walk_forward_boundary_smoke_test
+          python -m strategy_lab.portfolio_priority_smoke_test
+
+      - name: Run cached six-fold calibration
+        run: python scripts/run_causal_long_history_calibration_v2.py
+
+      - name: Commit compact calibration result
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase origin agent/live-paper-hardening
+          git add \
+            results/causal_long_history_calibration_v2/result.json \
+            results/causal_long_history_calibration_v2/candidate_summary.csv \
+            results/causal_long_history_calibration_v2/candidate_folds/*.csv
+          if git diff --cached --quiet; then
+            echo 'No calibration result changes'
+            exit 0
+          fi
+          git commit -m 'Record cached long-history calibration v2 result'
+          git push origin HEAD:agent/live-paper-hardening
