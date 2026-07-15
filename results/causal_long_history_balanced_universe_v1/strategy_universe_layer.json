@@ -1,0 +1,480 @@
+{
+  "version": "strategy_universe_layer_v1",
+  "created_at_utc": "2026-07-15T17:25:20+00:00",
+  "mode": "metadata_layer_only",
+  "strategy_policy": {
+    "strategy_changed": false,
+    "sector_is_trading_rule": false,
+    "sector_is_context_tag": true,
+    "live_trading": false,
+    "order_execution": false,
+    "note": "This layer only prepares symbols and tags. It must not replace the proven strategy baseline."
+  },
+  "source": {
+    "groups_version": "sector_groups_v1",
+    "groups_status": "research_seed_not_live_ranking",
+    "top_n_per_group": 3
+  },
+  "core_reference_symbols": [
+    "INJUSDT",
+    "TONUSDT",
+    "DOGEUSDT",
+    "ARBUSDT",
+    "NEARUSDT",
+    "OPUSDT"
+  ],
+  "discovery_symbols": [
+    "BTCUSDT",
+    "ETHUSDT",
+    "SOLUSDT",
+    "BNBUSDT",
+    "POLUSDT",
+    "FETUSDT",
+    "RENDERUSDT",
+    "TAOUSDT",
+    "FILUSDT",
+    "ARUSDT",
+    "UNIUSDT",
+    "AAVEUSDT",
+    "LDOUSDT",
+    "ONDOUSDT",
+    "PENDLEUSDT",
+    "OMUSDT",
+    "SHIBUSDT",
+    "PEPEUSDT",
+    "IMXUSDT",
+    "SANDUSDT",
+    "MANAUSDT",
+    "LINKUSDT",
+    "PYTHUSDT",
+    "API3USDT",
+    "XRPUSDT",
+    "LTCUSDT",
+    "BCHUSDT",
+    "JUPUSDT"
+  ],
+  "combined_symbols": [
+    "INJUSDT",
+    "TONUSDT",
+    "DOGEUSDT",
+    "ARBUSDT",
+    "NEARUSDT",
+    "OPUSDT",
+    "BTCUSDT",
+    "ETHUSDT",
+    "SOLUSDT",
+    "BNBUSDT",
+    "POLUSDT",
+    "FETUSDT",
+    "RENDERUSDT",
+    "TAOUSDT",
+    "FILUSDT",
+    "ARUSDT",
+    "UNIUSDT",
+    "AAVEUSDT",
+    "LDOUSDT",
+    "ONDOUSDT",
+    "PENDLEUSDT",
+    "OMUSDT",
+    "SHIBUSDT",
+    "PEPEUSDT",
+    "IMXUSDT",
+    "SANDUSDT",
+    "MANAUSDT",
+    "LINKUSDT",
+    "PYTHUSDT",
+    "API3USDT",
+    "XRPUSDT",
+    "LTCUSDT",
+    "BCHUSDT",
+    "JUPUSDT"
+  ],
+  "symbols": [
+    {
+      "symbol": "INJUSDT",
+      "role": "core",
+      "sectors": [],
+      "sector_rankings": {},
+      "is_core_reference": true
+    },
+    {
+      "symbol": "TONUSDT",
+      "role": "core",
+      "sectors": [],
+      "sector_rankings": {},
+      "is_core_reference": true
+    },
+    {
+      "symbol": "DOGEUSDT",
+      "role": "core",
+      "sectors": [
+        "memes_high_beta"
+      ],
+      "sector_rankings": {
+        "memes_high_beta": 1
+      },
+      "is_core_reference": true
+    },
+    {
+      "symbol": "ARBUSDT",
+      "role": "core",
+      "sectors": [
+        "layer2_scaling"
+      ],
+      "sector_rankings": {
+        "layer2_scaling": 1
+      },
+      "is_core_reference": true
+    },
+    {
+      "symbol": "NEARUSDT",
+      "role": "core",
+      "sectors": [],
+      "sector_rankings": {},
+      "is_core_reference": true
+    },
+    {
+      "symbol": "OPUSDT",
+      "role": "core",
+      "sectors": [
+        "layer2_scaling"
+      ],
+      "sector_rankings": {
+        "layer2_scaling": 2
+      },
+      "is_core_reference": true
+    },
+    {
+      "symbol": "BTCUSDT",
+      "role": "discovery",
+      "sectors": [
+        "majors_liquid"
+      ],
+      "sector_rankings": {
+        "majors_liquid": 1
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "ETHUSDT",
+      "role": "discovery",
+      "sectors": [
+        "majors_liquid",
+        "layer1_smart_contracts"
+      ],
+      "sector_rankings": {
+        "majors_liquid": 2,
+        "layer1_smart_contracts": 1
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "SOLUSDT",
+      "role": "discovery",
+      "sectors": [
+        "majors_liquid",
+        "layer1_smart_contracts",
+        "solana_ecosystem"
+      ],
+      "sector_rankings": {
+        "majors_liquid": 3,
+        "layer1_smart_contracts": 2,
+        "solana_ecosystem": 1
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "BNBUSDT",
+      "role": "discovery",
+      "sectors": [
+        "layer1_smart_contracts"
+      ],
+      "sector_rankings": {
+        "layer1_smart_contracts": 3
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "POLUSDT",
+      "role": "discovery",
+      "sectors": [
+        "layer2_scaling"
+      ],
+      "sector_rankings": {
+        "layer2_scaling": 3
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "FETUSDT",
+      "role": "discovery",
+      "sectors": [
+        "ai_data_compute"
+      ],
+      "sector_rankings": {
+        "ai_data_compute": 1
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "RENDERUSDT",
+      "role": "discovery",
+      "sectors": [
+        "ai_data_compute",
+        "depin_infrastructure"
+      ],
+      "sector_rankings": {
+        "ai_data_compute": 2,
+        "depin_infrastructure": 1
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "TAOUSDT",
+      "role": "discovery",
+      "sectors": [
+        "ai_data_compute"
+      ],
+      "sector_rankings": {
+        "ai_data_compute": 3
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "FILUSDT",
+      "role": "discovery",
+      "sectors": [
+        "depin_infrastructure"
+      ],
+      "sector_rankings": {
+        "depin_infrastructure": 2
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "ARUSDT",
+      "role": "discovery",
+      "sectors": [
+        "depin_infrastructure"
+      ],
+      "sector_rankings": {
+        "depin_infrastructure": 3
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "UNIUSDT",
+      "role": "discovery",
+      "sectors": [
+        "defi_dex_lending"
+      ],
+      "sector_rankings": {
+        "defi_dex_lending": 1
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "AAVEUSDT",
+      "role": "discovery",
+      "sectors": [
+        "defi_dex_lending"
+      ],
+      "sector_rankings": {
+        "defi_dex_lending": 2
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "LDOUSDT",
+      "role": "discovery",
+      "sectors": [
+        "defi_dex_lending"
+      ],
+      "sector_rankings": {
+        "defi_dex_lending": 3
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "ONDOUSDT",
+      "role": "discovery",
+      "sectors": [
+        "rwa_tokenization"
+      ],
+      "sector_rankings": {
+        "rwa_tokenization": 1
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "PENDLEUSDT",
+      "role": "discovery",
+      "sectors": [
+        "rwa_tokenization"
+      ],
+      "sector_rankings": {
+        "rwa_tokenization": 2
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "OMUSDT",
+      "role": "discovery",
+      "sectors": [
+        "rwa_tokenization"
+      ],
+      "sector_rankings": {
+        "rwa_tokenization": 3
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "SHIBUSDT",
+      "role": "discovery",
+      "sectors": [
+        "memes_high_beta"
+      ],
+      "sector_rankings": {
+        "memes_high_beta": 2
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "PEPEUSDT",
+      "role": "discovery",
+      "sectors": [
+        "memes_high_beta"
+      ],
+      "sector_rankings": {
+        "memes_high_beta": 3
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "IMXUSDT",
+      "role": "discovery",
+      "sectors": [
+        "gaming_metaverse"
+      ],
+      "sector_rankings": {
+        "gaming_metaverse": 1
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "SANDUSDT",
+      "role": "discovery",
+      "sectors": [
+        "gaming_metaverse"
+      ],
+      "sector_rankings": {
+        "gaming_metaverse": 2
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "MANAUSDT",
+      "role": "discovery",
+      "sectors": [
+        "gaming_metaverse"
+      ],
+      "sector_rankings": {
+        "gaming_metaverse": 3
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "LINKUSDT",
+      "role": "discovery",
+      "sectors": [
+        "oracles_data_services"
+      ],
+      "sector_rankings": {
+        "oracles_data_services": 1
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "PYTHUSDT",
+      "role": "discovery",
+      "sectors": [
+        "oracles_data_services",
+        "solana_ecosystem"
+      ],
+      "sector_rankings": {
+        "oracles_data_services": 2,
+        "solana_ecosystem": 3
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "API3USDT",
+      "role": "discovery",
+      "sectors": [
+        "oracles_data_services"
+      ],
+      "sector_rankings": {
+        "oracles_data_services": 3
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "XRPUSDT",
+      "role": "discovery",
+      "sectors": [
+        "payments_legacy_value"
+      ],
+      "sector_rankings": {
+        "payments_legacy_value": 1
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "LTCUSDT",
+      "role": "discovery",
+      "sectors": [
+        "payments_legacy_value"
+      ],
+      "sector_rankings": {
+        "payments_legacy_value": 2
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "BCHUSDT",
+      "role": "discovery",
+      "sectors": [
+        "payments_legacy_value"
+      ],
+      "sector_rankings": {
+        "payments_legacy_value": 3
+      },
+      "is_core_reference": false
+    },
+    {
+      "symbol": "JUPUSDT",
+      "role": "discovery",
+      "sectors": [
+        "solana_ecosystem"
+      ],
+      "sector_rankings": {
+        "solana_ecosystem": 2
+      },
+      "is_core_reference": false
+    }
+  ],
+  "sector_counts": {
+    "ai_data_compute": 3,
+    "defi_dex_lending": 3,
+    "depin_infrastructure": 3,
+    "gaming_metaverse": 3,
+    "layer1_smart_contracts": 3,
+    "layer2_scaling": 3,
+    "majors_liquid": 3,
+    "memes_high_beta": 3,
+    "oracles_data_services": 3,
+    "payments_legacy_value": 3,
+    "rwa_tokenization": 3,
+    "solana_ecosystem": 3
+  }
+}

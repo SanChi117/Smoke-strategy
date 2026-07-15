@@ -1,0 +1,2 @@
+name,verdict,valid_folds,positive_folds,positive_pct,total_trades,avg_return_pct,avg_pf,worst_dd_pct,score
+LONGHIST_RESUMPTION_BALANCED_V1,WATCH_TOO_SPARSE,6,3,50.0,6,0.3317,49.5,1.45,7.5067
