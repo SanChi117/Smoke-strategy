@@ -65,6 +65,9 @@ jobs:
       - name: Test pullback resumption entry
         run: python -m strategy_lab.pullback_resumption_smoke_test
 
+      - name: Test context alignment pipeline gate
+        run: python -m strategy_lab.context_alignment_gate_smoke_test
+
       - name: Test all-candidate shadow learning
         run: python -m strategy_lab.shadow_history_smoke_test
 
