@@ -1,0 +1,44 @@
+name: Discover External Holdout
+
+on:
+  push:
+    branches:
+      - 'agent/live-paper-hardening'
+    paths:
+      - 'research_triggers/discover_external_holdout_v1.txt'
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/live-paper-hardening
+          fetch-depth: 0
+
+      - name: Find frozen external holdout run
+        run: |
+          RUN_JSON="$(gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow causal-external-holdout.yml \
+            --event push \
+            --branch agent/live-paper-hardening \
+            --limit 5 \
+            --json databaseId,status,conclusion,headSha,createdAt \
+            --jq '.[0]')"
+          test -n "$RUN_JSON"
+          mkdir -p results/causal_external_holdout_status_v1
+          printf '%s\n' "$RUN_JSON" > results/causal_external_holdout_status_v1/monitor.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase origin agent/live-paper-hardening
+          git add results/causal_external_holdout_status_v1/monitor.json
+          git commit -m 'Record frozen external holdout run id' || exit 0
+          git push origin HEAD:agent/live-paper-hardening
