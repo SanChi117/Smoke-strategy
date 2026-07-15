@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Quick strict-OOS sweep used to choose the next deep-validation candidate.
+"""Quick strict-OOS sweep for the pullback-resumption family.
 
 This is a screening stage only. A positive result is never enough for promotion.
 """
@@ -13,8 +13,10 @@ from pathlib import Path
 
 CANDIDATES = (
     "TAGGED_PULLBACK_SHORT_BALANCED_V1,"
-    "TAGGED_PULLBACK_SHORT_INDECISION_V1,"
-    "TAGGED_PULLBACK_SHORT_INDECISION_VR09_V1"
+    "TAGGED_PULLBACK_RESUMPTION_BOTH_V1,"
+    "TAGGED_PULLBACK_RESUMPTION_BALANCED_V1,"
+    "TAGGED_PULLBACK_RESUMPTION_STRICT_V1,"
+    "TAGGED_PULLBACK_RESUMPTION_BOTH_VR09_V1"
 )
 
 
@@ -24,8 +26,8 @@ def run(cmd: list[str]) -> None:
 
 
 def main() -> int:
-    root = Path("results/causal_quick_sweep_v1")
-    universe = Path("results/causal_quick_sweep_universe_v1")
+    root = Path("results/causal_quick_sweep_v3")
+    universe = Path("results/causal_quick_sweep_universe_v3")
     matrix = root / "matrix"
     multi = root / "multi_wfo"
     data = root / "data"
@@ -33,14 +35,14 @@ def main() -> int:
 
     run([
         sys.executable, "scripts/build_strategy_universe_layer.py",
-        "--top-n-per-group", "3",
+        "--top-n-per-group", "4",
         "--out-dir", str(universe),
     ])
     run([
-        sys.executable, "scripts/run_binance_tagged_mtf_fast_matrix.py",
+        sys.executable, "scripts/run_binance_resumption_matrix.py",
         "--symbols-file", str(symbols),
         "--interval", "15m",
-        "--limit", "3000",
+        "--limit", "4500",
         "--candles-out", str(data / "matrix_candles.csv"),
         "--out-dir", str(matrix),
         "--profile", "growth_100_20x",
@@ -53,13 +55,13 @@ def main() -> int:
         "--out-dir", str(multi),
         "--candidate-names", CANDIDATES,
         "--interval", "15m",
-        "--limit", "3000",
+        "--limit", "4500",
         "--windows", "3",
-        "--lookback-days", "14",
+        "--lookback-days", "21",
         "--profile", "growth_100_20x",
         "--sleep-sec", "0.02",
     ])
-    print("Quick strict-OOS sweep complete", flush=True)
+    print("Quick strict-OOS resumption sweep complete", flush=True)
     print(multi / "tagged_multi_wfo_best.json", flush=True)
     return 0
 
