@@ -1,0 +1,93 @@
+name: Frozen SHORT External Holdout V1
+
+on:
+  push:
+    branches:
+      - agent/live-paper-hardening
+    paths:
+      - research_triggers/frozen_short_external_holdout_v1.txt
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  external-holdout:
+    name: frozen-refined-short-external-holdout
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - name: Checkout frozen branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/live-paper-hardening
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Verify frozen causal invariants
+        run: |
+          python -m py_compile scripts/run_frozen_short_external_holdout.py
+          python -m strategy_lab.causal_history_fast_smoke_test
+          python -m strategy_lab.closed_context_smoke_test
+          python -m strategy_lab.walk_forward_boundary_smoke_test
+          python -m strategy_lab.research_metrics_smoke_test
+
+      - name: Download untouched official futures holdout
+        run: |
+          python scripts/download_binance_vision_futures_archives.py \
+            --symbols-file results/twelve_month_dual_screening_universe_v1/combined_symbols.txt \
+            --interval 15m \
+            --start-date '2025-01-01' \
+            --end-date '2025-06-30' \
+            --out-dir "$RUNNER_TEMP/frozen-short-holdout-usdm" \
+            --summary-json results/frozen_short_external_holdout_v1/archive_download_summary.json \
+            --workers 8 \
+            --retries 2 \
+            --timeout 30
+
+      - name: Merge and verify untouched closed candles
+        run: |
+          python scripts/merge_binance_vision_futures_klines.py \
+            --input-dir "$RUNNER_TEMP/frozen-short-holdout-usdm" \
+            --out "$RUNNER_TEMP/frozen-short-holdout-usdm-15m.csv" \
+            --symbols-file results/twelve_month_dual_screening_universe_v1/combined_symbols.txt \
+            --interval 15m \
+            --start-date '2025-01-01' \
+            --end-date '2025-06-30' \
+            --summary-json results/frozen_short_external_holdout_v1/archive_merge_summary.json \
+            --min-coverage 0.65
+
+      - name: Validate one frozen refined baseline
+        run: |
+          python scripts/run_frozen_short_external_holdout.py \
+            --candles "$RUNNER_TEMP/frozen-short-holdout-usdm-15m.csv" \
+            --out-dir results/frozen_short_external_holdout_v1 \
+            --windows 6 \
+            --lookback-days 30 \
+            --profile research_500 \
+            --pool-min-confidence 40
+
+      - name: Upload frozen external holdout audit
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-frozen-short-external-holdout-v1
+          path: |
+            results/frozen_short_external_holdout_v1/result.json
+            results/frozen_short_external_holdout_v1/folds.csv
+            results/frozen_short_external_holdout_v1/all_trades.csv
+            results/frozen_short_external_holdout_v1/short_trades.csv
+            results/frozen_short_external_holdout_v1/long_trades.csv
+            results/frozen_short_external_holdout_v1/archive_download_summary.json
+            results/frozen_short_external_holdout_v1/archive_merge_summary.json
+          if-no-files-found: warn
