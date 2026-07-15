@@ -68,6 +68,9 @@ jobs:
       - name: Test context alignment pipeline gate
         run: python -m strategy_lab.context_alignment_gate_smoke_test
 
+      - name: Test matrix baseline filter roundtrip
+        run: python -m strategy_lab.baseline_filter_roundtrip_smoke_test
+
       - name: Test Binance Vision archive planner and downloader
         run: python -m strategy_lab.binance_vision_download_smoke_test
 
