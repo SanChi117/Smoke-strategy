@@ -74,6 +74,9 @@ jobs:
       - name: Test strict walk-forward boundaries
         run: python -m strategy_lab.walk_forward_boundary_smoke_test
 
+      - name: Test strict OOS rejection funnel
+        run: python -m strategy_lab.walk_forward_funnel_smoke_test
+
       - name: Test simultaneous candidate priority
         run: python -m strategy_lab.portfolio_priority_smoke_test
 
