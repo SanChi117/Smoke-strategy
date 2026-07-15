@@ -1,7 +1,7 @@
 {
-  "run_id": 29444213534,
-  "source_head_sha": "353673eadd60e2b1777a142b773043bd16e44d45",
-  "status": "failure",
+  "run_id": 29446470823,
+  "source_head_sha": "c9f61e87a11761e531d7e8dc7c4f728d3ad9b35a",
+  "status": "running",
   "period": "2025-07-01 through 2026-07-14",
   "mode": "DUAL_DIRECTION_DEVELOPMENT"
 }
