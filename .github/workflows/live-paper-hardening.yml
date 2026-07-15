@@ -68,6 +68,12 @@ jobs:
       - name: Test context alignment pipeline gate
         run: python -m strategy_lab.context_alignment_gate_smoke_test
 
+      - name: Test Binance Vision archive planner and downloader
+        run: python -m strategy_lab.binance_vision_download_smoke_test
+
+      - name: Test Binance Vision archive merger
+        run: python -m strategy_lab.binance_vision_archive_smoke_test
+
       - name: Test all-candidate shadow learning
         run: python -m strategy_lab.shadow_history_smoke_test
 
