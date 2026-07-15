@@ -1,0 +1,3 @@
+run fixed twelve-month dual-direction development screen
+period: 2025-07-01 through 2026-07-14
+windows: 8
