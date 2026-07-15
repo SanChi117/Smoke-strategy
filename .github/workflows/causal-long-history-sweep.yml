@@ -35,11 +35,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .
 
-      - name: Verify causal invariants
+      - name: Verify causal and archive invariants
         run: |
           python -m strategy_lab.causal_history_fast_smoke_test
           python -m strategy_lab.closed_context_smoke_test
           python -m strategy_lab.context_alignment_gate_smoke_test
+          python -m strategy_lab.binance_vision_download_smoke_test
+          python -m strategy_lab.binance_vision_archive_smoke_test
           python -m strategy_lab.walk_forward_boundary_smoke_test
           python -m strategy_lab.walk_forward_funnel_smoke_test
 
@@ -49,9 +51,46 @@ jobs:
             --top-n-per-group 3 \
             --out-dir results/causal_long_history_universe_v1
 
-      - name: Run six-month cached causal WFO
+      - name: Resolve closed historical period
+        id: dates
+        shell: bash
         run: |
-          python scripts/run_causal_long_history_sweep.py \
+          START_DATE="$(date -u -d '210 days ago' +%F)"
+          END_DATE="$(date -u -d '1 day ago' +%F)"
+          echo "start_date=$START_DATE" >> "$GITHUB_OUTPUT"
+          echo "end_date=$END_DATE" >> "$GITHUB_OUTPUT"
+          echo "Historical period: $START_DATE -> $END_DATE"
+
+      - name: Download official Binance Vision USD-M Futures archives
+        run: |
+          python scripts/download_binance_vision_futures_archives.py \
+            --symbols-file results/causal_long_history_universe_v1/combined_symbols.txt \
+            --interval 15m \
+            --start-date '${{ steps.dates.outputs.start_date }}' \
+            --end-date '${{ steps.dates.outputs.end_date }}' \
+            --out-dir "$RUNNER_TEMP/binance-vision-usdm" \
+            --summary-json results/causal_long_history_sweep_v1/archive_download_summary.json \
+            --workers 8 \
+            --retries 2 \
+            --timeout 30
+
+      - name: Merge and verify closed futures candles
+        run: |
+          python scripts/merge_binance_vision_futures_klines.py \
+            --input-dir "$RUNNER_TEMP/binance-vision-usdm" \
+            --out "$RUNNER_TEMP/smoke-usdm-15m.csv" \
+            --symbols-file results/causal_long_history_universe_v1/combined_symbols.txt \
+            --interval 15m \
+            --start-date '${{ steps.dates.outputs.start_date }}' \
+            --end-date '${{ steps.dates.outputs.end_date }}' \
+            --summary-json results/causal_long_history_sweep_v1/archive_merge_summary.json \
+            --min-coverage 0.75
+
+      - name: Run six-month cached causal WFO
+        env:
+          SMOKE_LONG_CANDLES_SOURCE: ${{ runner.temp }}/smoke-usdm-15m.csv
+        run: |
+          python scripts/run_causal_long_history_sweep_cached.py \
             --symbols-file results/causal_long_history_universe_v1/combined_symbols.txt \
             --out-dir results/causal_long_history_sweep_v1 \
             --interval 15m \
@@ -60,7 +99,7 @@ jobs:
             --lookback-days 30 \
             --profile research_500 \
             --pool-min-confidence 40 \
-            --sleep-sec 0.02
+            --sleep-sec 0
 
       - name: Prepare compact audit result
         if: always()
@@ -68,15 +107,18 @@ jobs:
           rm -rf compact-long-wfo
           mkdir -p compact-long-wfo/results/causal_long_history_sweep_v1
           mkdir -p compact-long-wfo/results/causal_long_history_universe_v1
-          cp -f results/causal_long_history_sweep_v1/result.json compact-long-wfo/results/causal_long_history_sweep_v1/ 2>/dev/null || true
-          cp -f results/causal_long_history_sweep_v1/result.md compact-long-wfo/results/causal_long_history_sweep_v1/ 2>/dev/null || true
-          cp -f results/causal_long_history_sweep_v1/long_wfo_summary.csv compact-long-wfo/results/causal_long_history_sweep_v1/ 2>/dev/null || true
-          cp -f results/causal_long_history_sweep_v1/fold_index.csv compact-long-wfo/results/causal_long_history_sweep_v1/ 2>/dev/null || true
-          cp -f results/causal_long_history_sweep_v1/market_data_summary.json compact-long-wfo/results/causal_long_history_sweep_v1/ 2>/dev/null || true
-          cp -R results/causal_long_history_sweep_v1/candidate_folds compact-long-wfo/results/causal_long_history_sweep_v1/ 2>/dev/null || true
-          cp -f results/causal_long_history_universe_v1/combined_symbols.txt compact-long-wfo/results/causal_long_history_universe_v1/ 2>/dev/null || true
+          for file in \
+            result.json result.md long_wfo_summary.csv fold_index.csv \
+            market_data_summary.json archive_download_summary.json archive_merge_summary.json; do
+            cp -f "results/causal_long_history_sweep_v1/$file" \
+              compact-long-wfo/results/causal_long_history_sweep_v1/ 2>/dev/null || true
+          done
+          cp -R results/causal_long_history_sweep_v1/candidate_folds \
+            compact-long-wfo/results/causal_long_history_sweep_v1/ 2>/dev/null || true
+          cp -f results/causal_long_history_universe_v1/combined_symbols.txt \
+            compact-long-wfo/results/causal_long_history_universe_v1/ 2>/dev/null || true
           find results/causal_long_history_sweep_v1/folds -type f \
-            \( -name 'walk_forward_layer_funnel.json' -o -name 'pipeline_summary.csv' \) \
+            \( -name 'walk_forward_layer_funnel.json' -o -name 'pipeline_summary.csv' -o -name 'summary.json' \) \
             -print0 2>/dev/null | while IFS= read -r -d '' file; do
               destination="compact-long-wfo/$file"
               mkdir -p "$(dirname "$destination")"
