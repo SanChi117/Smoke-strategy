@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
-      TARGET_SHA: 7656ddce65c254c896d4877e3b981ac88bd885de
+      TARGET_SHA: 1b157e91d3fbeb1d9718ee4a4dd4d4279f6d6321
     steps:
       - uses: actions/checkout@v4
         with:
@@ -51,5 +51,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git pull --rebase origin agent/live-paper-hardening
           git add results/causal_long_history_status_v1/monitor.json
-          git commit -m 'Record six-month causal WFO run id' || exit 0
+          git commit -m 'Record Binance Vision six-month WFO run id' || exit 0
           git push origin HEAD:agent/live-paper-hardening
