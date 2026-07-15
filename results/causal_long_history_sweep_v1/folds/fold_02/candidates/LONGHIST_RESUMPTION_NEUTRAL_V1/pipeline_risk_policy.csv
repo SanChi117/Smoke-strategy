@@ -1,0 +1,10 @@
+metric,value,note
+profile,growth_100_20x,"$100 balance, 20x leverage, growth-oriented research profile."
+base_risk,0.75%,Default risk for strong allowed trades.
+max_risk,1.00%,Hard cap for strongest signals only.
+watch_risk,0.375%,WATCH-based allowed trades use half of base risk.
+max_positions,2,No more than two simultaneous positions.
+max_symbol_positions,1,No duplicate active position on the same symbol.
+daily_loss_limit,3%,Research halt target for same-day new entries after realized losses.
+weekly_loss_limit,8%,Research halt target for same-week new entries after realized losses.
+skip_rule,Any SKIP blocks trade,Quality SKIP or Structure SKIP sets risk to zero and blocks the trade.

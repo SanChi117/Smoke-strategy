@@ -1,0 +1,27 @@
+{
+  "validation_candidates": 9334,
+  "validation_allowed": 11,
+  "setup_counts": {
+    "breakout": 8130,
+    "ignition": 193,
+    "liquidity_reclaim": 700,
+    "pullback": 36,
+    "pullback_resumption": 1,
+    "pullback_resumption_strict": 1,
+    "range_rotation": 250,
+    "watch_impulse": 23
+  },
+  "allowed_by_setup": {
+    "pullback": 9,
+    "pullback_resumption": 1,
+    "pullback_resumption_strict": 1
+  },
+  "blocking_reasons": {
+    "structure_skip": 8066,
+    "setup_filtered": 828,
+    "quality_skip": 426,
+    "allowed_full_balanced": 11,
+    "direction_context_filtered": 2,
+    "candle_type_filtered": 1
+  }
+}

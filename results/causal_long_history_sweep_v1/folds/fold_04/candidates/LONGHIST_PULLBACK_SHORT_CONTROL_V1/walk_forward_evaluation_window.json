@@ -1,0 +1,11 @@
+{
+  "mode": "STRICT_OUT_OF_SAMPLE_PRIORITY",
+  "validation_start": "2026-04-15T23:52:30",
+  "validation_end": "2026-05-15T23:50:00",
+  "warmup_candidates_excluded_from_pnl": 11520,
+  "validation_candidates": 10970,
+  "validation_allowed_candidates": 4,
+  "priority_mode": "causal_entry_quality",
+  "layer_funnel_file": "walk_forward_layer_funnel.json",
+  "missing_join_keys": []
+}

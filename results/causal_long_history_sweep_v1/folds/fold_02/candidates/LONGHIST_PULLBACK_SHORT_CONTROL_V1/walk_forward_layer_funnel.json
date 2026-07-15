@@ -1,0 +1,25 @@
+{
+  "validation_candidates": 10056,
+  "validation_allowed": 10,
+  "setup_counts": {
+    "breakout": 8916,
+    "ignition": 186,
+    "liquidity_reclaim": 836,
+    "pullback": 38,
+    "pullback_resumption": 1,
+    "range_rotation": 60,
+    "watch_impulse": 19
+  },
+  "allowed_by_setup": {
+    "pullback": 9,
+    "pullback_resumption": 1
+  },
+  "blocking_reasons": {
+    "structure_skip": 6652,
+    "setup_filtered": 3266,
+    "quality_skip": 99,
+    "direction_context_filtered": 25,
+    "allowed_full_balanced": 10,
+    "candle_type_filtered": 4
+  }
+}

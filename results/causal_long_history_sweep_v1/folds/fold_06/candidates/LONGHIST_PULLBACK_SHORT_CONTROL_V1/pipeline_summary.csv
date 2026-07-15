@@ -1,0 +1,2 @@
+profile,initial_cash,leverage,base_risk_pct,max_risk_pct,candidates,allowed_candidates,executed_trades,skipped,skipped_no_risk,skipped_max_positions,skipped_symbol_limit,skipped_cash,skipped_daily_halt,skipped_weekly_halt,final_cash,ret_pct,max_dd_pct,pf,winrate,max_loss_streak,symbols_traded,symbols_positive,total_fees,avg_risk_pct
+research_500,500.0,20.0,0.005,0.005,9334,11,7,4,0,2,2,0,0,0,490.29,-1.94,3.65,0.2285,28.57,5,3,1,2.0106,0.005
