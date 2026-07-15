@@ -77,6 +77,9 @@ jobs:
       - name: Test Binance Vision archive merger
         run: python -m strategy_lab.binance_vision_archive_smoke_test
 
+      - name: Test portfolio execution audit
+        run: python -m strategy_lab.portfolio_audit_smoke_test
+
       - name: Test all-candidate shadow learning
         run: python -m strategy_lab.shadow_history_smoke_test
 
