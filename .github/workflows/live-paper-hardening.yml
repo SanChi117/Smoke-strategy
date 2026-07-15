@@ -111,7 +111,7 @@ jobs:
         run: bash -n deployment/install_smoke.sh
 
   pooled-pf-calibration-v3:
-    name: pooled-pf-cooldown-calibration-v3
+    name: pooled-pf-cooldown-calibration-v3-fast
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
@@ -132,18 +132,18 @@ jobs:
       - name: Verify pooled metric regression
         run: python -m strategy_lab.research_metrics_smoke_test
 
-      - name: Run pooled-PF cooldown calibration v3
-        run: python scripts/run_causal_long_history_calibration_v3.py
+      - name: Run optimized pooled-PF cooldown calibration v3
+        run: python scripts/run_causal_long_history_calibration_v3_fast.py
 
-      - name: Upload pooled-PF calibration v3
+      - name: Upload optimized pooled-PF calibration v3
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: smoke-causal-long-history-calibration-v3
+          name: smoke-causal-long-history-calibration-v3-fast
           path: |
-            results/causal_long_history_calibration_v3/result.json
-            results/causal_long_history_calibration_v3/candidate_summary.csv
-            results/causal_long_history_calibration_v3/candidate_folds/*.csv
+            results/causal_long_history_calibration_v3_fast/result.json
+            results/causal_long_history_calibration_v3_fast/candidate_summary.csv
+            results/causal_long_history_calibration_v3_fast/candidate_folds/*.csv
 
   full-causal-revalidation:
     name: mandatory-causal-paper-validation
