@@ -47,7 +47,7 @@ def main() -> int:
         "--sleep-sec", "0.02",
     ])
     run([
-        sys.executable, "scripts/run_tagged_multi_wfo.py",
+        sys.executable, "scripts/run_tagged_multi_wfo_cached.py",
         "--matrix", str(matrix / "matrix_summary.csv"),
         "--symbols-file", str(symbols),
         "--out-dir", str(multi),
