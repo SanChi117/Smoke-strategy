@@ -52,8 +52,30 @@ def simulate_dynamic_portfolio(
     profile: RiskProfile,
     cost: CostConfig,
     setup: str,
+    priority_scores: dict[tuple[str, str, object], float] | None = None,
 ) -> DynamicPortfolioResult:
-    ordered = sorted(trades, key=lambda t: (t.entry_time, t.symbol, t.side))
+    """Simulate the portfolio with optional causal candidate priority.
+
+    When several candidates have the same entry timestamp, the old implementation
+    selected them by symbol name. If `priority_scores` is supplied, higher-scored
+    candidates are evaluated first. Scores must contain entry-time information
+    only; this function never derives priority from trade outcome.
+    """
+
+    priorities = priority_scores or {}
+
+    def key_for(t: Trade) -> tuple[str, str, object]:
+        return (t.symbol.upper(), t.side.lower(), t.entry_time)
+
+    ordered = sorted(
+        trades,
+        key=lambda t: (
+            t.entry_time,
+            -float(priorities.get(key_for(t), 0.0)),
+            t.symbol,
+            t.side,
+        ),
+    )
     cash = profile.initial_cash
     peak = profile.initial_cash
     max_dd = 0.0
@@ -73,9 +95,6 @@ def simulate_dynamic_portfolio(
 
     daily_pnl: dict[date, float] = {}
     weekly_pnl: dict[tuple[int, int], float] = {}
-
-    def key_for(t: Trade) -> tuple[str, str, object]:
-        return (t.symbol.upper(), t.side.lower(), t.entry_time)
 
     def mark_dd() -> None:
         nonlocal peak, max_dd
