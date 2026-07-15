@@ -23,12 +23,47 @@ on:
         type: boolean
 
 permissions:
-  contents: read
+  contents: write
 
 env:
   PYTHONUNBUFFERED: '1'
 
 jobs:
+  repair-dual-screening-boolean:
+    name: repair-dual-screening-boolean
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/live-paper-hardening
+          fetch-depth: 0
+      - name: Repair typo only when present
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/run_twelve_month_dual_direction_screening.py')
+          text = path.read_text(encoding='utf-8')
+          old = '"promotion_allowed": false,'
+          new = '"promotion_allowed": False,'
+          if old not in text:
+              print('Boolean is already correct')
+              raise SystemExit(0)
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+          python -m py_compile scripts/run_twelve_month_dual_direction_screening.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase origin agent/live-paper-hardening
+          git add scripts/run_twelve_month_dual_direction_screening.py
+          if git diff --cached --quiet; then
+            echo 'No repair needed'
+            exit 0
+          fi
+          git commit -m 'Fix twelve-month screening result boolean'
+          git push origin HEAD:agent/live-paper-hardening
+
   fast-checks:
     name: causal-and-vps-fast-checks
     runs-on: ubuntu-latest
