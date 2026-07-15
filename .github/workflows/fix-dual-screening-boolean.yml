@@ -1,0 +1,41 @@
+name: Fix Dual Screening Boolean
+
+on:
+  push:
+    branches:
+      - 'agent/live-paper-hardening'
+    paths:
+      - 'research_triggers/fix_dual_screening_boolean_v1.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/live-paper-hardening
+          fetch-depth: 0
+
+      - name: Fix Python boolean and commit
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/run_twelve_month_dual_direction_screening.py')
+          text = path.read_text(encoding='utf-8')
+          old = '"promotion_allowed": false,'
+          new = '"promotion_allowed": False,'
+          if old not in text:
+              raise SystemExit('target typo not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+          python -m py_compile scripts/run_twelve_month_dual_direction_screening.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase origin agent/live-paper-hardening
+          git add scripts/run_twelve_month_dual_direction_screening.py
+          git commit -m 'Fix twelve-month screening result boolean'
+          git push origin HEAD:agent/live-paper-hardening
