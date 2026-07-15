@@ -41,6 +41,7 @@ jobs:
           fetch-depth: 0
       - name: Repair typo only when present
         run: |
+          git pull --rebase origin agent/live-paper-hardening
           python - <<'PY'
           from pathlib import Path
           path = Path('scripts/run_twelve_month_dual_direction_screening.py')
@@ -55,7 +56,6 @@ jobs:
           python -m py_compile scripts/run_twelve_month_dual_direction_screening.py
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git pull --rebase origin agent/live-paper-hardening
           git add scripts/run_twelve_month_dual_direction_screening.py
           if git diff --cached --quiet; then
             echo 'No repair needed'
