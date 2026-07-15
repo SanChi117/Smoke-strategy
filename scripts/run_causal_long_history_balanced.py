@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import run_causal_long_history_sweep as sweep
+from run_causal_long_history_sweep_cached import archive_loader
 
 
 CANDIDATE_NAME = "LONGHIST_RESUMPTION_BALANCED_V1"
@@ -14,6 +15,7 @@ def main() -> int:
     if len(selected) != 1:
         raise RuntimeError(f"Expected one {CANDIDATE_NAME} config, found {len(selected)}")
     sweep.CANDIDATES = selected
+    sweep.load_binance_futures_candles = archive_loader
     return sweep.main()
 
 
