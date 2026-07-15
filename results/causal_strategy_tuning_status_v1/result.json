@@ -1,0 +1,96 @@
+{
+  "source_run_id": "29406468574",
+  "source_head_sha": "248c3d829a61164ee29024d85dd5311afe7773a6",
+  "workflow_outcome": "success",
+  "matrix_top": [
+    {
+      "name": "TAGGED_PULLBACK_SHORT_BALANCED_V1",
+      "ret_pct": "4.98",
+      "pf": "2.0329",
+      "max_dd_pct": "3.89",
+      "executed_trades": "44",
+      "score": "-7.4054"
+    },
+    {
+      "name": "TAGGED_MTF_ENTRY_CONFIRM_V1",
+      "ret_pct": "4.12",
+      "pf": "1.8415",
+      "max_dd_pct": "4.08",
+      "executed_trades": "45",
+      "score": "-8.634"
+    },
+    {
+      "name": "TAGGED_MTF_NO_DIRECTION_BLOCK_V1",
+      "ret_pct": "4.12",
+      "pf": "1.8415",
+      "max_dd_pct": "4.08",
+      "executed_trades": "45",
+      "score": "-8.634"
+    },
+    {
+      "name": "TAGGED_MTF_NO_DIRECTION_NO_IGNITION_V1",
+      "ret_pct": "4.1",
+      "pf": "1.83",
+      "max_dd_pct": "3.84",
+      "executed_trades": "48",
+      "score": "-8.662"
+    },
+    {
+      "name": "TAGGED_PULLBACK_SHORT_NEUTRAL_INDECISION_V1",
+      "ret_pct": "2.82",
+      "pf": "1.7916",
+      "max_dd_pct": "3.24",
+      "executed_trades": "33",
+      "score": "-12.6656"
+    },
+    {
+      "name": "TAGGED_PULLBACK_SHORT_STRICT_V1",
+      "ret_pct": "1.42",
+      "pf": "1.6028",
+      "max_dd_pct": "3.32",
+      "executed_trades": "24",
+      "score": "-15.5168"
+    },
+    {
+      "name": "TAGGED_PULLBACK_SHORT_INDECISION_V1",
+      "ret_pct": "-0.14",
+      "pf": "1.0469",
+      "max_dd_pct": "2.15",
+      "executed_trades": "10",
+      "score": "-49.6174"
+    },
+    {
+      "name": "TAGGED_PULLBACK_SHORT_INDECISION_VR09_V1",
+      "ret_pct": "-0.21",
+      "pf": "0.9159",
+      "max_dd_pct": "1.92",
+      "executed_trades": "5",
+      "score": "-65.2604"
+    }
+  ],
+  "multi_candidate": "TAGGED_PULLBACK_SHORT_INDECISION_VR09_V1",
+  "multi_verdict": "WATCH_TOO_SPARSE",
+  "multi_positive_folds": 0,
+  "multi_valid_folds": 4,
+  "multi_avg_return_pct": -0.105,
+  "multi_avg_pf": 0.0,
+  "multi_worst_dd_pct": 1.08,
+  "multi_total_trades": 1,
+  "deep_candidate": "TAGGED_PULLBACK_SHORT_INDECISION_VR09_V1",
+  "deep_decision": "WATCH_TOO_SPARSE",
+  "deep_positive_folds": 0,
+  "deep_valid_folds": 4,
+  "deep_avg_return_pct": 0.0,
+  "deep_avg_pf": 0.0,
+  "deep_worst_dd_pct": 0.0,
+  "deep_total_trades": 0,
+  "tagged_decision": "BLOCK_DEEP_VALIDATION",
+  "paper_review_status": "BLOCK_PAPER_REVIEW",
+  "files_found": {
+    "matrix": "collected/causal_strategy_tuning_v1/matrix/matrix_summary.csv",
+    "multi": "collected/causal_strategy_tuning_v1/multi_wfo/tagged_multi_wfo_best.json",
+    "deep": "collected/causal_strategy_tuning_v1/deep_validation/deep_validation_summary.json",
+    "decision": "collected/causal_strategy_tuning_v1/tagged_decision/tagged_research_decision.json",
+    "paper": "collected/causal_strategy_tuning_v1/paper_review/paper_review_plan.json"
+  }
+}
