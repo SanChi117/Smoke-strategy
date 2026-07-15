@@ -1,0 +1,42 @@
+name: Collect Dual Screening Failure
+
+on:
+  push:
+    branches:
+      - 'agent/live-paper-hardening'
+    paths:
+      - 'research_triggers/collect_dual_screening_failure_v1.txt'
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN_ID: '29444213534'
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/live-paper-hardening
+          fetch-depth: 0
+
+      - name: Collect failed step log
+        run: |
+          mkdir -p results/twelve_month_dual_screening_failure_v1
+          gh run view "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --log-failed \
+            > results/twelve_month_dual_screening_failure_v1/failure.log
+          tail -n 220 results/twelve_month_dual_screening_failure_v1/failure.log \
+            > results/twelve_month_dual_screening_failure_v1/failure_tail.txt
+
+      - name: Commit failure tail
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase origin agent/live-paper-hardening
+          git add results/twelve_month_dual_screening_failure_v1/failure_tail.txt
+          git commit -m 'Record twelve-month dual screen failure tail' || exit 0
+          git push origin HEAD:agent/live-paper-hardening
