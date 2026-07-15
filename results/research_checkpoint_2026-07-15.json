@@ -1,0 +1,41 @@
+{
+  "date": "2026-07-15",
+  "mode": "STRICT_CAUSAL_RESEARCH_ONLY",
+  "screening_v3": {
+    "artifact_id": 8353993488,
+    "leader": "CAL3_MEDIUM_CD12H",
+    "trades": 24,
+    "positive_folds": "4/6",
+    "pooled_pf": 1.6727,
+    "avg_return_pct": 0.2817,
+    "worst_fold_return_pct": -1.39,
+    "worst_dd_pct": 3.11,
+    "decision": "WATCH_TOO_SPARSE"
+  },
+  "screening_v4": {
+    "artifact_id": 8354333290,
+    "leader": "CAL4_EXP_LEGACY_CONTEXT_CD12",
+    "trades": 22,
+    "positive_folds": "4/6",
+    "pooled_pf": 2.1386,
+    "avg_return_pct": 0.43,
+    "worst_fold_return_pct": -0.81,
+    "worst_dd_pct": 2.88,
+    "decision": "SCREENING_LEADER_ONLY"
+  },
+  "external_holdout_v1": {
+    "artifact_id": 8354575710,
+    "period": "2025-07-01 through 2025-12-31",
+    "baseline": "SMOKE_PULLBACK_FROZEN_EXTERNAL_V1",
+    "trades": 9,
+    "positive_folds": "3/6",
+    "pooled_pf": 1.0963,
+    "avg_return_pct": -0.0233,
+    "worst_fold_return_pct": -0.93,
+    "worst_dd_pct": 2.06,
+    "decision": "REJECT_NOT_ROBUST"
+  },
+  "next_hypothesis": "Twelve-month dual-direction regime-aligned pullbacks with symmetric long and short handling",
+  "paper_promotion_allowed": false,
+  "live_orders_allowed": false
+}
