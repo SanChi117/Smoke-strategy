@@ -162,6 +162,38 @@ def build_layer_funnel(
     return rows, summary
 
 
+def enrich_audit_events(
+    audit_events: list[dict[str, object]],
+    generated_by_key: dict[tuple[str, str, datetime], dict[str, str]],
+    decisions_by_key: dict[tuple[str, str, datetime], dict[str, str]],
+) -> list[dict[str, object]]:
+    """Attach entry-time metadata to portfolio events for diagnostic analysis."""
+
+    enriched: list[dict[str, object]] = []
+    for event in audit_events:
+        key = trade_key(event.get("symbol"), event.get("side"), event.get("entry_time"))
+        generated = generated_by_key.get(key, {})
+        decision = decisions_by_key.get(key, {})
+        meta = reason_values(generated.get("risk_plan_reason"))
+        row = dict(event)
+        row.update({
+            "confidence_hint": generated.get("confidence_hint", ""),
+            "quality_decision": decision.get("quality_decision", ""),
+            "structure_decision": decision.get("structure_decision", ""),
+            "setup_type": decision.get("setup_type", generated.get("setup_type", event.get("kind", ""))),
+            "trend_context": decision.get("trend_context", generated.get("trend_context", "")),
+            "volatility_regime": decision.get("volatility_regime", generated.get("volatility_regime", "")),
+            "direction_context": meta.get("dir", ""),
+            "context_alignment": meta.get("ctx_align", ""),
+            "liquidity_state": meta.get("liq", ""),
+            "candle_type": meta.get("candle", ""),
+            "volume_ratio": meta.get("vr", ""),
+            "risk_plan_reason": generated.get("risk_plan_reason", ""),
+        })
+        enriched.append(row)
+    return enriched
+
+
 def evaluate_validation_window(
     run_dir: str | Path,
     validation_start: datetime,
@@ -191,6 +223,10 @@ def evaluate_validation_window(
         row for row in decision_rows
         if validation_start <= parse_dt(row.get("entry_time")) < validation_end
     ]
+    decisions_by_key = {
+        trade_key(row.get("symbol"), row.get("side"), row.get("entry_time")): row
+        for row in validation_decisions
+    }
     allowed_decisions = [row for row in validation_decisions if bool_value(row.get("allowed"))]
     funnel_rows, funnel_summary = build_layer_funnel(validation_decisions, generated_by_key)
 
@@ -226,6 +262,7 @@ def evaluate_validation_window(
 
     profile = get_risk_profile(profile_name)
     cost = CostConfig(fee_rate=cfg.fee_rate, slippage_rate=cfg.slippage_rate)
+    audit_events: list[dict[str, object]] = []
     result = simulate_dynamic_portfolio(
         allowed_trades,
         risk_pcts,
@@ -233,7 +270,11 @@ def evaluate_validation_window(
         cost,
         f"{cfg.name}_{profile.name}_STRICT_OOS_PRIORITY",
         priority_scores=priority_scores,
+        audit_events=audit_events,
     )
+    enriched_audit = enrich_audit_events(audit_events, generated_by_key, decisions_by_key)
+    executed_rows = [row for row in enriched_audit if row.get("event") == "CLOSE"]
+    skipped_rows = [row for row in enriched_audit if row.get("event") == "SKIP"]
 
     summary = PipelineSummary(
         profile=profile.name,
@@ -270,6 +311,9 @@ def evaluate_validation_window(
     write_csv(root / "pipeline_allowed_trades.csv", allowed_generated_rows, generated_fields)
     write_csv(root / "walk_forward_candidate_priorities.csv", priority_rows)
     write_csv(root / "walk_forward_layer_funnel.csv", funnel_rows)
+    write_csv(root / "walk_forward_portfolio_audit.csv", enriched_audit)
+    write_csv(root / "walk_forward_executed_trades.csv", executed_rows)
+    write_csv(root / "walk_forward_skipped_allowed_trades.csv", skipped_rows)
     (root / "walk_forward_layer_funnel.json").write_text(
         json.dumps(funnel_summary, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
@@ -282,8 +326,11 @@ def evaluate_validation_window(
         "warmup_candidates_excluded_from_pnl": len(decision_rows) - len(validation_decisions),
         "validation_candidates": len(validation_decisions),
         "validation_allowed_candidates": len(allowed_trades),
+        "portfolio_executed_trades": len(executed_rows),
+        "portfolio_skipped_allowed_trades": len(skipped_rows),
         "priority_mode": "causal_entry_quality",
         "layer_funnel_file": "walk_forward_layer_funnel.json",
+        "portfolio_audit_file": "walk_forward_portfolio_audit.csv",
         "missing_join_keys": missing,
     }
     (root / "walk_forward_evaluation_window.json").write_text(
