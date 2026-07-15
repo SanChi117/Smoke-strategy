@@ -25,6 +25,30 @@ jobs:
           ref: agent/live-paper-hardening
           fetch-depth: 0
 
+      - name: Record running WFO id
+        run: |
+          mkdir -p results/causal_long_history_status_v1
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          Path('results/causal_long_history_status_v1/monitor.json').write_text(
+              json.dumps({
+                  'source_head_sha': os.environ['GITHUB_SHA'],
+                  'run_id': int(os.environ['GITHUB_RUN_ID']),
+                  'status': 'running',
+                  'data_source': 'BINANCE_VISION_USDM_FUTURES_ARCHIVE',
+              }, indent=2) + '\n',
+              encoding='utf-8',
+          )
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase origin agent/live-paper-hardening
+          git add results/causal_long_history_status_v1/monitor.json
+          git commit -m 'Record running Binance Vision causal WFO id' || true
+          git push origin HEAD:agent/live-paper-hardening
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -133,18 +157,32 @@ jobs:
           path: compact-long-wfo/**
           if-no-files-found: warn
 
-      - name: Commit compact result to branch
+      - name: Commit compact result and final status
         if: always()
         run: |
-          if [ ! -f compact-long-wfo/results/causal_long_history_sweep_v1/result.json ]; then
-            echo 'No final result to commit'
-            exit 0
-          fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git pull --rebase origin agent/live-paper-hardening
-          mkdir -p results
-          cp -R compact-long-wfo/results/* results/
-          git add results/causal_long_history_sweep_v1 results/causal_long_history_universe_v1
-          git commit -m 'Record six-month causal WFO result' || exit 0
+          mkdir -p results/causal_long_history_status_v1
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          Path('results/causal_long_history_status_v1/monitor.json').write_text(
+              json.dumps({
+                  'source_head_sha': os.environ['GITHUB_SHA'],
+                  'run_id': int(os.environ['GITHUB_RUN_ID']),
+                  'status': '${{ job.status }}',
+                  'data_source': 'BINANCE_VISION_USDM_FUTURES_ARCHIVE',
+              }, indent=2) + '\n',
+              encoding='utf-8',
+          )
+          PY
+          if [ -f compact-long-wfo/results/causal_long_history_sweep_v1/result.json ]; then
+            mkdir -p results
+            cp -R compact-long-wfo/results/* results/
+            git add results/causal_long_history_sweep_v1 results/causal_long_history_universe_v1
+          fi
+          git add results/causal_long_history_status_v1/monitor.json
+          git commit -m 'Record Binance Vision six-month causal WFO result' || exit 0
           git push origin HEAD:agent/live-paper-hardening
