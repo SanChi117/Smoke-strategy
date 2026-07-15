@@ -40,7 +40,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: smoke-causal-quick-sweep-v1
+          name: smoke-causal-quick-sweep-v3
           path: |
-            results/causal_quick_sweep_v1/**
-            results/causal_quick_sweep_universe_v1/**
+            results/causal_quick_sweep_v3/**
+            results/causal_quick_sweep_universe_v3/**
