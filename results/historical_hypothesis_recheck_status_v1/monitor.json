@@ -1,7 +1,7 @@
 {
   "run_id": 29489085609,
   "source_head_sha": "21b49155c0cd5649a26cdb9dd7176c4eec936ad4",
-  "status": "running",
+  "status": "success",
   "period": "2025-01-01 through 2026-06-30",
   "mode": "HISTORICAL_HYPOTHESIS_RECHECK_V1"
 }

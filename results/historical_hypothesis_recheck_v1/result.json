@@ -1,0 +1,751 @@
+{
+  "mode": "SMOKE_HISTORICAL_HYPOTHESIS_RECHECK_V1",
+  "period_start": "2025-01-01T00:00:00",
+  "period_end": "2026-06-30T23:45:00",
+  "windows": 10,
+  "lookback_days": 30,
+  "variants": 12,
+  "pipeline_runs": 20,
+  "leader": {
+    "name": "HIST_HARD_PULLBACK_CONTROL",
+    "verdict": "BLOCK_UNSTABLE",
+    "valid_folds": 10,
+    "positive_folds": 4,
+    "positive_pct": 40.0,
+    "total_trades": 194,
+    "avg_return_pct": -0.202,
+    "median_return_pct": -0.34,
+    "worst_fold_return_pct": -1.52,
+    "pooled_pf": 1.1376,
+    "gross_profit": 148.421715,
+    "gross_loss": 130.473493,
+    "net_pnl": 17.948222,
+    "worst_dd_pct": 4.33,
+    "score": 4.2457,
+    "development_gate": "BLOCK_DEVELOPMENT",
+    "side_summary": {
+      "long": {
+        "trades": 127,
+        "wins": 72,
+        "losses": 55,
+        "gross_profit": 105.095892,
+        "gross_loss": 77.672299,
+        "net_pnl": 27.423594,
+        "pf": 1.3531
+      },
+      "short": {
+        "trades": 67,
+        "wins": 29,
+        "losses": 38,
+        "gross_profit": 43.325823,
+        "gross_loss": 52.801194,
+        "net_pnl": -9.475371,
+        "pf": 0.8205
+      }
+    }
+  },
+  "candidates": [
+    {
+      "name": "HIST_HARD_PULLBACK_CONTROL",
+      "verdict": "BLOCK_UNSTABLE",
+      "valid_folds": 10,
+      "positive_folds": 4,
+      "positive_pct": 40.0,
+      "total_trades": 194,
+      "avg_return_pct": -0.202,
+      "median_return_pct": -0.34,
+      "worst_fold_return_pct": -1.52,
+      "pooled_pf": 1.1376,
+      "gross_profit": 148.421715,
+      "gross_loss": 130.473493,
+      "net_pnl": 17.948222,
+      "worst_dd_pct": 4.33,
+      "score": 4.2457,
+      "development_gate": "BLOCK_DEVELOPMENT",
+      "side_summary": {
+        "long": {
+          "trades": 127,
+          "wins": 72,
+          "losses": 55,
+          "gross_profit": 105.095892,
+          "gross_loss": 77.672299,
+          "net_pnl": 27.423594,
+          "pf": 1.3531
+        },
+        "short": {
+          "trades": 67,
+          "wins": 29,
+          "losses": 38,
+          "gross_profit": 43.325823,
+          "gross_loss": 52.801194,
+          "net_pnl": -9.475371,
+          "pf": 0.8205
+        }
+      }
+    },
+    {
+      "name": "HIST_SOFT_PULLBACK_FAMILY",
+      "verdict": "BLOCK_UNSTABLE",
+      "valid_folds": 10,
+      "positive_folds": 4,
+      "positive_pct": 40.0,
+      "total_trades": 356,
+      "avg_return_pct": -1.644,
+      "median_return_pct": -1.1,
+      "worst_fold_return_pct": -8.43,
+      "pooled_pf": 0.8808,
+      "gross_profit": 230.954148,
+      "gross_loss": 262.213588,
+      "net_pnl": -31.25944,
+      "worst_dd_pct": 10.96,
+      "score": -1.2816,
+      "development_gate": "BLOCK_DEVELOPMENT",
+      "side_summary": {
+        "long": {
+          "trades": 174,
+          "wins": 93,
+          "losses": 81,
+          "gross_profit": 134.841293,
+          "gross_loss": 115.717772,
+          "net_pnl": 19.123521,
+          "pf": 1.1653
+        },
+        "short": {
+          "trades": 182,
+          "wins": 75,
+          "losses": 107,
+          "gross_profit": 96.112854,
+          "gross_loss": 146.495815,
+          "net_pnl": -50.382961,
+          "pf": 0.6561
+        }
+      }
+    },
+    {
+      "name": "HIST_SOFT_IGNITION",
+      "verdict": "BLOCK_UNSTABLE",
+      "valid_folds": 10,
+      "positive_folds": 2,
+      "positive_pct": 20.0,
+      "total_trades": 1613,
+      "avg_return_pct": -1.452,
+      "median_return_pct": -3.42,
+      "worst_fold_return_pct": -10.94,
+      "pooled_pf": 1.0437,
+      "gross_profit": 1332.966081,
+      "gross_loss": 1277.170942,
+      "net_pnl": 55.795139,
+      "worst_dd_pct": 14.34,
+      "score": -3.2909,
+      "development_gate": "BLOCK_DEVELOPMENT",
+      "side_summary": {
+        "long": {
+          "trades": 600,
+          "wins": 270,
+          "losses": 330,
+          "gross_profit": 476.338589,
+          "gross_loss": 503.129481,
+          "net_pnl": -26.790891,
+          "pf": 0.9468
+        },
+        "short": {
+          "trades": 1013,
+          "wins": 501,
+          "losses": 512,
+          "gross_profit": 856.627492,
+          "gross_loss": 774.041461,
+          "net_pnl": 82.58603,
+          "pf": 1.1067
+        }
+      }
+    },
+    {
+      "name": "HIST_SOFT_REGIME_ROUTER_ROLL5",
+      "verdict": "BLOCK_UNSTABLE",
+      "valid_folds": 10,
+      "positive_folds": 0,
+      "positive_pct": 0.0,
+      "total_trades": 960,
+      "avg_return_pct": -2.782,
+      "median_return_pct": -2.425,
+      "worst_fold_return_pct": -7.07,
+      "pooled_pf": 0.9478,
+      "gross_profit": 828.975402,
+      "gross_loss": 874.611241,
+      "net_pnl": -45.635839,
+      "worst_dd_pct": 12.11,
+      "score": -4.7935,
+      "development_gate": "BLOCK_DEVELOPMENT",
+      "side_summary": {
+        "long": {
+          "trades": 298,
+          "wins": 125,
+          "losses": 173,
+          "gross_profit": 257.155901,
+          "gross_loss": 287.713204,
+          "net_pnl": -30.557303,
+          "pf": 0.8938
+        },
+        "short": {
+          "trades": 662,
+          "wins": 317,
+          "losses": 345,
+          "gross_profit": 571.819501,
+          "gross_loss": 586.898037,
+          "net_pnl": -15.078536,
+          "pf": 0.9743
+        }
+      }
+    },
+    {
+      "name": "HIST_SOFT_REGIME_ROUTER_ROLL8",
+      "verdict": "BLOCK_UNSTABLE",
+      "valid_folds": 10,
+      "positive_folds": 1,
+      "positive_pct": 10.0,
+      "total_trades": 1118,
+      "avg_return_pct": -4.266,
+      "median_return_pct": -5.025,
+      "worst_fold_return_pct": -8.34,
+      "pooled_pf": 0.8977,
+      "gross_profit": 915.367991,
+      "gross_loss": 1019.677366,
+      "net_pnl": -104.309375,
+      "worst_dd_pct": 12.55,
+      "score": -6.1479,
+      "development_gate": "BLOCK_DEVELOPMENT",
+      "side_summary": {
+        "long": {
+          "trades": 355,
+          "wins": 146,
+          "losses": 209,
+          "gross_profit": 263.193436,
+          "gross_loss": 339.394554,
+          "net_pnl": -76.201118,
+          "pf": 0.7755
+        },
+        "short": {
+          "trades": 763,
+          "wins": 361,
+          "losses": 402,
+          "gross_profit": 652.174555,
+          "gross_loss": 680.282812,
+          "net_pnl": -28.108257,
+          "pf": 0.9587
+        }
+      }
+    },
+    {
+      "name": "HIST_SOFT_RANGE_ROTATION",
+      "verdict": "BLOCK_UNSTABLE",
+      "valid_folds": 10,
+      "positive_folds": 1,
+      "positive_pct": 10.0,
+      "total_trades": 791,
+      "avg_return_pct": -6.706,
+      "median_return_pct": -5.89,
+      "worst_fold_return_pct": -15.9,
+      "pooled_pf": 0.6698,
+      "gross_profit": 421.015601,
+      "gross_loss": 628.551754,
+      "net_pnl": -207.536153,
+      "worst_dd_pct": 18.43,
+      "score": -12.2115,
+      "development_gate": "BLOCK_DEVELOPMENT",
+      "side_summary": {
+        "long": {
+          "trades": 384,
+          "wins": 165,
+          "losses": 219,
+          "gross_profit": 214.719112,
+          "gross_loss": 305.430486,
+          "net_pnl": -90.711374,
+          "pf": 0.703
+        },
+        "short": {
+          "trades": 407,
+          "wins": 172,
+          "losses": 235,
+          "gross_profit": 206.296489,
+          "gross_loss": 323.121268,
+          "net_pnl": -116.824779,
+          "pf": 0.6384
+        }
+      }
+    },
+    {
+      "name": "HIST_SOFT_TREND_ROUTER",
+      "verdict": "BLOCK_UNSTABLE",
+      "valid_folds": 10,
+      "positive_folds": 0,
+      "positive_pct": 0.0,
+      "total_trades": 3332,
+      "avg_return_pct": -10.364,
+      "median_return_pct": -9.055,
+      "worst_fold_return_pct": -25.06,
+      "pooled_pf": 0.9301,
+      "gross_profit": 2803.266304,
+      "gross_loss": 3014.001487,
+      "net_pnl": -210.735183,
+      "worst_dd_pct": 26.49,
+      "score": -19.6188,
+      "development_gate": "BLOCK_DEVELOPMENT",
+      "side_summary": {
+        "long": {
+          "trades": 1002,
+          "wins": 432,
+          "losses": 570,
+          "gross_profit": 826.057321,
+          "gross_loss": 956.13129,
+          "net_pnl": -130.073969,
+          "pf": 0.864
+        },
+        "short": {
+          "trades": 2330,
+          "wins": 1073,
+          "losses": 1257,
+          "gross_profit": 1977.208983,
+          "gross_loss": 2057.870196,
+          "net_pnl": -80.661214,
+          "pf": 0.9608
+        }
+      }
+    },
+    {
+      "name": "HIST_SOFT_REGIME_ROUTER_ALL",
+      "verdict": "BLOCK_UNSTABLE",
+      "valid_folds": 10,
+      "positive_folds": 0,
+      "positive_pct": 0.0,
+      "total_trades": 3330,
+      "avg_return_pct": -12.483,
+      "median_return_pct": -12.115,
+      "worst_fold_return_pct": -22.19,
+      "pooled_pf": 0.8966,
+      "gross_profit": 2712.226186,
+      "gross_loss": 3024.964196,
+      "net_pnl": -312.73801,
+      "worst_dd_pct": 23.84,
+      "score": -20.5132,
+      "development_gate": "BLOCK_DEVELOPMENT",
+      "side_summary": {
+        "long": {
+          "trades": 1056,
+          "wins": 449,
+          "losses": 607,
+          "gross_profit": 820.292856,
+          "gross_loss": 1004.852871,
+          "net_pnl": -184.560015,
+          "pf": 0.8163
+        },
+        "short": {
+          "trades": 2274,
+          "wins": 1053,
+          "losses": 1221,
+          "gross_profit": 1891.93333,
+          "gross_loss": 2020.111325,
+          "net_pnl": -128.177995,
+          "pf": 0.9365
+        }
+      }
+    },
+    {
+      "name": "HIST_SOFT_BREAKOUT",
+      "verdict": "BLOCK_UNSTABLE",
+      "valid_folds": 10,
+      "positive_folds": 0,
+      "positive_pct": 0.0,
+      "total_trades": 3320,
+      "avg_return_pct": -11.895,
+      "median_return_pct": -12.365,
+      "worst_fold_return_pct": -24.81,
+      "pooled_pf": 0.9035,
+      "gross_profit": 2733.867759,
+      "gross_loss": 3025.99433,
+      "net_pnl": -292.126572,
+      "worst_dd_pct": 26.24,
+      "score": -21.1046,
+      "development_gate": "BLOCK_DEVELOPMENT",
+      "side_summary": {
+        "long": {
+          "trades": 985,
+          "wins": 403,
+          "losses": 582,
+          "gross_profit": 767.959108,
+          "gross_loss": 960.226138,
+          "net_pnl": -192.26703,
+          "pf": 0.7998
+        },
+        "short": {
+          "trades": 2335,
+          "wins": 1067,
+          "losses": 1268,
+          "gross_profit": 1965.908651,
+          "gross_loss": 2065.768193,
+          "net_pnl": -99.859542,
+          "pf": 0.9517
+        }
+      }
+    },
+    {
+      "name": "HIST_HARD_REGIME_ROUTER_ALL",
+      "verdict": "BLOCK_UNSTABLE",
+      "valid_folds": 10,
+      "positive_folds": 0,
+      "positive_pct": 0.0,
+      "total_trades": 2422,
+      "avg_return_pct": -13.223,
+      "median_return_pct": -13.03,
+      "worst_fold_return_pct": -22.04,
+      "pooled_pf": 0.8156,
+      "gross_profit": 1851.777397,
+      "gross_loss": 2270.493673,
+      "net_pnl": -418.716276,
+      "worst_dd_pct": 25.46,
+      "score": -22.3062,
+      "development_gate": "BLOCK_DEVELOPMENT",
+      "side_summary": {
+        "long": {
+          "trades": 897,
+          "wins": 397,
+          "losses": 500,
+          "gross_profit": 682.421278,
+          "gross_loss": 820.492483,
+          "net_pnl": -138.071205,
+          "pf": 0.8317
+        },
+        "short": {
+          "trades": 1525,
+          "wins": 667,
+          "losses": 858,
+          "gross_profit": 1169.356119,
+          "gross_loss": 1450.00119,
+          "net_pnl": -280.645071,
+          "pf": 0.8065
+        }
+      }
+    },
+    {
+      "name": "HIST_SOFT_LIQUIDITY_RECLAIM",
+      "verdict": "BLOCK_UNSTABLE",
+      "valid_folds": 10,
+      "positive_folds": 0,
+      "positive_pct": 0.0,
+      "total_trades": 2800,
+      "avg_return_pct": -17.072,
+      "median_return_pct": -18.095,
+      "worst_fold_return_pct": -25.56,
+      "pooled_pf": 0.7959,
+      "gross_profit": 2188.582259,
+      "gross_loss": 2749.937758,
+      "net_pnl": -561.355499,
+      "worst_dd_pct": 29.0,
+      "score": -27.9844,
+      "development_gate": "BLOCK_DEVELOPMENT",
+      "side_summary": {
+        "long": {
+          "trades": 1460,
+          "wins": 626,
+          "losses": 834,
+          "gross_profit": 1120.272807,
+          "gross_loss": 1489.576136,
+          "net_pnl": -369.303329,
+          "pf": 0.7521
+        },
+        "short": {
+          "trades": 1340,
+          "wins": 617,
+          "losses": 723,
+          "gross_profit": 1068.309453,
+          "gross_loss": 1260.361623,
+          "net_pnl": -192.05217,
+          "pf": 0.8476
+        }
+      }
+    },
+    {
+      "name": "HIST_SOFT_REVERSAL_ROUTER",
+      "verdict": "BLOCK_UNSTABLE",
+      "valid_folds": 10,
+      "positive_folds": 0,
+      "positive_pct": 0.0,
+      "total_trades": 2928,
+      "avg_return_pct": -17.649,
+      "median_return_pct": -16.705,
+      "worst_fold_return_pct": -26.14,
+      "pooled_pf": 0.8016,
+      "gross_profit": 2264.974142,
+      "gross_loss": 2825.703475,
+      "net_pnl": -560.729333,
+      "worst_dd_pct": 29.12,
+      "score": -28.6043,
+      "development_gate": "BLOCK_DEVELOPMENT",
+      "side_summary": {
+        "long": {
+          "trades": 1516,
+          "wins": 657,
+          "losses": 859,
+          "gross_profit": 1158.973351,
+          "gross_loss": 1498.591753,
+          "net_pnl": -339.618402,
+          "pf": 0.7734
+        },
+        "short": {
+          "trades": 1412,
+          "wins": 648,
+          "losses": 764,
+          "gross_profit": 1106.00079,
+          "gross_loss": 1327.111722,
+          "net_pnl": -221.110932,
+          "pf": 0.8334
+        }
+      }
+    }
+  ],
+  "leader_diagnostics": {
+    "sides": {
+      "long": {
+        "trades": 127,
+        "wins": 72,
+        "losses": 55,
+        "gross_profit": 105.095892,
+        "gross_loss": 77.672299,
+        "net_pnl": 27.423594,
+        "pf": 1.3531
+      },
+      "short": {
+        "trades": 67,
+        "wins": 29,
+        "losses": 38,
+        "gross_profit": 43.325823,
+        "gross_loss": 52.801194,
+        "net_pnl": -9.475371,
+        "pf": 0.8205
+      }
+    },
+    "categories": {
+      "symbol": [
+        {
+          "value": "TONUSDT",
+          "trades": 15,
+          "wins": 6,
+          "losses": 9,
+          "net_pnl": -7.743575
+        },
+        {
+          "value": "BTCUSDT",
+          "trades": 82,
+          "wins": 39,
+          "losses": 43,
+          "net_pnl": -3.345853
+        },
+        {
+          "value": "SOLUSDT",
+          "trades": 1,
+          "wins": 0,
+          "losses": 1,
+          "net_pnl": -2.625129
+        },
+        {
+          "value": "POLUSDT",
+          "trades": 2,
+          "wins": 1,
+          "losses": 1,
+          "net_pnl": -1.467369
+        },
+        {
+          "value": "DOGEUSDT",
+          "trades": 1,
+          "wins": 1,
+          "losses": 0,
+          "net_pnl": 0.756196
+        },
+        {
+          "value": "BCHUSDT",
+          "trades": 11,
+          "wins": 7,
+          "losses": 4,
+          "net_pnl": 1.21545
+        },
+        {
+          "value": "LTCUSDT",
+          "trades": 14,
+          "wins": 5,
+          "losses": 9,
+          "net_pnl": 1.721722
+        },
+        {
+          "value": "ETHUSDT",
+          "trades": 10,
+          "wins": 6,
+          "losses": 4,
+          "net_pnl": 4.937709
+        },
+        {
+          "value": "BNBUSDT",
+          "trades": 48,
+          "wins": 30,
+          "losses": 18,
+          "net_pnl": 11.433231
+        },
+        {
+          "value": "XRPUSDT",
+          "trades": 10,
+          "wins": 6,
+          "losses": 4,
+          "net_pnl": 13.06584
+        }
+      ],
+      "setup_type": [
+        {
+          "value": "pullback_resumption_strict",
+          "trades": 9,
+          "wins": 5,
+          "losses": 4,
+          "net_pnl": 1.482575
+        },
+        {
+          "value": "pullback_resumption",
+          "trades": 10,
+          "wins": 4,
+          "losses": 6,
+          "net_pnl": 4.937801
+        },
+        {
+          "value": "pullback",
+          "trades": 175,
+          "wins": 92,
+          "losses": 83,
+          "net_pnl": 11.527847
+        }
+      ],
+      "candle_type": [
+        {
+          "value": "bull_impulse",
+          "trades": 23,
+          "wins": 11,
+          "losses": 12,
+          "net_pnl": -6.954284
+        },
+        {
+          "value": "bull_rejection",
+          "trades": 8,
+          "wins": 5,
+          "losses": 3,
+          "net_pnl": -0.461001
+        },
+        {
+          "value": "indecision",
+          "trades": 14,
+          "wins": 8,
+          "losses": 6,
+          "net_pnl": 1.079939
+        },
+        {
+          "value": "neutral",
+          "trades": 52,
+          "wins": 26,
+          "losses": 26,
+          "net_pnl": 1.749074
+        },
+        {
+          "value": "bear_rejection",
+          "trades": 14,
+          "wins": 8,
+          "losses": 6,
+          "net_pnl": 7.704551
+        },
+        {
+          "value": "bear_impulse",
+          "trades": 83,
+          "wins": 43,
+          "losses": 40,
+          "net_pnl": 14.829944
+        }
+      ],
+      "context_alignment": [
+        {
+          "value": "fallback_entry",
+          "trades": 46,
+          "wins": 20,
+          "losses": 26,
+          "net_pnl": -6.320853
+        },
+        {
+          "value": "daily_only",
+          "trades": 34,
+          "wins": 17,
+          "losses": 17,
+          "net_pnl": -3.568394
+        },
+        {
+          "value": "h4_only",
+          "trades": 39,
+          "wins": 19,
+          "losses": 20,
+          "net_pnl": 8.262962
+        },
+        {
+          "value": "aligned",
+          "trades": 75,
+          "wins": 45,
+          "losses": 30,
+          "net_pnl": 19.574507
+        }
+      ],
+      "liquidity_state": [
+        {
+          "value": "none",
+          "trades": 194,
+          "wins": 101,
+          "losses": 93,
+          "net_pnl": 17.948222
+        }
+      ],
+      "volume_bucket": [
+        {
+          "value": "0.75_1.0",
+          "trades": 51,
+          "wins": 21,
+          "losses": 30,
+          "net_pnl": -11.893293
+        },
+        {
+          "value": "1.0_1.5",
+          "trades": 64,
+          "wins": 32,
+          "losses": 32,
+          "net_pnl": -5.168925
+        },
+        {
+          "value": "1.5_2.0",
+          "trades": 22,
+          "wins": 12,
+          "losses": 10,
+          "net_pnl": 6.544645
+        },
+        {
+          "value": "gte_2.0",
+          "trades": 32,
+          "wins": 23,
+          "losses": 9,
+          "net_pnl": 16.81671
+        },
+        {
+          "value": "lt_0.75",
+          "trades": 25,
+          "wins": 13,
+          "losses": 12,
+          "net_pnl": 11.649085
+        }
+      ]
+    }
+  },
+  "promotion_allowed": false,
+  "next_required_step": "Freeze one leader and validate on an untouched earlier period or symbol holdout.",
+  "limitations": [
+    "Dynamic targets require a separate exit simulation.",
+    "Flat v7.2, 5m timing, sector ranking and SMC components are scheduled for later waves.",
+    "Any leader still requires a frozen external holdout."
+  ]
+}
