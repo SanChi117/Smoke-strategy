@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "name": "FLAT_V7_2_RECOVERED",
+  "source_status": "rules recovered from historical project context; original full Pine source not located in the audit set",
+  "timeframe": "15m",
+  "direction": "long_only_in_recovered_reference",
+  "entry": {
+    "range_length_bars": 50,
+    "zone": "lower Donchian boundary plus ATR buffer",
+    "atr_touch_buffer": 0.3,
+    "center_ban_normalized": [0.33, 0.67],
+    "minimum_range_width_pct": 2.0,
+    "cooldown_bars_min": 4
+  },
+  "volume": {
+    "average": "SMA20",
+    "narrow_range_multiplier": 1.6,
+    "default_multiplier": 1.8,
+    "wide_range_multiplier": 2.0,
+    "unresolved": "exact narrow/default/wide range-width boundaries were not preserved in the recovered context"
+  },
+  "trend_filter": {
+    "60m": "EMA50 > EMA200",
+    "15m": "close > EMA200"
+  },
+  "stop": {
+    "base": "fractal or zone low",
+    "buffer": "ATR reserve",
+    "wide_range_behavior": "wider stop allowed",
+    "unresolved": "exact fractal lookback and ATR reserve coefficients must be recovered from source or treated as explicit research parameters"
+  },
+  "target": {
+    "base": "swing high minus ATR * 0.4",
+    "minimum_rr": 1.7,
+    "rr_cap": "weak impulse 2.2; strong impulse 2.8",
+    "unresolved": "exact strong/weak impulse classifier must be recovered or formalized before testing"
+  },
+  "audit_decision": "PORT_AS_INDEPENDENT_RANGE_FAMILY",
+  "restrictions": [
+    "do not merge approximate Flat rules into the current generic range_rotation setup",
+    "do not invent unresolved coefficients silently",
+    "test against a no-Flat regime-router control on strict OOS",
+    "no promotion without frozen external holdout"
+  ]
+}
