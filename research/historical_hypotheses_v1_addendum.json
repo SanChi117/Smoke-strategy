@@ -1,0 +1,42 @@
+{
+  "parent_registry": "research/historical_hypotheses_v1.json",
+  "recovered_from": "ROADMAP.md strategy-improvement phase",
+  "hypotheses": [
+    {
+      "id": "H21_BTC_ETH_MARKET_CONTEXT",
+      "idea": "BTC/ETH market regime as cross-symbol context",
+      "old_status": "planned and historically discussed, not isolated in causal A/B",
+      "old_test_validity": "not_tested",
+      "decision": "RETEST_AFTER_FAMILY_SCREEN",
+      "priority": 2,
+      "test_plan": "Add only closed BTC/ETH 4H/1D regime features; compare against an otherwise identical no-market-context control."
+    },
+    {
+      "id": "H22_MARKET_SESSION_CONTEXT",
+      "idea": "Market session and time-of-week context",
+      "old_status": "planned; session existed in early Structure keys but was not independently validated",
+      "old_test_validity": "insufficient",
+      "decision": "RETEST_AFTER_FAMILY_SCREEN",
+      "priority": 2,
+      "test_plan": "Measure setup-family performance by UTC session and weekday first; only then test a soft risk modifier, never post-hoc hard blocks."
+    },
+    {
+      "id": "H23_SETUP_SPECIFIC_TIME_STOP",
+      "idea": "Different maximum holding time for breakout, pullback, range and liquidity setups",
+      "old_status": "planned; current risk model uses one global maximum holding period",
+      "old_test_validity": "not_tested",
+      "decision": "IMPLEMENT_WITH_DYNAMIC_EXITS",
+      "priority": 1,
+      "test_plan": "Estimate causal MFE/MAE and time-to-target per setup family, then compare family-specific time stops against the global time-stop control."
+    },
+    {
+      "id": "H24_SYMBOL_BEHAVIOR_CLASS",
+      "idea": "trend_friendly, volatile_clean, watch_only, chaotic_avoid and insufficient_history symbol classes",
+      "old_status": "documented but not proven as a causal production gate",
+      "old_test_validity": "insufficient",
+      "decision": "RETEST_AS_SOFT_RANK",
+      "priority": 2,
+      "test_plan": "Build classes from completed rolling history only; compare soft risk/ranking against no-class control before any hard exclusion."
+    }
+  ]
+}
