@@ -260,7 +260,7 @@ def generate_flat_v72_plans(
             zone_low = min(dc_low, min(row.low for row in fractal_rows))
             stop_atr = cfg.wide_stop_atr if width_pct >= cfg.wide_width_pct else cfg.normal_stop_atr
             stop = zone_low - atr * stop_atr
-            entry = candle.close
+            entry = rows[index + 1].open
             risk = entry - stop
             if risk <= 0:
                 reasons["invalid_stop"] += 1
@@ -299,7 +299,8 @@ def generate_flat_v72_plans(
                 f"flat_v72|dir=up|ctx_align=aligned|candle={candle_type}|liq=none|"
                 f"vr={volume_ratio:.6f}|range_width={width_pct:.6f}|"
                 f"volume_req={required_volume:.4f}|atr={atr:.8f}|"
-                f"rr_raw={raw_rr:.6f}|rr_cap={rr_cap:.4f}|strong={str(strong).lower()}"
+                f"rr_raw={raw_rr:.6f}|rr_cap={rr_cap:.4f}|strong={str(strong).lower()}|"
+                "entry_model=next_bar_open"
             )
             plans.append(
                 FlatPlan(
