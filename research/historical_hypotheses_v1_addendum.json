@@ -1,6 +1,6 @@
 {
   "parent_registry": "research/historical_hypotheses_v1.json",
-  "recovered_from": "ROADMAP, Cleanshot history, tactical matrix commits and trading-assistant requirements",
+  "recovered_from": "ROADMAP, Cleanshot history, Pine rules, tactical commits and trading-assistant requirements",
   "hypotheses": [
     {
       "id": "H21_BTC_ETH_MARKET_CONTEXT",
@@ -55,6 +55,33 @@
       "decision": "RETEST_AFTER_FAMILY_SCREEN",
       "priority": 2,
       "test_plan": "For surviving setup families, run a predeclared A/B: no micro filter, each filter alone, and combined filter; use the full universe and frozen folds."
+    },
+    {
+      "id": "H27_MTF_CONTEXT_ROUTING",
+      "idea": "1D narrative plus completed 4H context plus 15M entry, with optional 5M timing",
+      "old_status": "became the old final baseline but causal validation later failed",
+      "old_test_validity": "architecture_not_disproved_but_old_edge_invalid",
+      "decision": "RETEST_AS_CONTEXT_AB",
+      "priority": 1,
+      "test_plan": "Compare entry-only, 4H-only, 1D+4H aligned, conflict-as-risk-reduction and conflict-as-hard-block variants on identical setup families."
+    },
+    {
+      "id": "H28_STRUCTURAL_STOP_WITH_ATR_BUFFER",
+      "idea": "Stop beyond swing, fractal, Donchian boundary or POI with ATR reserve",
+      "old_status": "central Pine/user rule but replaced in SMOKE by fixed setup stop percentages",
+      "old_test_validity": "not_tested_in_current_causal_pipeline",
+      "decision": "IMPLEMENT_NEXT",
+      "priority": 1,
+      "test_plan": "Build causal structural stop candidates from information available at entry; compare against current fixed-percent stops while holding entries and targets constant."
+    },
+    {
+      "id": "H29_RISK_GRADE_PREDICTIVENESS",
+      "idea": "Risk grade and confidence should predict realised outcomes",
+      "old_status": "risk grades drive labels and risk but were not independently proven",
+      "old_test_validity": "insufficient",
+      "decision": "DIAGNOSTIC_FIRST",
+      "priority": 2,
+      "test_plan": "Measure OOS calibration by grade: sample count, hit rate, average R, PF, MFE/MAE and monotonicity before using grade as a hard gate."
     }
   ]
 }
