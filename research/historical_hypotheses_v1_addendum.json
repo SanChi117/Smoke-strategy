@@ -1,6 +1,6 @@
 {
   "parent_registry": "research/historical_hypotheses_v1.json",
-  "recovered_from": "ROADMAP.md strategy-improvement phase",
+  "recovered_from": "ROADMAP, Cleanshot history and trading-assistant requirements",
   "hypotheses": [
     {
       "id": "H21_BTC_ETH_MARKET_CONTEXT",
@@ -37,6 +37,15 @@
       "decision": "RETEST_AS_SOFT_RANK",
       "priority": 2,
       "test_plan": "Build classes from completed rolling history only; compare soft risk/ranking against no-class control before any hard exclusion."
+    },
+    {
+      "id": "H25_DERIVATIVES_MICROSTRUCTURE_DATA",
+      "idea": "Open interest, funding, liquidation maps, order book and cluster context",
+      "old_status": "discussed in Cleanshot and later market-scanner requirements; not integrated into SMOKE history",
+      "old_test_validity": "no_point_in_time_dataset",
+      "decision": "DATASET_FIRST",
+      "priority": 3,
+      "test_plan": "Acquire timestamped historical derivatives data with known publication time, coverage and survivorship rules; test each feature as an overlay against a candle-only control."
     }
   ]
 }
