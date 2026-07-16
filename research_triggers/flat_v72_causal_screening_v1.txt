@@ -1,0 +1,8 @@
+Trigger FLAT_V72_CAUSAL_SCREENING_V1 after the historical hypothesis recheck.
+
+Purpose:
+- port the recovered Flat v7.2 rules as an independent LONG range family;
+- test faithful base and predeclared ablations on strict chronological OOS;
+- keep unresolved Pine coefficients explicit;
+- do not use or tune on an external holdout;
+- never promote directly from this development screen.
