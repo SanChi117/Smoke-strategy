@@ -45,10 +45,10 @@ def main() -> None:
     assert summary["plans"] == len(plans)
     assert plans, "expected at least one deterministic Flat plan"
     assert all(plan.entry_time > source[0].time for plan in plans)
+    assert all(plan.stop < plan.entry < plan.target for plan in plans)
     rows = simulate_flat_v72_rows(plans, source)
     assert rows, "expected simulated rows"
     assert all(row["setup_type"] == "flat_v72" for row in rows)
-    assert all(float(row["stop"]) < float(row["entry"]) < float(row["target"]) for row in rows)
     assert all(str(row["exit_time"]) > str(row["entry_time"]) for row in rows)
     print("Flat v7.2 causal smoke test passed")
 
