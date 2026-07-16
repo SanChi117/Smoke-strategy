@@ -1,6 +1,6 @@
 {
   "parent_registry": "research/historical_hypotheses_v1.json",
-  "recovered_from": "ROADMAP, Cleanshot history and trading-assistant requirements",
+  "recovered_from": "ROADMAP, Cleanshot history, tactical matrix commits and trading-assistant requirements",
   "hypotheses": [
     {
       "id": "H21_BTC_ETH_MARKET_CONTEXT",
@@ -46,6 +46,15 @@
       "decision": "DATASET_FIRST",
       "priority": 3,
       "test_plan": "Acquire timestamped historical derivatives data with known publication time, coverage and survivorship rules; test each feature as an overlay against a candle-only control."
+    },
+    {
+      "id": "H26_TACTICAL_MICRO_CONTEXT",
+      "idea": "Liquidity state, candle type, direction and minimum volume-ratio tactical filters",
+      "old_status": "historical candidates used high_sweep_reject, bear_rejection, direction-up and volume-ratio filters",
+      "old_test_validity": "post_hoc_and_core_biased",
+      "decision": "RETEST_AFTER_FAMILY_SCREEN",
+      "priority": 2,
+      "test_plan": "For surviving setup families, run a predeclared A/B: no micro filter, each filter alone, and combined filter; use the full universe and frozen folds."
     }
   ]
 }
