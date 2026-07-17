@@ -1,0 +1,12 @@
+Trigger FLAT_V72_5M_SOFT_TIMING_RISK_V1 after Flat exit refinement blocked.
+
+Frozen rules:
+- one unchanged 15m baseline and four preregistered soft 5m overlays;
+- completed 5m candles only;
+- no hard signal rejection;
+- 10 strict chronological OOS folds on 2025-01-01 through 2026-06-30;
+- same universe, portfolio, fees and slippage;
+- pooled PF and fixed development gate;
+- no external holdout and no candidate additions after results.
+
+If all candidates block, stop 5m tuning on this period and move to causal symbol/sector ranking.
