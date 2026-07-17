@@ -1,0 +1,105 @@
+{
+  "study_id": "CAUSAL_SYMBOL_SECTOR_RANKING_V1",
+  "status": "PRE_REGISTERED_NOT_RUN",
+  "created_after": "FLAT_V72_5M_SOFT_TIMING_RISK_V1_BLOCK",
+  "research_only": true,
+  "live_trading": false,
+  "paper_promotion": false,
+  "external_holdout_forbidden": true,
+  "hypothesis": "A causal rolling rank of symbols and frozen sectors may reduce exposure to persistently weak parts of the Flat v7.2 signal universe without using future outcomes or hand-picking winners.",
+  "fixed_development_period": {
+    "start": "2025-01-01",
+    "end": "2026-06-30"
+  },
+  "frozen_baseline": {
+    "entry_family": "recovered Flat v7.2 long-only",
+    "learning": "soft",
+    "exit_policy": "structural target with 24h maximum hold",
+    "execution": "closed 15m signal bar, next 15m open",
+    "same_bar_ambiguity": "stop_first",
+    "portfolio_profile": "research_500",
+    "fees": 0.001,
+    "slippage": 0.0002,
+    "walk_forward_windows": 10,
+    "fold_warmup_days": 30
+  },
+  "ranking_contract": {
+    "lookback_days": 30,
+    "source_book": "all valid baseline shadow signals",
+    "availability_rule": "a shadow outcome is usable only when exit_time <= current entry_time",
+    "symbol_min_completed_trades": 3,
+    "sector_min_completed_trades": 6,
+    "symbol_prior_strength": 5.0,
+    "sector_prior_strength": 10.0,
+    "score": "cost-adjusted R shrunk toward zero",
+    "symbol_percentile": "cross-sectional percentile among symbols with enough completed history",
+    "sector_percentile": "mean percentile across the symbol's frozen sector tags",
+    "hybrid_percentile": "mean of available symbol and sector percentiles",
+    "missing_history": "never retrospectively imputed",
+    "sector_membership": "frozen strategy_lab/universe/sector_groups.json through build_strategy_universe_layer.py",
+    "manual_symbol_selection": false
+  },
+  "candidates": [
+    {
+      "name": "RANK_CONTROL_NO_OVERLAY",
+      "mode": "control",
+      "risk": "unchanged",
+      "hard_gate": false
+    },
+    {
+      "name": "RANK_SYMBOL_SOFT_RISK",
+      "mode": "symbol_soft",
+      "risk_by_percentile": {
+        "missing": 0.85,
+        "top_quartile": 1.10,
+        "middle_half": 0.85,
+        "bottom_quartile": 0.60
+      },
+      "hard_gate": false
+    },
+    {
+      "name": "RANK_SECTOR_SOFT_RISK",
+      "mode": "sector_soft",
+      "risk_by_percentile": {
+        "missing": 0.85,
+        "top_quartile": 1.10,
+        "middle_half": 0.85,
+        "bottom_quartile": 0.60
+      },
+      "hard_gate": false
+    },
+    {
+      "name": "RANK_HYBRID_SOFT_RISK",
+      "mode": "hybrid_soft",
+      "risk_by_percentile": {
+        "missing": 0.80,
+        "top_quartile": 1.10,
+        "upper_middle_quartile": 0.90,
+        "lower_middle_quartile": 0.70,
+        "bottom_quartile": 0.50
+      },
+      "hard_gate": false
+    },
+    {
+      "name": "RANK_HYBRID_BOTTOM_QUARTILE_GATE",
+      "mode": "hybrid_bottom_gate",
+      "risk_if_missing": 0.80,
+      "hard_gate": "only when a non-missing hybrid percentile is below 0.25"
+    }
+  ],
+  "development_gate": {
+    "minimum_trades": 60,
+    "pooled_pf_min": 1.20,
+    "avg_return_pct_gt": 0.0,
+    "positive_folds_min": 6,
+    "worst_dd_pct_max": 8.0,
+    "selection_rule": "At most one passing candidate: highest pooled PF, then lowest DD, then highest positive-fold percentage, then most trades, then name."
+  },
+  "anti_overfit_rules": [
+    "No candidate additions or coefficient changes after viewing results.",
+    "No external holdout access unless exactly one candidate passes development.",
+    "Blocked candidates are not rescued by manual symbol exclusions.",
+    "If all candidates block, proceed to separately preregistered LONG/SHORT regime families."
+  ],
+  "next_action": "Implement and run exactly the control plus four active ranking candidates."
+}
