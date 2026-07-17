@@ -1,0 +1,90 @@
+{
+  "study_id": "LONG_SHORT_REGIME_FAMILIES_V1",
+  "status": "PRE_REGISTERED_NOT_RUN",
+  "created_after": "CAUSAL_SYMBOL_SECTOR_RANKING_V1_BLOCK",
+  "research_only": true,
+  "live_trading": false,
+  "paper_promotion": false,
+  "external_holdout_forbidden": true,
+  "hypothesis": "Separate causal LONG and SHORT regime families may isolate directional edge that is diluted in the pooled Flat v7.2 universe.",
+  "fixed_development_period": {
+    "start": "2025-01-01",
+    "end": "2026-06-30"
+  },
+  "frozen_execution": {
+    "closed_candles_only": true,
+    "entry": "next 15m open after completed signal bar",
+    "same_bar_ambiguity": "stop_first",
+    "portfolio_profile": "research_500",
+    "fees": 0.001,
+    "slippage": 0.0002,
+    "walk_forward_windows": 10,
+    "fold_warmup_days": 30
+  },
+  "regime_inputs": {
+    "availability": "all features must be known at or before signal close",
+    "market_reference": "BTCUSDT completed 4h and 1h candles",
+    "trend": "completed 4h EMA50 versus EMA200 and EMA50 slope",
+    "structure": "completed 4h close versus prior completed 20-bar range midpoint",
+    "volatility": "completed 1h ATR14 percentile over trailing 90 completed 1h bars",
+    "no_future_fill": true
+  },
+  "predeclared_families": [
+    {
+      "name": "LONG_CONTROL_ALL_REGIMES",
+      "side": "long",
+      "gate": "none"
+    },
+    {
+      "name": "LONG_BULL_TREND_ONLY",
+      "side": "long",
+      "gate": "4h EMA50 > EMA200, EMA50 rising, completed close above prior range midpoint"
+    },
+    {
+      "name": "LONG_BULL_OR_NEUTRAL_SOFT_RISK",
+      "side": "long",
+      "gate": "none",
+      "risk": "1.00 in bull, 0.70 in neutral, 0.40 in bear"
+    },
+    {
+      "name": "SHORT_CONTROL_ALL_REGIMES",
+      "side": "short",
+      "gate": "none"
+    },
+    {
+      "name": "SHORT_BEAR_TREND_ONLY",
+      "side": "short",
+      "gate": "4h EMA50 < EMA200, EMA50 falling, completed close below prior range midpoint"
+    },
+    {
+      "name": "SHORT_BEAR_OR_NEUTRAL_SOFT_RISK",
+      "side": "short",
+      "gate": "none",
+      "risk": "1.00 in bear, 0.70 in neutral, 0.40 in bull"
+    }
+  ],
+  "development_gate": {
+    "minimum_trades": 60,
+    "pooled_pf_min": 1.20,
+    "avg_return_pct_gt": 0.0,
+    "positive_folds_min": 6,
+    "worst_dd_pct_max": 8.0,
+    "selection_rule": "At most one passing candidate across both directional families: highest pooled PF, then lowest DD, then highest positive-fold percentage, then most trades, then name."
+  },
+  "holdout_rule": {
+    "allowed_only_after_one_development_pass": true,
+    "one_untouched_period_only": true,
+    "pf_gt": 1.10,
+    "target_pf": 1.20,
+    "avg_return_pct_gt": 0.0,
+    "positive_folds_min_fraction": 0.5,
+    "no_rule_changes_after_viewing": true
+  },
+  "anti_overfit_rules": [
+    "No candidate additions or coefficient changes after viewing development results.",
+    "No manual symbol exclusions or winner-only subsets.",
+    "LONG and SHORT families use identical costs, portfolio accounting and fold boundaries.",
+    "If all six candidates block, proceed to separately preregistered formal causal Cleanshot/SMC features."
+  ],
+  "next_action": "Implement and run exactly the six preregistered candidates under strict OOS."
+}
