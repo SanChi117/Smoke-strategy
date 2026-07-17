@@ -1,6 +1,6 @@
 {
   "study_id": "FLAT_V72_5M_SOFT_TIMING_RISK_V1",
-  "status": "PRE_REGISTERED_NOT_RUN",
+  "status": "PRE_REGISTERED_READY_TO_RUN",
   "created_after": "FLAT_V72_EXIT_REFINEMENT_V1_BLOCK",
   "research_only": true,
   "live_trading": false,
@@ -12,12 +12,12 @@
     "external_holdout_forbidden": true
   },
   "data_contract": {
-    "source": "Binance Futures public klines",
-    "base_interval": "15m rebuilt from 5m",
+    "source": "Binance USD-M Futures public archives",
+    "base_interval": "15m rebuilt from exactly three complete 5m candles",
     "micro_interval": "5m",
     "closed_candles_only": true,
-    "causal_join": "latest completed 5m candle at or before the 15m decision timestamp",
-    "universe": "identical to FLAT_V72_EXIT_REFINEMENT_V1",
+    "causal_join": "latest 5m candle whose close time is not later than the 15m decision timestamp",
+    "universe": "identical universe builder and top-n-per-group=3 used by the preceding Flat studies",
     "commissions_and_slippage": "identical to FLAT_V72_EXIT_REFINEMENT_V1",
     "portfolio_profile": "research_500",
     "walk_forward_windows": 10,
@@ -25,18 +25,46 @@
   },
   "baseline": {
     "name": "FLAT72_15M_BASELINE_CONTROL",
-    "entry_rules": "unchanged Flat v7.2",
+    "entry_rules": "unchanged recovered Flat v7.2",
     "exit_rules": "FLAT72_EXIT_SOFT_STRUCT_24H_CONTROL",
     "risk_multiplier": 1.0,
     "entry_delay_bars_5m": 0
   },
-  "micro_states": {
-    "supportive": "5m direction/candle/liquidity agrees with long entry and volume is not dry",
-    "neutral": "no clear agreement or disagreement",
-    "adverse": "5m direction/candle/liquidity conflicts with long entry",
-    "missing": "insufficient completed 5m history"
+  "micro_classifier": {
+    "minimum_completed_5m_bars": 30,
+    "ema_fast": 9,
+    "ema_slow": 21,
+    "volume_sma": 20,
+    "liquidity_lookback": 6,
+    "bull_impulse_body_atr_fraction": 0.55,
+    "bear_impulse_body_atr_fraction": 0.55,
+    "supportive_points": [
+      "EMA9 > EMA21",
+      "last close > EMA9",
+      "last candle bullish",
+      "last volume / SMA20 >= 0.80",
+      "last candle swept the prior six-bar low and closed back above that low"
+    ],
+    "adverse_points": [
+      "EMA9 < EMA21",
+      "last close < EMA9",
+      "last candle bearish with body >= 0.55 ATR14",
+      "last close below the prior six-bar low",
+      "last volume / SMA20 < 0.60"
+    ],
+    "supportive_rule": "supportive_points >= 3 and adverse_points <= 1",
+    "adverse_rule": "adverse_points >= 3 and supportive_points <= 1",
+    "neutral_rule": "all other complete contexts",
+    "missing_rule": "fewer than 30 completed 5m bars",
+    "no_future_fields": true
   },
   "candidates": [
+    {
+      "name": "FLAT72_15M_BASELINE_CONTROL",
+      "hard_gate": false,
+      "entry_delay_bars_5m": 0,
+      "risk_by_state": {"supportive": 1.0, "neutral": 1.0, "adverse": 1.0, "missing": 1.0}
+    },
     {
       "name": "SOFT_RISK_075_ON_ADVERSE",
       "hard_gate": false,
@@ -55,7 +83,7 @@
       "entry_delay_bars_5m": 1,
       "delay_only_state": "adverse",
       "risk_by_state": {"supportive": 1.0, "neutral": 1.0, "adverse": 1.0, "missing": 1.0},
-      "fill_rule": "next completed 5m close after the delayed decision; no retrospective best fill"
+      "fill_rule": "close of the next completed 5m candle; keep the original absolute structural stop and target; if the delayed fill makes them invalid, use the original causal fill and record the fallback"
     },
     {
       "name": "SOFT_SUPPORTIVE_110_ADVERSE_060",
@@ -67,16 +95,15 @@
   "metrics": {
     "primary": ["pooled_pf", "avg_return_pct", "positive_fold_pct", "worst_dd_pct"],
     "secondary": ["total_trades", "median_return_pct", "worst_fold_return_pct", "net_pnl"],
-    "pooled_pf_required": true,
-    "equal_fold_average_not_pf": true
+    "pooled_pf_required": true
   },
   "development_gate": {
     "pooled_pf_min": 1.2,
     "avg_return_pct_gt": 0.0,
     "positive_fold_pct_min": 60.0,
     "worst_dd_pct_max": 8.0,
-    "must_not_reduce_trade_count": true,
+    "must_not_reduce_trade_count_vs_baseline": true,
     "selection_rule": "Select at most one candidate by fixed lexicographic order: pass all gates, highest pooled PF, then lowest DD, then highest positive-fold percentage. No candidate additions after viewing results."
   },
-  "next_action": "Implement and run exactly these four soft candidates plus baseline. If all block, move to causal symbol/sector ranking; do not add more 5m variants on this development period."
+  "next_action": "Run exactly the baseline and four soft candidates. If all block, move to causal symbol/sector ranking; do not add more 5m variants on this development period."
 }
