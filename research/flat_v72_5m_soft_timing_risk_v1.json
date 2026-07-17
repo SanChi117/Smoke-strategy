@@ -1,0 +1,82 @@
+{
+  "study_id": "FLAT_V72_5M_SOFT_TIMING_RISK_V1",
+  "status": "PRE_REGISTERED_NOT_RUN",
+  "created_after": "FLAT_V72_EXIT_REFINEMENT_V1_BLOCK",
+  "research_only": true,
+  "live_trading": false,
+  "paper_promotion": false,
+  "hypothesis": "Completed 5m microstructure may improve execution timing or reduce risk without rejecting otherwise valid 15m Flat v7.2 entries.",
+  "fixed_development_period": {
+    "start": "2025-01-01",
+    "end": "2026-06-30",
+    "external_holdout_forbidden": true
+  },
+  "data_contract": {
+    "source": "Binance Futures public klines",
+    "base_interval": "15m rebuilt from 5m",
+    "micro_interval": "5m",
+    "closed_candles_only": true,
+    "causal_join": "latest completed 5m candle at or before the 15m decision timestamp",
+    "universe": "identical to FLAT_V72_EXIT_REFINEMENT_V1",
+    "commissions_and_slippage": "identical to FLAT_V72_EXIT_REFINEMENT_V1",
+    "portfolio_profile": "research_500",
+    "walk_forward_windows": 10,
+    "lookback_days": 30
+  },
+  "baseline": {
+    "name": "FLAT72_15M_BASELINE_CONTROL",
+    "entry_rules": "unchanged Flat v7.2",
+    "exit_rules": "FLAT72_EXIT_SOFT_STRUCT_24H_CONTROL",
+    "risk_multiplier": 1.0,
+    "entry_delay_bars_5m": 0
+  },
+  "micro_states": {
+    "supportive": "5m direction/candle/liquidity agrees with long entry and volume is not dry",
+    "neutral": "no clear agreement or disagreement",
+    "adverse": "5m direction/candle/liquidity conflicts with long entry",
+    "missing": "insufficient completed 5m history"
+  },
+  "candidates": [
+    {
+      "name": "SOFT_RISK_075_ON_ADVERSE",
+      "hard_gate": false,
+      "entry_delay_bars_5m": 0,
+      "risk_by_state": {"supportive": 1.0, "neutral": 1.0, "adverse": 0.75, "missing": 1.0}
+    },
+    {
+      "name": "SOFT_RISK_050_ON_ADVERSE",
+      "hard_gate": false,
+      "entry_delay_bars_5m": 0,
+      "risk_by_state": {"supportive": 1.0, "neutral": 1.0, "adverse": 0.5, "missing": 1.0}
+    },
+    {
+      "name": "SOFT_DELAY_ONE_5M_IF_ADVERSE",
+      "hard_gate": false,
+      "entry_delay_bars_5m": 1,
+      "delay_only_state": "adverse",
+      "risk_by_state": {"supportive": 1.0, "neutral": 1.0, "adverse": 1.0, "missing": 1.0},
+      "fill_rule": "next completed 5m close after the delayed decision; no retrospective best fill"
+    },
+    {
+      "name": "SOFT_SUPPORTIVE_110_ADVERSE_060",
+      "hard_gate": false,
+      "entry_delay_bars_5m": 0,
+      "risk_by_state": {"supportive": 1.1, "neutral": 0.85, "adverse": 0.6, "missing": 0.85}
+    }
+  ],
+  "metrics": {
+    "primary": ["pooled_pf", "avg_return_pct", "positive_fold_pct", "worst_dd_pct"],
+    "secondary": ["total_trades", "median_return_pct", "worst_fold_return_pct", "net_pnl"],
+    "pooled_pf_required": true,
+    "equal_fold_average_not_pf": true
+  },
+  "development_gate": {
+    "pooled_pf_min": 1.2,
+    "avg_return_pct_gt": 0.0,
+    "positive_fold_pct_min": 60.0,
+    "worst_dd_pct_max": 8.0,
+    "must_not_reduce_trade_count": true,
+    "selection_rule": "Select at most one candidate by fixed lexicographic order: pass all gates, highest pooled PF, then lowest DD, then highest positive-fold percentage. No candidate additions after viewing results."
+  },
+  "next_action": "Implement and run exactly these four soft candidates plus baseline. If all block, move to causal symbol/sector ranking; do not add more 5m variants on this development period."
+}
