@@ -1,0 +1,6 @@
+SMOKE_MTF_DEALING_RANGE_V2_CORE
+created_utc=2026-07-18
+scope=closed-candle resampling, confirmed pivots/fractals, dealing ranges, level/trend strength, event-risk point-in-time checks
+research_only=true
+paper=false
+live=false
