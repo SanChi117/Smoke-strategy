@@ -22,6 +22,7 @@ from strategy_lab.mtf_dealing_range_v2 import (
     confirmed_pivots,
 )
 from strategy_lab.mtf_liquidity_map_v2 import build_liquidity_map
+from strategy_lab.mtf_raid_signal_v2 import RaidSignal, detect_h1_raid_signal
 
 
 @dataclass(frozen=True)
@@ -64,6 +65,7 @@ class EntryPlan:
     context: MtfContextSnapshot
     poi: Level | None
     h1_raid: bool
+    raid: RaidSignal | None
     h1_reaction: bool
     bos: BosSignal | None
     event_blocked: bool
@@ -72,7 +74,6 @@ class EntryPlan:
 
 
 def _bars_asof(bars: Sequence[ClosedBar], symbol: str, timestamp: datetime) -> list[ClosedBar]:
-    """Return only bars whose complete OHLCV was known by ``timestamp``."""
     return [bar for bar in bars if bar.symbol == symbol and bar.close_time <= timestamp]
 
 
@@ -104,7 +105,6 @@ def _available_levels(
     timestamp: datetime,
     timeframes: tuple[str, ...] = ("1h", "4h", "1d", "1w", "1M"),
 ) -> list[Level]:
-    """Use one causal map for POI, FTA and target selection."""
     liquidity = build_liquidity_map(engine, symbol, timestamp)
     return [
         level
@@ -120,7 +120,6 @@ def find_active_poi(
     side: str,
     config: EntryConfig,
 ) -> Level | None:
-    """Select the strongest nearby HTF level on the correct side."""
     h1 = _bars_asof(engine.bars["1h"], symbol, timestamp)
     if not h1:
         return None
@@ -154,22 +153,8 @@ def detect_liquidity_raid(
     timestamp: datetime,
     lookback_bars: int = 4,
 ) -> bool:
-    """Require a closed H1 sweep and reclaim of a confirmed fractal."""
-    rows = [bar for bar in bars if bar.close_time <= timestamp]
-    pivots = confirmed_pivots(rows, 2, 2)
-    desired_kind = "low" if side == "long" else "high"
-    candidates = [pivot for pivot in pivots if pivot.kind == desired_kind]
-    if not candidates:
-        return False
-    reference = candidates[-1]
-    for bar in rows[-lookback_bars:]:
-        if bar.open_time < reference.confirmed_at:
-            continue
-        if side == "long" and bar.low < reference.price and bar.close > reference.price:
-            return True
-        if side == "short" and bar.high > reference.price and bar.close < reference.price:
-            return True
-    return False
+    """Backward-compatible boolean view of the fresh H1 raid signal."""
+    return detect_h1_raid_signal(bars, side, timestamp, lookback_bars) is not None
 
 
 def detect_h1_reaction(
@@ -179,11 +164,6 @@ def detect_h1_reaction(
     timestamp: datetime,
     lookback_bars: int = 3,
 ) -> bool:
-    """Require a closed directional rejection from the selected HTF POI.
-
-    A strong level is never a trigger by itself. Price must touch the zone and a
-    completed H1 candle must close away from it in the intended direction.
-    """
     if poi is None:
         return False
     rows = [bar for bar in bars if bar.close_time <= timestamp]
@@ -208,6 +188,7 @@ def detect_5m_bos(
     side: str,
     timestamp: datetime,
     config: EntryConfig,
+    raid: RaidSignal | None = None,
 ) -> BosSignal | None:
     """Detect body-close BOS over a pivot confirmed before the signal opened."""
     rows = [bar for bar in bars if bar.close_time <= timestamp]
@@ -235,6 +216,16 @@ def detect_5m_bos(
     )
     if not crossed:
         return None
+
+    if raid is not None:
+        if signal.open_time < raid.raid_bar.close_time:
+            return None
+        if side == "long":
+            if not (pivot.price > raid.pivot.price and signal.close > raid.pivot.price):
+                return None
+        else:
+            if not (pivot.price < raid.pivot.price and signal.close < raid.pivot.price):
+                return None
 
     atr = _atr(rows) or max(1e-12, signal.high - signal.low)
     full_range = max(1e-12, signal.high - signal.low)
@@ -276,11 +267,6 @@ def find_next_15m_entry_bar(
     timestamp: datetime,
     bos: BosSignal | None,
 ) -> ClosedBar | None:
-    """Return the 15m bar whose open is the planned execution timestamp.
-
-    Only the bar's open price may be used at that timestamp. Its later high, low,
-    close and volume are deliberately ignored by the entry model.
-    """
     if bos is None or bos.signal_bar.close_time > timestamp:
         return None
     if timestamp.second != 0 or timestamp.microsecond != 0 or timestamp.minute % 15 != 0:
@@ -302,8 +288,21 @@ def _select_stop(
     side: str,
     entry: float,
     poi: Level | None,
+    raid: RaidSignal | None,
     config: EntryConfig,
 ) -> float | None:
+    h1 = _bars_asof(engine.bars["1h"], symbol, timestamp)
+    atr = _atr(h1) if h1 else None
+    if atr is None:
+        atr = entry * 0.005
+
+    if raid is not None:
+        raid_anchor = raid.pivot.price
+        if side == "long" and raid_anchor < entry:
+            return raid_anchor - atr * config.stop_buffer_atr
+        if side == "short" and raid_anchor > entry:
+            return raid_anchor + atr * config.stop_buffer_atr
+
     candidates: list[tuple[float, float, int]] = []
     timeframe_rank = {"5m": 1, "15m": 2, "1h": 3}
     for timeframe in ("5m", "15m", "1h"):
@@ -315,10 +314,6 @@ def _select_stop(
                 candidates.append((pivot.price, pivot.strength, timeframe_rank[timeframe]))
             if side == "short" and pivot.kind == "high" and pivot.price > entry:
                 candidates.append((pivot.price, pivot.strength, timeframe_rank[timeframe]))
-    h1 = _bars_asof(engine.bars["1h"], symbol, timestamp)
-    atr = _atr(h1) if h1 else None
-    if atr is None:
-        atr = entry * 0.005
     if poi is not None:
         level_price = poi.low if side == "long" else poi.high
         poi_rank = {"1h": 3, "4h": 4, "1d": 5, "1w": 6, "1M": 7}.get(poi.timeframe, 3)
@@ -416,13 +411,14 @@ class MtfEntryModelV2:
             reasons.append("no_active_htf_poi")
 
         h1_rows = _bars_asof(self.engine.bars["1h"], symbol, timestamp)
-        h1_raid = detect_liquidity_raid(h1_rows, side, timestamp)
+        raid = detect_h1_raid_signal(h1_rows, side, timestamp)
+        h1_raid = raid is not None
         h1_reaction = detect_h1_reaction(h1_rows, poi, side, timestamp)
         reaction_ready = poi is not None and (h1_raid or h1_reaction)
         if poi is not None and not reaction_ready:
             reasons.append("poi_has_no_closed_h1_reaction_or_raid")
 
-        bos = detect_5m_bos(self.engine.bars["5m"], side, timestamp, self.config)
+        bos = detect_5m_bos(self.engine.bars["5m"], side, timestamp, self.config, raid)
         if bos is None:
             reasons.append("no_confirmed_5m_bos")
 
@@ -444,7 +440,7 @@ class MtfEntryModelV2:
 
         entry = entry_bar.open if entry_bar is not None else None
         stop = (
-            _select_stop(self.engine, symbol, timestamp, side, entry, poi, self.config)
+            _select_stop(self.engine, symbol, timestamp, side, entry, poi, raid, self.config)
             if entry is not None
             else None
         )
@@ -514,6 +510,7 @@ class MtfEntryModelV2:
             context=snapshot,
             poi=poi,
             h1_raid=h1_raid,
+            raid=raid,
             h1_reaction=h1_reaction,
             bos=bos,
             event_blocked=event_blocked,
