@@ -97,7 +97,7 @@
         "HTF_TARGET"
       ],
       "required_context": ["daily_bearish_rb_or_supply", "4h_bsl_raid", "4h_snr_or_imbalance_poi"],
-      "required_trigger": ["closed_h1_reaction_or_raid", "5m_bos_after_inducement"],
+      "required_trigger": ["closed_h1_reaction_or_raid", "closed_5m_bos_after_inducement"],
       "stop_anchor": "strong_high_above_trigger_or_h4_poi",
       "target_anchor": "4h_eql_ssl_or_weak_low",
       "expected_entry_timeframe": "15m",
@@ -119,7 +119,7 @@
         "HTF_TARGET"
       ],
       "required_context": ["daily_bullish_imbalance_or_demand", "4h_ssl_raid", "1h_rb_or_imbalance_poi"],
-      "required_trigger": ["closed_h1_reaction_or_raid", "5m_bos_after_inducement"],
+      "required_trigger": ["closed_h1_reaction_or_raid", "closed_5m_bos_after_inducement"],
       "stop_anchor": "strong_low_below_trigger_or_h4_poi",
       "target_anchor": "4h_fta_eqh_bsl_or_weak_high",
       "expected_entry_timeframe": "15m",
