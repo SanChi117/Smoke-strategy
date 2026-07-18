@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Stateful H1 confirmation -> 5m BOS -> next 15m open entry model.
 
+Two causal paths are supported:
+1) fresh H1 liquidity raid -> 5m BOS;
+2) H1 volume confirmation creates a new zone -> later closed 15m zone test -> 5m BOS.
+
 Research only. This module never sends paper or live orders.
 """
 from __future__ import annotations
@@ -21,6 +25,7 @@ from strategy_lab.mtf_dealing_range_v2 import (
 )
 from strategy_lab.mtf_liquidity_map_v2 import build_liquidity_map
 from strategy_lab.mtf_raid_signal_v2 import RaidSignal, detect_h1_raid_signal
+from strategy_lab.mtf_vc_zone_test_v2 import VcZoneTestSignal, detect_15m_vc_zone_test
 from strategy_lab.mtf_volume_confirmation_v2 import (
     VolumeConfirmationSignal,
     detect_h1_volume_confirmation,
@@ -71,6 +76,8 @@ class EntryPlan:
     h1_reaction: bool
     h1_vc: bool
     volume_confirmation: VolumeConfirmationSignal | None
+    vc_zone_test: bool
+    vc_test: VcZoneTestSignal | None
     bos: BosSignal | None
     event_blocked: bool
     event_risk_multiplier: float
@@ -163,7 +170,7 @@ def detect_h1_reaction(
     timestamp: datetime,
     lookback_bars: int = 3,
 ) -> bool:
-    """Diagnostic candle reaction; it is not sufficient to arm an entry."""
+    """Diagnostic candle reaction; it cannot arm an entry by itself."""
     if poi is None:
         return False
     rows = [bar for bar in bars if bar.close_time <= timestamp]
@@ -186,7 +193,9 @@ def detect_5m_bos(
     timestamp: datetime,
     config: EntryConfig,
     raid: RaidSignal | None = None,
+    confirmation_time: datetime | None = None,
 ) -> BosSignal | None:
+    """Detect a fresh body-close BOS after the selected confirmation path."""
     rows = [bar for bar in bars if bar.close_time <= timestamp]
     if len(rows) < 20:
         return None
@@ -194,6 +203,9 @@ def detect_5m_bos(
     age = timestamp - signal.close_time
     if age < timedelta(0) or age > timedelta(minutes=config.max_bos_age_minutes):
         return None
+    if confirmation_time is not None and signal.open_time < confirmation_time:
+        return None
+
     desired_kind = "high" if side == "long" else "low"
     candidates = [
         pivot
@@ -211,6 +223,7 @@ def detect_5m_bos(
     )
     if not crossed:
         return None
+
     if raid is not None:
         if signal.open_time < raid.raid_bar.close_time:
             return None
@@ -235,18 +248,28 @@ def detect_5m_bos(
         imbalance = signal.low > left.high if side == "long" else signal.high < left.low
     if not displacement and not imbalance:
         return None
+
     strength = min(
         100.0,
         pivot.strength * 0.45
         + min(35.0, body / max(atr, 1e-12) * 20.0)
         + (15.0 if imbalance else 0.0),
     )
-    return BosSignal(signal.symbol, side, pivot, signal, displacement, imbalance, round(strength, 4))
+    return BosSignal(
+        symbol=signal.symbol,
+        side=side,
+        pivot=pivot,
+        signal_bar=signal,
+        displacement=displacement,
+        imbalance=imbalance,
+        strength=round(strength, 4),
+    )
 
 
 def find_next_15m_entry_bar(
     bars: Sequence[ClosedBar], symbol: str, timestamp: datetime, bos: BosSignal | None
 ) -> ClosedBar | None:
+    """Use only the open of the aligned 15m bar at the evaluation timestamp."""
     if bos is None or bos.signal_bar.close_time > timestamp:
         return None
     if timestamp.second != 0 or timestamp.microsecond != 0 or timestamp.minute % 15 != 0:
@@ -275,6 +298,8 @@ def _select_stop(
     atr = _atr(h1) if h1 else None
     if atr is None:
         atr = entry * 0.005
+
+    # In the raid model, invalidation is behind the swept fresh liquidity.
     if raid is not None:
         anchor = raid.pivot.price
         if side == "long" and anchor < entry:
@@ -294,9 +319,10 @@ def _select_stop(
             if side == "short" and pivot.kind == "high" and pivot.price > entry:
                 candidates.append((pivot.price, pivot.strength, rank[timeframe]))
     if poi is not None:
-        price = poi.low if side == "long" else poi.high
+        level_price = poi.low if side == "long" else poi.high
         poi_rank = {"1h": 3, "4h": 4, "1d": 5, "1w": 6, "1M": 7}.get(poi.timeframe, 3)
-        candidates.append((price, poi.strength, poi_rank))
+        candidates.append((level_price, poi.strength, poi_rank))
+
     if side == "long":
         valid = [item for item in candidates if item[0] < entry]
         if not valid:
@@ -371,11 +397,13 @@ class MtfEntryModelV2:
         side = side.lower()
         if side not in {"long", "short"}:
             raise ValueError("side must be long or short")
+
         snapshot = self.engine.snapshot(symbol, timestamp)
         reasons: list[str] = []
         direction_allowed = snapshot.long_allowed if side == "long" else snapshot.short_allowed
         if not direction_allowed:
             reasons.append(f"context_blocks_{side}:{snapshot.scenario.value}")
+
         event_blocked = bool(event_decision and event_decision.block_new_entry)
         event_multiplier = event_decision.risk_multiplier if event_decision else 1.0
         if event_blocked:
@@ -384,19 +412,40 @@ class MtfEntryModelV2:
         poi = find_active_poi(self.engine, symbol, timestamp, side, self.config)
         if poi is None:
             reasons.append("no_active_htf_poi")
+
         h1_rows = _bars_asof(self.engine.bars["1h"], symbol, timestamp)
         raid = detect_h1_raid_signal(h1_rows, side, timestamp)
         h1_raid = raid is not None
         h1_reaction = detect_h1_reaction(h1_rows, poi, side, timestamp)
         vc = detect_h1_volume_confirmation(h1_rows, poi, side, timestamp)
         h1_vc = vc is not None
-        confirmation_ready = poi is not None and (h1_raid or h1_vc)
-        if poi is not None and not confirmation_ready:
-            reasons.append("poi_has_no_closed_h1_raid_or_vc")
+        vc_test = detect_15m_vc_zone_test(self.engine.bars["15m"], vc, side, timestamp)
+        vc_zone_test = vc_test is not None
 
-        bos = detect_5m_bos(self.engine.bars["5m"], side, timestamp, self.config, raid)
+        raid_path_ready = h1_raid
+        vc_path_ready = h1_vc and vc_zone_test
+        confirmation_ready = poi is not None and (raid_path_ready or vc_path_ready)
+        if poi is not None and not h1_raid and not h1_vc:
+            reasons.append("poi_has_no_closed_h1_raid_or_vc")
+        elif poi is not None and h1_vc and not h1_raid and not vc_zone_test:
+            reasons.append("h1_vc_zone_not_tested_on_closed_15m")
+
+        confirmation_time: datetime | None = None
+        if raid is not None:
+            confirmation_time = raid.raid_bar.close_time
+        elif vc_test is not None:
+            confirmation_time = vc_test.test_bar.close_time
+        bos = detect_5m_bos(
+            self.engine.bars["5m"],
+            side,
+            timestamp,
+            self.config,
+            raid=raid,
+            confirmation_time=confirmation_time,
+        )
         if bos is None:
             reasons.append("no_confirmed_5m_bos")
+
         if not direction_allowed:
             state = SetupState.NO_CONTEXT
         elif poi is None:
@@ -423,6 +472,7 @@ class MtfEntryModelV2:
             if entry is not None
             else None
         )
+
         rr: float | None = None
         if entry is not None and stop is not None and target is not None:
             risk = entry - stop if side == "long" else stop - entry
@@ -436,18 +486,32 @@ class MtfEntryModelV2:
 
         trend_score = snapshot.scenario_strength * 0.30
         poi_score = (poi.strength if poi else 0.0) * 0.25
-        confirmation_score = 15.0 if h1_raid else 12.0 if h1_vc else 3.0 if h1_reaction else 0.0
+        if h1_raid:
+            confirmation_score = 15.0
+        elif vc_zone_test:
+            confirmation_score = 14.0
+        elif h1_vc:
+            confirmation_score = 4.0
+        elif h1_reaction:
+            confirmation_score = 2.0
+        else:
+            confirmation_score = 0.0
         bos_score = (bos.strength if bos else 0.0) * 0.20
         target_score = 10.0 if rr is not None and rr >= self.config.min_rr else 0.0
         event_score = 5.0 * max(0.0, min(1.0, event_multiplier))
-        quality = min(100.0, trend_score + poi_score + confirmation_score + bos_score + target_score + event_score)
+        quality = min(
+            100.0,
+            trend_score + poi_score + confirmation_score + bos_score + target_score + event_score,
+        )
         quality_state = _quality_state(quality)
+
         rr_ok = rr is not None and rr >= self.config.min_rr
         if rr is not None and not rr_ok:
             reasons.append(f"rr_below_min:{rr:.4f}<{self.config.min_rr:.4f}")
         quality_ok = quality >= self.config.min_quality_score
         if not quality_ok:
             reasons.append(f"quality_below_min:{quality:.4f}")
+
         allowed = all(
             (
                 direction_allowed,
@@ -464,6 +528,7 @@ class MtfEntryModelV2:
         if allowed:
             state = SetupState.ENTRY_READY
             reasons.append("entry_ready_next_15m_open")
+
         return EntryPlan(
             symbol=symbol,
             side=side,
@@ -484,6 +549,8 @@ class MtfEntryModelV2:
             h1_reaction=h1_reaction,
             h1_vc=h1_vc,
             volume_confirmation=vc,
+            vc_zone_test=vc_zone_test,
+            vc_test=vc_test,
             bos=bos,
             event_blocked=event_blocked,
             event_risk_multiplier=round(event_multiplier, 6),
