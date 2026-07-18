@@ -4,8 +4,16 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from strategy_lab.mtf_dealing_range_v2 import ClosedBar
-from strategy_lab.mtf_entry_model_v2 import EntryConfig, detect_5m_bos
+from strategy_lab.mtf_dealing_range_v2 import ClosedBar, Level
+from strategy_lab.mtf_entry_model_v2 import (
+    EntryConfig,
+    detect_5m_bos,
+    detect_h1_reaction,
+    find_next_15m_entry_bar,
+)
+
+
+BASE = datetime(2026, 1, 1)
 
 
 def bar(
@@ -14,13 +22,17 @@ def bar(
     close_price: float,
     high: float,
     low: float,
+    *,
+    timeframe: str = "5m",
+    minutes: int = 5,
+    symbol: str = "BTCUSDT",
 ) -> ClosedBar:
-    start = datetime(2026, 1, 1) + timedelta(minutes=5 * index)
+    start = BASE + timedelta(minutes=minutes * index)
     return ClosedBar(
-        symbol="BTCUSDT",
-        timeframe="5m",
+        symbol=symbol,
+        timeframe=timeframe,
         open_time=start,
-        close_time=start + timedelta(minutes=5),
+        close_time=start + timedelta(minutes=minutes),
         open=open_price,
         high=high,
         low=low,
@@ -79,10 +91,94 @@ def test_unconfirmed_pivot_cannot_trigger() -> None:
     assert detect_5m_bos(rows, "long", rows[-1].close_time, EntryConfig()) is None
 
 
+def test_execution_uses_next_15m_open_not_5m_open() -> None:
+    rows = bullish_bos_rows()
+    signal = detect_5m_bos(rows, "long", rows[-1].close_time, EntryConfig())
+    assert signal is not None
+    execution_time = datetime(2026, 1, 1, 2, 15)
+    m15 = ClosedBar(
+        symbol="BTCUSDT",
+        timeframe="15m",
+        open_time=execution_time,
+        close_time=execution_time + timedelta(minutes=15),
+        open=111.0,
+        high=999.0,
+        low=1.0,
+        close=500.0,
+        volume=9999.0,
+    )
+    selected = find_next_15m_entry_bar([m15], "BTCUSDT", execution_time, signal)
+    assert selected is not None
+    assert selected.timeframe == "15m"
+    assert selected.open == 111.0
+
+
+def test_execution_rejects_non_15m_boundary() -> None:
+    rows = bullish_bos_rows()
+    signal = detect_5m_bos(rows, "long", rows[-1].close_time, EntryConfig())
+    assert signal is not None
+    timestamp = datetime(2026, 1, 1, 2, 10)
+    candidate = ClosedBar(
+        symbol="BTCUSDT",
+        timeframe="15m",
+        open_time=timestamp,
+        close_time=timestamp + timedelta(minutes=15),
+        open=111.0,
+        high=112.0,
+        low=110.0,
+        close=111.5,
+        volume=100.0,
+    )
+    assert find_next_15m_entry_bar([candidate], "BTCUSDT", timestamp, signal) is None
+
+
+def test_h1_reaction_requires_closed_touch_and_rejection() -> None:
+    poi = Level(
+        symbol="BTCUSDT",
+        timeframe="4h",
+        kind="imbalance",
+        side="support",
+        low=99.0,
+        high=100.0,
+        formed_at=BASE,
+        confirmed_at=BASE,
+        strength=75.0,
+        source="reference",
+    )
+    closed = ClosedBar(
+        symbol="BTCUSDT",
+        timeframe="1h",
+        open_time=BASE,
+        close_time=BASE + timedelta(hours=1),
+        open=99.4,
+        high=101.2,
+        low=98.8,
+        close=100.9,
+        volume=100.0,
+    )
+    future = ClosedBar(
+        symbol="BTCUSDT",
+        timeframe="1h",
+        open_time=BASE + timedelta(hours=1),
+        close_time=BASE + timedelta(hours=2),
+        open=100.9,
+        high=105.0,
+        low=90.0,
+        close=91.0,
+        volume=100.0,
+    )
+    asof = BASE + timedelta(hours=1)
+    assert detect_h1_reaction([closed, future], poi, "long", asof)
+    assert not detect_h1_reaction([future], poi, "long", asof)
+
+
 def main() -> int:
     test_confirmed_close_bos()
     test_wick_without_close_is_not_bos()
     test_unconfirmed_pivot_cannot_trigger()
+    test_execution_uses_next_15m_open_not_5m_open()
+    test_execution_rejects_non_15m_boundary()
+    test_h1_reaction_requires_closed_touch_and_rejection()
     print("SMOKE MTF entry model V2 smoke tests: OK")
     return 0
 
