@@ -1,0 +1,116 @@
+name: SMOKE MTF V2 Real Recognition V1
+
+on:
+  push:
+    branches: ['agent/smoke-mtf-dealing-range-v2']
+    paths: ['research_triggers/smoke_mtf_v2_real_recognition_v1.txt']
+
+permissions:
+  contents: write
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  real-recognition:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout research branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/smoke-mtf-dealing-range-v2
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install and verify no-outcome exporter
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          python -m py_compile strategy_lab/mtf_recognition_export_v2.py scripts/export_smoke_mtf_v2_recognition_candidates.py
+          python -m strategy_lab.mtf_recognition_export_v2_smoke_test
+          python -m strategy_lab.mtf_entry_state_machine_v2_smoke_test
+      - name: Download fixed Binance Futures 5m history
+        run: |
+          python scripts/download_binance_vision_futures_archives.py \
+            --symbols-file research/smoke_mtf_v2_recognition_universe.txt \
+            --interval 5m --start-date '2024-07-01' --end-date '2025-02-08' \
+            --out-dir "$RUNNER_TEMP/binance-smoke-mtf-v2-recognition" \
+            --summary-json results/smoke_mtf_v2_real_recognition_v1/archive_download_summary.json \
+            --workers 8 --retries 2 --timeout 30
+      - name: Merge and verify closed candles
+        run: |
+          python scripts/merge_binance_vision_futures_klines.py \
+            --input-dir "$RUNNER_TEMP/binance-smoke-mtf-v2-recognition" \
+            --out "$RUNNER_TEMP/smoke-mtf-v2-recognition-5m.csv" \
+            --symbols-file research/smoke_mtf_v2_recognition_universe.txt \
+            --interval 5m --start-date '2024-07-01' --end-date '2025-02-08' \
+            --summary-json results/smoke_mtf_v2_real_recognition_v1/archive_merge_summary.json \
+            --min-coverage 0.95
+      - name: Export real recognition states without PnL
+        run: |
+          python scripts/export_smoke_mtf_v2_recognition_candidates.py \
+            --candles "$RUNNER_TEMP/smoke-mtf-v2-recognition-5m.csv" \
+            --scan-start '2025-02-01T00:00:00' \
+            --scan-end '2025-02-08T00:00:00' \
+            --per-group 4 \
+            --out-dir results/smoke_mtf_v2_real_recognition_v1
+      - name: Enforce no-PnL output contract
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from strategy_lab.mtf_recognition_export_v2 import assert_no_outcome_fields
+          root = Path('results/smoke_mtf_v2_real_recognition_v1')
+          for name in ('summary.json', 'recognition_candidates.json'):
+              payload = json.loads((root / name).read_text(encoding='utf-8'))
+              assert_no_outcome_fields(payload)
+          text = (root / 'recognition_candidates.csv').read_text(encoding='utf-8').lower()
+          forbidden = ('pnl', 'future_return', 'realized_return', 'tp_hit', 'sl_hit', 'mfe', 'mae')
+          found = [token for token in forbidden if token in text]
+          if found:
+              raise RuntimeError(f'forbidden outcome fields in CSV: {found}')
+          print('No-PnL output contract: OK')
+          PY
+      - name: Upload full recognition audit
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-mtf-v2-real-recognition-v1
+          path: |
+            results/smoke_mtf_v2_real_recognition_v1/**
+            research/smoke_mtf_v2_real_recognition_run_v1.json
+            research/smoke_mtf_v2_recognition_universe.txt
+          if-no-files-found: warn
+      - name: Commit compact recognition result and monitor
+        if: always()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase origin agent/smoke-mtf-dealing-range-v2
+          mkdir -p results/smoke_mtf_v2_real_recognition_status_v1
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          payload = {
+              'run_id': int(os.environ['GITHUB_RUN_ID']),
+              'source_head_sha': os.environ['GITHUB_SHA'],
+              'status': '${{ job.status }}',
+              'mode': 'SMOKE_MTF_V2_REAL_RECOGNITION_RUN_V1',
+              'pnl_used': False,
+              'future_outcomes_used': False,
+              'history_period': '2024-07-01 through 2025-02-08',
+              'scan_period': '2025-02-01 through 2025-02-08',
+          }
+          Path('results/smoke_mtf_v2_real_recognition_status_v1/monitor.json').write_text(
+              json.dumps(payload, indent=2) + '\n', encoding='utf-8'
+          )
+          PY
+          git add results/smoke_mtf_v2_real_recognition_status_v1/monitor.json
+          for file in summary.json recognition_candidates.csv archive_download_summary.json archive_merge_summary.json; do
+            test -f "results/smoke_mtf_v2_real_recognition_v1/$file" && git add "results/smoke_mtf_v2_real_recognition_v1/$file"
+          done
+          git commit -m 'Record first real no-PnL MTF recognition run' || exit 0
+          git push origin HEAD:agent/smoke-mtf-dealing-range-v2
