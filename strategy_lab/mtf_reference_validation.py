@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """Semantic validation for Drive-derived SMOKE MTF V2 reference scenarios.
 
-This layer checks the meaning and stage order of the strategy before any
-profit-based development run. It does not claim to validate chart geometry;
-that is handled by the labelled candle replay layer.
+This layer checks strategy meaning and stage order before any profit-based
+screen. Chart geometry is checked separately by labelled candle replay.
 """
 from __future__ import annotations
 
@@ -60,7 +59,8 @@ def validate_reference_payload(payload: dict[str, Any]) -> ReferenceValidationRe
         "DAILY_DEALING_RANGE",
         "H4_DEALING_RANGE",
         "HTF_POI",
-        "H1_REACTION_OR_RAID",
+        "H1_VC_OR_RAID",
+        "M15_VC_ZONE_TEST",
         "M5_CONFIRMED_BOS",
         "M15_NEXT_OPEN",
         "STRUCTURAL_STOP",
@@ -125,40 +125,63 @@ def validate_reference_payload(payload: dict[str, Any]) -> ReferenceValidationRe
             continue
 
         positive_count += 1
-        required_full_chain = {
+        entry_path = str(scenario.get("entry_path") or "")
+        if entry_path not in {"raid", "vc"}:
+            errors.append(f"{scenario_id}: entry_path must be raid or vc")
+        required_base_chain = {
             "MACRO_CONTEXT",
             "DAILY_DEALING_RANGE",
             "H4_DEALING_RANGE",
             "HTF_POI",
-            "H1_REACTION_OR_RAID",
+            "H1_VC_OR_RAID",
             "M5_CONFIRMED_BOS",
             "M15_NEXT_OPEN",
             "STRUCTURAL_STOP",
             "HTF_TARGET",
         }
-        if not required_full_chain.issubset(set(stages)):
-            errors.append(f"{scenario_id}: positive scenario must contain the full state chain")
+        if not required_base_chain.issubset(set(stages)):
+            errors.append(f"{scenario_id}: positive scenario must contain the base state chain")
+        if entry_path == "vc" and "M15_VC_ZONE_TEST" not in stages:
+            errors.append(f"{scenario_id}: VC path must include M15_VC_ZONE_TEST")
+        if entry_path == "raid" and "M15_VC_ZONE_TEST" in stages:
+            errors.append(f"{scenario_id}: direct raid path must not require a VC-zone test")
         if scenario.get("expected_entry_timeframe") != "15m":
             errors.append(f"{scenario_id}: execution timeframe must be 15m")
         if scenario.get("expected_execution") != "next_open":
             errors.append(f"{scenario_id}: execution must be next_open")
 
-        triggers = " ".join(_as_strings(scenario.get("required_trigger"), f"{prefix}.required_trigger", errors)).lower()
+        triggers = " ".join(
+            _as_strings(scenario.get("required_trigger"), f"{prefix}.required_trigger", errors)
+        ).lower()
         if "5m" not in triggers or "bos" not in triggers:
             errors.append(f"{scenario_id}: positive scenario must require 5m BOS")
         if "closed" not in triggers:
             errors.append(f"{scenario_id}: trigger must explicitly require closed candles")
+        if entry_path == "raid":
+            if "fresh" not in triggers or "raid" not in triggers:
+                errors.append(f"{scenario_id}: raid path must require a fresh closed H1 raid")
+        if entry_path == "vc":
+            if "h1_vc" not in triggers or "15m_vc_zone_test" not in triggers:
+                errors.append(f"{scenario_id}: VC path must require H1 VC and a closed 15m zone test")
 
         stop_anchor = str(scenario.get("stop_anchor") or "").lower()
-        if "strong_" not in stop_anchor and "poi_invalidation" not in stop_anchor:
-            errors.append(f"{scenario_id}: stop must use Strong High/Low or POI invalidation")
+        if not any(token in stop_anchor for token in ("strong_", "poi_invalidation", "swept_fresh")):
+            errors.append(f"{scenario_id}: stop must use swept liquidity, Strong High/Low or POI invalidation")
         target_anchor = str(scenario.get("target_anchor") or "").lower()
         if not any(token in target_anchor for token in ("eql", "eqh", "ssl", "bsl", "weak_", "fta")):
             errors.append(f"{scenario_id}: target must be anchored to HTF liquidity/FTA")
 
     forbidden = _as_strings(payload.get("forbidden_shortcuts"), "forbidden_shortcuts", errors)
     joined = " ".join(forbidden).lower()
-    for required_phrase in ("strong level", "wick", "right-side", "15m open", "pnl"):
+    for required_phrase in (
+        "strong level",
+        "wick",
+        "right-side",
+        "15m open",
+        "pnl",
+        "vc-created poi",
+        "simple h1 reaction",
+    ):
         if required_phrase not in joined:
             errors.append(f"forbidden_shortcuts missing concept: {required_phrase}")
 
