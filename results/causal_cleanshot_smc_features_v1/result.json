@@ -1,0 +1,808 @@
+{
+  "mode": "CAUSAL_CLEANSHOT_SMC_FEATURES_V1",
+  "period_start": "2025-01-01T00:00:00",
+  "period_end": "2026-06-30T23:45:00",
+  "windows": 10,
+  "lookback_days": 30,
+  "variants": 6,
+  "pipeline_runs": 10,
+  "leader": {
+    "name": "SMC_POI_VC_CHAIN",
+    "verdict": "BLOCK_UNSTABLE",
+    "valid_folds": 10,
+    "positive_folds": 5,
+    "positive_pct": 50.0,
+    "total_trades": 47,
+    "avg_return_pct": 0.067,
+    "median_return_pct": 0.15,
+    "worst_fold_return_pct": -1.99,
+    "pooled_pf": 1.2023,
+    "gross_profit": 48.190061,
+    "gross_loss": 40.081512,
+    "net_pnl": 8.108549,
+    "worst_dd_pct": 3.97,
+    "score": 5.1289,
+    "development_gate": "WATCH_DEVELOPMENT",
+    "side_summary": {
+      "long": {
+        "trades": 20,
+        "wins": 5,
+        "losses": 15,
+        "gross_profit": 13.252624,
+        "gross_loss": 22.781861,
+        "net_pnl": -9.529237,
+        "pf": 0.5817
+      },
+      "short": {
+        "trades": 27,
+        "wins": 14,
+        "losses": 13,
+        "gross_profit": 34.937437,
+        "gross_loss": 17.299652,
+        "net_pnl": 17.637786,
+        "pf": 2.0195
+      }
+    }
+  },
+  "candidates": [
+    {
+      "name": "SMC_POI_VC_CHAIN",
+      "verdict": "BLOCK_UNSTABLE",
+      "valid_folds": 10,
+      "positive_folds": 5,
+      "positive_pct": 50.0,
+      "total_trades": 47,
+      "avg_return_pct": 0.067,
+      "median_return_pct": 0.15,
+      "worst_fold_return_pct": -1.99,
+      "pooled_pf": 1.2023,
+      "gross_profit": 48.190061,
+      "gross_loss": 40.081512,
+      "net_pnl": 8.108549,
+      "worst_dd_pct": 3.97,
+      "score": 5.1289,
+      "development_gate": "WATCH_DEVELOPMENT",
+      "side_summary": {
+        "long": {
+          "trades": 20,
+          "wins": 5,
+          "losses": 15,
+          "gross_profit": 13.252624,
+          "gross_loss": 22.781861,
+          "net_pnl": -9.529237,
+          "pf": 0.5817
+        },
+        "short": {
+          "trades": 27,
+          "wins": 14,
+          "losses": 13,
+          "gross_profit": 34.937437,
+          "gross_loss": 17.299652,
+          "net_pnl": 17.637786,
+          "pf": 2.0195
+        }
+      }
+    },
+    {
+      "name": "SMC_IDM_BOS_CHAIN",
+      "verdict": "WATCH_TOO_SPARSE",
+      "valid_folds": 10,
+      "positive_folds": 3,
+      "positive_pct": 30.0,
+      "total_trades": 29,
+      "avg_return_pct": 0.119,
+      "median_return_pct": 0.0,
+      "worst_fold_return_pct": -1.15,
+      "pooled_pf": 1.3414,
+      "gross_profit": 34.770835,
+      "gross_loss": 25.921926,
+      "net_pnl": 8.84891,
+      "worst_dd_pct": 2.14,
+      "score": 5.0031,
+      "development_gate": "BLOCK_DEVELOPMENT",
+      "side_summary": {
+        "long": {
+          "trades": 16,
+          "wins": 7,
+          "losses": 9,
+          "gross_profit": 13.872365,
+          "gross_loss": 16.035707,
+          "net_pnl": -2.163343,
+          "pf": 0.8651
+        },
+        "short": {
+          "trades": 13,
+          "wins": 8,
+          "losses": 5,
+          "gross_profit": 20.898471,
+          "gross_loss": 9.886218,
+          "net_pnl": 11.012252,
+          "pf": 2.1139
+        }
+      }
+    },
+    {
+      "name": "SMC_RAID_BOS_CHAIN",
+      "verdict": "WATCH_TOO_SPARSE",
+      "valid_folds": 10,
+      "positive_folds": 5,
+      "positive_pct": 50.0,
+      "total_trades": 22,
+      "avg_return_pct": -0.222,
+      "median_return_pct": -0.145,
+      "worst_fold_return_pct": -1.41,
+      "pooled_pf": 0.6447,
+      "gross_profit": 15.677662,
+      "gross_loss": 24.317215,
+      "net_pnl": -8.639552,
+      "worst_dd_pct": 2.72,
+      "score": 2.0921,
+      "development_gate": "BLOCK_DEVELOPMENT",
+      "side_summary": {
+        "long": {
+          "trades": 6,
+          "wins": 2,
+          "losses": 4,
+          "gross_profit": 1.494393,
+          "gross_loss": 7.854303,
+          "net_pnl": -6.35991,
+          "pf": 0.1903
+        },
+        "short": {
+          "trades": 16,
+          "wins": 8,
+          "losses": 8,
+          "gross_profit": 14.183269,
+          "gross_loss": 16.462912,
+          "net_pnl": -2.279642,
+          "pf": 0.8615
+        }
+      }
+    },
+    {
+      "name": "SMC_HYBRID_SCORE_7",
+      "verdict": "BLOCK_UNSTABLE",
+      "valid_folds": 10,
+      "positive_folds": 5,
+      "positive_pct": 50.0,
+      "total_trades": 823,
+      "avg_return_pct": -1.509,
+      "median_return_pct": -1.075,
+      "worst_fold_return_pct": -7.76,
+      "pooled_pf": 1.0047,
+      "gross_profit": 800.907891,
+      "gross_loss": 797.15023,
+      "net_pnl": 3.75766,
+      "worst_dd_pct": 10.83,
+      "score": -0.2099,
+      "development_gate": "BLOCK_DEVELOPMENT",
+      "side_summary": {
+        "long": {
+          "trades": 365,
+          "wins": 153,
+          "losses": 212,
+          "gross_profit": 311.394544,
+          "gross_loss": 389.711095,
+          "net_pnl": -78.316551,
+          "pf": 0.799
+        },
+        "short": {
+          "trades": 458,
+          "wins": 228,
+          "losses": 230,
+          "gross_profit": 489.513347,
+          "gross_loss": 407.439136,
+          "net_pnl": 82.074212,
+          "pf": 1.2014
+        }
+      }
+    },
+    {
+      "name": "SMC_SOFT_SCORE",
+      "verdict": "BLOCK_UNSTABLE",
+      "valid_folds": 10,
+      "positive_folds": 0,
+      "positive_pct": 0.0,
+      "total_trades": 3298,
+      "avg_return_pct": -6.12,
+      "median_return_pct": -4.91,
+      "worst_fold_return_pct": -12.3,
+      "pooled_pf": 0.883,
+      "gross_profit": 1231.743281,
+      "gross_loss": 1395.002873,
+      "net_pnl": -163.259591,
+      "worst_dd_pct": 14.66,
+      "score": -9.6011,
+      "development_gate": "BLOCK_DEVELOPMENT",
+      "side_summary": {
+        "long": {
+          "trades": 1455,
+          "wins": 638,
+          "losses": 817,
+          "gross_profit": 560.259105,
+          "gross_loss": 659.735569,
+          "net_pnl": -99.476464,
+          "pf": 0.8492
+        },
+        "short": {
+          "trades": 1843,
+          "wins": 813,
+          "losses": 1030,
+          "gross_profit": 671.484176,
+          "gross_loss": 735.267304,
+          "net_pnl": -63.783127,
+          "pf": 0.9133
+        }
+      }
+    },
+    {
+      "name": "SMC_DIRECTION_CONTROL",
+      "verdict": "BLOCK_UNSTABLE",
+      "valid_folds": 10,
+      "positive_folds": 0,
+      "positive_pct": 0.0,
+      "total_trades": 3073,
+      "avg_return_pct": -12.922,
+      "median_return_pct": -11.625,
+      "worst_fold_return_pct": -25.04,
+      "pooled_pf": 0.8769,
+      "gross_profit": 2521.112864,
+      "gross_loss": 2875.076876,
+      "net_pnl": -353.964012,
+      "worst_dd_pct": 26.72,
+      "score": -22.4513,
+      "development_gate": "BLOCK_DEVELOPMENT",
+      "side_summary": {
+        "long": {
+          "trades": 1346,
+          "wins": 580,
+          "losses": 766,
+          "gross_profit": 1078.848107,
+          "gross_loss": 1310.991413,
+          "net_pnl": -232.143306,
+          "pf": 0.8229
+        },
+        "short": {
+          "trades": 1727,
+          "wins": 771,
+          "losses": 956,
+          "gross_profit": 1442.264757,
+          "gross_loss": 1564.085463,
+          "net_pnl": -121.820706,
+          "pf": 0.9221
+        }
+      }
+    }
+  ],
+  "leader_diagnostics": {
+    "sides": {
+      "long": {
+        "trades": 20,
+        "wins": 5,
+        "losses": 15,
+        "gross_profit": 13.252624,
+        "gross_loss": 22.781861,
+        "net_pnl": -9.529237,
+        "pf": 0.5817
+      },
+      "short": {
+        "trades": 27,
+        "wins": 14,
+        "losses": 13,
+        "gross_profit": 34.937437,
+        "gross_loss": 17.299652,
+        "net_pnl": 17.637786,
+        "pf": 2.0195
+      }
+    },
+    "categories": {
+      "symbol": [
+        {
+          "value": "SOLUSDT",
+          "trades": 2,
+          "wins": 0,
+          "losses": 2,
+          "net_pnl": -4.439892
+        },
+        {
+          "value": "FETUSDT",
+          "trades": 2,
+          "wins": 0,
+          "losses": 2,
+          "net_pnl": -3.208743
+        },
+        {
+          "value": "AAVEUSDT",
+          "trades": 2,
+          "wins": 0,
+          "losses": 2,
+          "net_pnl": -2.767859
+        },
+        {
+          "value": "LINKUSDT",
+          "trades": 1,
+          "wins": 0,
+          "losses": 1,
+          "net_pnl": -2.665628
+        },
+        {
+          "value": "BTCUSDT",
+          "trades": 1,
+          "wins": 0,
+          "losses": 1,
+          "net_pnl": -2.665628
+        },
+        {
+          "value": "API3USDT",
+          "trades": 1,
+          "wins": 0,
+          "losses": 1,
+          "net_pnl": -2.584646
+        },
+        {
+          "value": "ARUSDT",
+          "trades": 1,
+          "wins": 0,
+          "losses": 1,
+          "net_pnl": -2.583302
+        },
+        {
+          "value": "XRPUSDT",
+          "trades": 3,
+          "wins": 1,
+          "losses": 2,
+          "net_pnl": -1.940366
+        },
+        {
+          "value": "OPUSDT",
+          "trades": 2,
+          "wins": 0,
+          "losses": 2,
+          "net_pnl": -1.065929
+        },
+        {
+          "value": "SANDUSDT",
+          "trades": 3,
+          "wins": 1,
+          "losses": 2,
+          "net_pnl": -1.013015
+        },
+        {
+          "value": "BNBUSDT",
+          "trades": 2,
+          "wins": 0,
+          "losses": 2,
+          "net_pnl": -0.831541
+        },
+        {
+          "value": "IMXUSDT",
+          "trades": 1,
+          "wins": 0,
+          "losses": 1,
+          "net_pnl": -0.256483
+        },
+        {
+          "value": "LTCUSDT",
+          "trades": 1,
+          "wins": 0,
+          "losses": 1,
+          "net_pnl": -0.056659
+        },
+        {
+          "value": "OMUSDT",
+          "trades": 1,
+          "wins": 0,
+          "losses": 1,
+          "net_pnl": -0.050923
+        },
+        {
+          "value": "LDOUSDT",
+          "trades": 3,
+          "wins": 1,
+          "losses": 2,
+          "net_pnl": 0.685087
+        },
+        {
+          "value": "POLUSDT",
+          "trades": 1,
+          "wins": 1,
+          "losses": 0,
+          "net_pnl": 1.189827
+        },
+        {
+          "value": "RENDERUSDT",
+          "trades": 2,
+          "wins": 1,
+          "losses": 1,
+          "net_pnl": 1.825844
+        },
+        {
+          "value": "TAOUSDT",
+          "trades": 1,
+          "wins": 1,
+          "losses": 0,
+          "net_pnl": 1.878613
+        },
+        {
+          "value": "MANAUSDT",
+          "trades": 1,
+          "wins": 1,
+          "losses": 0,
+          "net_pnl": 2.135436
+        },
+        {
+          "value": "PENDLEUSDT",
+          "trades": 3,
+          "wins": 2,
+          "losses": 1,
+          "net_pnl": 2.49952
+        },
+        {
+          "value": "INJUSDT",
+          "trades": 2,
+          "wins": 1,
+          "losses": 1,
+          "net_pnl": 3.225233
+        },
+        {
+          "value": "JUPUSDT",
+          "trades": 1,
+          "wins": 1,
+          "losses": 0,
+          "net_pnl": 4.031324
+        },
+        {
+          "value": "PYTHUSDT",
+          "trades": 4,
+          "wins": 3,
+          "losses": 1,
+          "net_pnl": 6.742033
+        },
+        {
+          "value": "UNIUSDT",
+          "trades": 6,
+          "wins": 5,
+          "losses": 1,
+          "net_pnl": 10.026246
+        }
+      ],
+      "setup_type": [
+        {
+          "value": "range_rotation",
+          "trades": 2,
+          "wins": 0,
+          "losses": 2,
+          "net_pnl": -5.331257
+        },
+        {
+          "value": "ignition",
+          "trades": 2,
+          "wins": 1,
+          "losses": 1,
+          "net_pnl": -0.34026
+        },
+        {
+          "value": "pullback",
+          "trades": 1,
+          "wins": 0,
+          "losses": 1,
+          "net_pnl": -0.33499
+        },
+        {
+          "value": "breakout",
+          "trades": 42,
+          "wins": 18,
+          "losses": 24,
+          "net_pnl": 14.115056
+        }
+      ],
+      "candle_type": [
+        {
+          "value": "bear_rejection",
+          "trades": 2,
+          "wins": 0,
+          "losses": 2,
+          "net_pnl": -5.192158
+        },
+        {
+          "value": "indecision",
+          "trades": 4,
+          "wins": 0,
+          "losses": 4,
+          "net_pnl": -4.051534
+        },
+        {
+          "value": "bear_impulse",
+          "trades": 9,
+          "wins": 3,
+          "losses": 6,
+          "net_pnl": -2.616909
+        },
+        {
+          "value": "bull_impulse",
+          "trades": 8,
+          "wins": 3,
+          "losses": 5,
+          "net_pnl": 0.043368
+        },
+        {
+          "value": "bull_rejection",
+          "trades": 4,
+          "wins": 4,
+          "losses": 0,
+          "net_pnl": 8.598057
+        },
+        {
+          "value": "neutral",
+          "trades": 20,
+          "wins": 9,
+          "losses": 11,
+          "net_pnl": 11.327724
+        }
+      ],
+      "context_alignment": [
+        {
+          "value": "h4_only",
+          "trades": 4,
+          "wins": 1,
+          "losses": 3,
+          "net_pnl": -4.85992
+        },
+        {
+          "value": "fallback_entry",
+          "trades": 23,
+          "wins": 7,
+          "losses": 16,
+          "net_pnl": -2.562582
+        },
+        {
+          "value": "daily_only",
+          "trades": 11,
+          "wins": 4,
+          "losses": 7,
+          "net_pnl": 2.582876
+        },
+        {
+          "value": "aligned",
+          "trades": 9,
+          "wins": 7,
+          "losses": 2,
+          "net_pnl": 12.948175
+        }
+      ],
+      "liquidity_state": [
+        {
+          "value": "none",
+          "trades": 47,
+          "wins": 19,
+          "losses": 28,
+          "net_pnl": 8.108549
+        }
+      ],
+      "volume_bucket": [
+        {
+          "value": "1.0_1.5",
+          "trades": 8,
+          "wins": 1,
+          "losses": 7,
+          "net_pnl": -4.233079
+        },
+        {
+          "value": "1.5_2.0",
+          "trades": 15,
+          "wins": 6,
+          "losses": 9,
+          "net_pnl": 2.300804
+        },
+        {
+          "value": "gte_2.0",
+          "trades": 24,
+          "wins": 12,
+          "losses": 12,
+          "net_pnl": 10.040824
+        }
+      ]
+    }
+  },
+  "promotion_allowed": false,
+  "next_required_step": "If exactly one candidate passes, freeze it and run one untouched external holdout. If all block, the preregistered research ladder is exhausted without robust edge.",
+  "external_holdout_touched": false,
+  "formalization_scope": [
+    "4h structural bias",
+    "4h premium/discount dealing range",
+    "4h imbalance or displacement-origin POI proxy",
+    "1h liquidity raid",
+    "15m BOS",
+    "15m displacement",
+    "15m imbalance",
+    "15m inducement proxy"
+  ],
+  "feature_counts": {
+    "SMC_DIRECTION_CONTROL": {
+      "allowed": 88145,
+      "bias_match": 88145,
+      "blocked": 95917,
+      "bos": 50816,
+      "displacement": 30318,
+      "evaluated": 184062,
+      "idm": 44720,
+      "imbalance": 38191,
+      "pd_match": 47455,
+      "poi": 33572,
+      "raid": 22982,
+      "score_0": 18805,
+      "score_1": 20555,
+      "score_10": 41,
+      "score_11": 2,
+      "score_2": 41682,
+      "score_3": 33323,
+      "score_4": 28312,
+      "score_5": 22539,
+      "score_6": 12126,
+      "score_7": 4894,
+      "score_8": 1610,
+      "score_9": 173,
+      "state_poor": 114365,
+      "state_qualified": 17020,
+      "state_strong": 1826,
+      "state_weak": 50851,
+      "volume_confirmation": 36735
+    },
+    "SMC_HYBRID_SCORE_7": {
+      "allowed": 1807,
+      "bias_match": 88145,
+      "blocked": 182255,
+      "bos": 50816,
+      "displacement": 30318,
+      "evaluated": 184062,
+      "idm": 44720,
+      "imbalance": 38191,
+      "pd_match": 47455,
+      "poi": 33572,
+      "raid": 22982,
+      "score_0": 18805,
+      "score_1": 20555,
+      "score_10": 41,
+      "score_11": 2,
+      "score_2": 41682,
+      "score_3": 33323,
+      "score_4": 28312,
+      "score_5": 22539,
+      "score_6": 12126,
+      "score_7": 4894,
+      "score_8": 1610,
+      "score_9": 173,
+      "state_poor": 114365,
+      "state_qualified": 17020,
+      "state_strong": 1826,
+      "state_weak": 50851,
+      "volume_confirmation": 36735
+    },
+    "SMC_IDM_BOS_CHAIN": {
+      "allowed": 42,
+      "bias_match": 88145,
+      "blocked": 184020,
+      "bos": 50816,
+      "displacement": 30318,
+      "evaluated": 184062,
+      "idm": 44720,
+      "imbalance": 38191,
+      "pd_match": 47455,
+      "poi": 33572,
+      "raid": 22982,
+      "score_0": 18805,
+      "score_1": 20555,
+      "score_10": 41,
+      "score_11": 2,
+      "score_2": 41682,
+      "score_3": 33323,
+      "score_4": 28312,
+      "score_5": 22539,
+      "score_6": 12126,
+      "score_7": 4894,
+      "score_8": 1610,
+      "score_9": 173,
+      "state_poor": 114365,
+      "state_qualified": 17020,
+      "state_strong": 1826,
+      "state_weak": 50851,
+      "volume_confirmation": 36735
+    },
+    "SMC_POI_VC_CHAIN": {
+      "allowed": 59,
+      "bias_match": 88145,
+      "blocked": 184003,
+      "bos": 50816,
+      "displacement": 30318,
+      "evaluated": 184062,
+      "idm": 44720,
+      "imbalance": 38191,
+      "pd_match": 47455,
+      "poi": 33572,
+      "raid": 22982,
+      "score_0": 18805,
+      "score_1": 20555,
+      "score_10": 41,
+      "score_11": 2,
+      "score_2": 41682,
+      "score_3": 33323,
+      "score_4": 28312,
+      "score_5": 22539,
+      "score_6": 12126,
+      "score_7": 4894,
+      "score_8": 1610,
+      "score_9": 173,
+      "state_poor": 114365,
+      "state_qualified": 17020,
+      "state_strong": 1826,
+      "state_weak": 50851,
+      "volume_confirmation": 36735
+    },
+    "SMC_RAID_BOS_CHAIN": {
+      "allowed": 31,
+      "bias_match": 88145,
+      "blocked": 184031,
+      "bos": 50816,
+      "displacement": 30318,
+      "evaluated": 184062,
+      "idm": 44720,
+      "imbalance": 38191,
+      "pd_match": 47455,
+      "poi": 33572,
+      "raid": 22982,
+      "score_0": 18805,
+      "score_1": 20555,
+      "score_10": 41,
+      "score_11": 2,
+      "score_2": 41682,
+      "score_3": 33323,
+      "score_4": 28312,
+      "score_5": 22539,
+      "score_6": 12126,
+      "score_7": 4894,
+      "score_8": 1610,
+      "score_9": 173,
+      "state_poor": 114365,
+      "state_qualified": 17020,
+      "state_strong": 1826,
+      "state_weak": 50851,
+      "volume_confirmation": 36735
+    },
+    "SMC_SOFT_SCORE": {
+      "allowed": 88145,
+      "bias_match": 88145,
+      "blocked": 95917,
+      "bos": 50816,
+      "displacement": 30318,
+      "evaluated": 184062,
+      "idm": 44720,
+      "imbalance": 38191,
+      "pd_match": 47455,
+      "poi": 33572,
+      "raid": 22982,
+      "score_0": 18805,
+      "score_1": 20555,
+      "score_10": 41,
+      "score_11": 2,
+      "score_2": 41682,
+      "score_3": 33323,
+      "score_4": 28312,
+      "score_5": 22539,
+      "score_6": 12126,
+      "score_7": 4894,
+      "score_8": 1610,
+      "score_9": 173,
+      "state_poor": 114365,
+      "state_qualified": 17020,
+      "state_strong": 1826,
+      "state_weak": 50851,
+      "volume_confirmation": 36735
+    }
+  },
+  "limitations": [
+    "Deterministic causal proxy; not exact equivalence to discretionary manual execution.",
+    "No order-book, open-interest, funding or liquidation-map data are used.",
+    "Development data are already exposed and cannot become an external holdout.",
+    "No coefficients or variants may be changed after viewing this result."
+  ]
+}
