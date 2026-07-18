@@ -30,6 +30,7 @@ SUPPORTED_EXPECTATIONS = {
     "poi_side",
     "h1_raid",
     "h1_reaction",
+    "h1_vc",
     "bos_required",
     "entry_required",
     "required_reasons",
@@ -87,6 +88,7 @@ def _observation(model: MtfEntryModelV2, symbol: str, timestamp: datetime, side:
         "poi_side": poi.side if poi else None,
         "h1_raid": plan.h1_raid,
         "h1_reaction": plan.h1_reaction,
+        "h1_vc": plan.h1_vc,
         "bos_required": plan.bos is not None,
         "entry_required": plan.entry is not None,
         "entry_time": plan.entry_time.isoformat() if plan.entry_time else None,
@@ -105,7 +107,6 @@ def compare_expectation(case_id: str, expected: dict[str, Any], actual: dict[str
     unknown = sorted(set(expected) - SUPPORTED_EXPECTATIONS)
     for field in unknown:
         mismatches.append(ReplayMismatch(case_id, field, "supported expectation", "unknown field"))
-
     for field in sorted(set(expected) & SUPPORTED_EXPECTATIONS):
         wanted = expected[field]
         if field == "required_reasons":
