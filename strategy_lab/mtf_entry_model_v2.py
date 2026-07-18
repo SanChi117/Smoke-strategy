@@ -9,13 +9,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Iterable, Sequence
+from typing import Sequence
 
 from strategy_lab.event_risk import EventRiskDecision
 from strategy_lab.mtf_dealing_range_v2 import (
     ClosedBar,
     Level,
-    MarketState,
     MtfContextSnapshot,
     MtfDealingRangeEngine,
     Pivot,
@@ -33,9 +32,9 @@ class EntryConfig:
     bos_body_atr: float = 0.50
     bos_close_location: float = 0.70
     poi_distance_atr: float = 0.50
-    strong_poi_threshold: float = 60.0
     min_quality_score: float = 55.0
     max_bos_age_minutes: int = 15
+    minimum_structural_strength: float = 40.0
 
 
 @dataclass(frozen=True)
@@ -66,6 +65,7 @@ class EntryPlan:
     context: MtfContextSnapshot
     poi: Level | None
     h1_raid: bool
+    h1_reaction: bool
     bos: BosSignal | None
     event_blocked: bool
     event_risk_multiplier: float
@@ -73,6 +73,7 @@ class EntryPlan:
 
 
 def _bars_asof(bars: Sequence[ClosedBar], symbol: str, timestamp: datetime) -> list[ClosedBar]:
+    """Return only bars whose complete OHLCV was known by ``timestamp``."""
     return [bar for bar in bars if bar.symbol == symbol and bar.close_time <= timestamp]
 
 
@@ -87,7 +88,8 @@ def _true_range(rows: Sequence[ClosedBar], index: int) -> float:
 def _atr(rows: Sequence[ClosedBar], length: int = 14) -> float | None:
     if len(rows) < length:
         return None
-    values = [_true_range(rows, index) for index in range(len(rows) - length, len(rows))]
+    start = len(rows) - length
+    values = [_true_range(rows, index) for index in range(start, len(rows))]
     return sum(values) / length
 
 
@@ -119,6 +121,7 @@ def find_active_poi(
     side: str,
     config: EntryConfig,
 ) -> Level | None:
+    """Select the strongest nearby 4H/1D level on the correct side."""
     h1 = _bars_asof(engine.bars["1h"], symbol, timestamp)
     if not h1:
         return None
@@ -137,6 +140,8 @@ def find_active_poi(
         key=lambda level: (
             level.strength,
             1 if level.timeframe == "1d" else 0,
+            -level.touches,
+            int(level.fresh),
             -_level_distance(level, price),
             level.confirmed_at,
         ),
@@ -149,6 +154,7 @@ def detect_liquidity_raid(
     timestamp: datetime,
     lookback_bars: int = 4,
 ) -> bool:
+    """Require a closed H1 sweep and reclaim of a confirmed fractal."""
     rows = [bar for bar in bars if bar.close_time <= timestamp]
     pivots = confirmed_pivots(rows, 2, 2)
     desired_kind = "low" if side == "long" else "high"
@@ -166,21 +172,58 @@ def detect_liquidity_raid(
     return False
 
 
+def detect_h1_reaction(
+    bars: Sequence[ClosedBar],
+    poi: Level | None,
+    side: str,
+    timestamp: datetime,
+    lookback_bars: int = 3,
+) -> bool:
+    """Require a closed directional rejection from the selected HTF POI.
+
+    A strong level is never a trigger by itself. Price must touch the zone and a
+    completed H1 candle must close away from it in the intended direction.
+    """
+    if poi is None:
+        return False
+    rows = [bar for bar in bars if bar.close_time <= timestamp]
+    for bar in rows[-lookback_bars:]:
+        touched = bar.low <= poi.high and bar.high >= poi.low
+        if not touched:
+            continue
+        full_range = max(1e-12, bar.high - bar.low)
+        close_location = (bar.close - bar.low) / full_range
+        midpoint = (poi.low + poi.high) / 2.0
+        if side == "long":
+            if bar.close > bar.open and bar.close >= midpoint and close_location >= 0.60:
+                return True
+        else:
+            if bar.close < bar.open and bar.close <= midpoint and close_location <= 0.40:
+                return True
+    return False
+
+
 def detect_5m_bos(
     bars: Sequence[ClosedBar],
     side: str,
     timestamp: datetime,
     config: EntryConfig,
 ) -> BosSignal | None:
+    """Detect body-close BOS over a pivot confirmed before the signal opened."""
     rows = [bar for bar in bars if bar.close_time <= timestamp]
     if len(rows) < 20:
         return None
     signal = rows[-1]
-    if timestamp - signal.close_time > timedelta(minutes=config.max_bos_age_minutes):
+    age = timestamp - signal.close_time
+    if age < timedelta(0) or age > timedelta(minutes=config.max_bos_age_minutes):
         return None
     pivots = confirmed_pivots(rows[:-1], 2, 2)
     desired_kind = "high" if side == "long" else "low"
-    candidates = [pivot for pivot in pivots if pivot.kind == desired_kind and pivot.confirmed_at <= signal.open_time]
+    candidates = [
+        pivot
+        for pivot in pivots
+        if pivot.kind == desired_kind and pivot.confirmed_at <= signal.open_time
+    ]
     if not candidates:
         return None
     pivot = candidates[-1]
@@ -192,6 +235,7 @@ def detect_5m_bos(
     )
     if not crossed:
         return None
+
     atr = _atr(rows) or max(1e-12, signal.high - signal.low)
     full_range = max(1e-12, signal.high - signal.low)
     body = abs(signal.close - signal.open)
@@ -206,14 +250,15 @@ def detect_5m_bos(
     if len(rows) >= 3:
         left = rows[-3]
         imbalance = signal.low > left.high if side == "long" else signal.high < left.low
+    if not displacement and not imbalance:
+        return None
+
     strength = min(
         100.0,
         pivot.strength * 0.45
         + min(35.0, body / max(atr, 1e-12) * 20.0)
         + (15.0 if imbalance else 0.0),
     )
-    if not displacement and not imbalance:
-        return None
     return BosSignal(
         symbol=signal.symbol,
         side=side,
@@ -222,6 +267,31 @@ def detect_5m_bos(
         displacement=displacement,
         imbalance=imbalance,
         strength=round(strength, 4),
+    )
+
+
+def find_next_15m_entry_bar(
+    bars: Sequence[ClosedBar],
+    symbol: str,
+    timestamp: datetime,
+    bos: BosSignal | None,
+) -> ClosedBar | None:
+    """Return the 15m bar whose open is the planned execution timestamp.
+
+    Only the bar's open price may be used at that timestamp. Its later high, low,
+    close and volume are deliberately ignored by the entry model.
+    """
+    if bos is None or bos.signal_bar.close_time > timestamp:
+        return None
+    if timestamp.second != 0 or timestamp.microsecond != 0 or timestamp.minute % 15 != 0:
+        return None
+    return next(
+        (
+            bar
+            for bar in bars
+            if bar.symbol == symbol and bar.timeframe == "15m" and bar.open_time == timestamp
+        ),
+        None,
     )
 
 
@@ -234,33 +304,38 @@ def _select_stop(
     poi: Level | None,
     config: EntryConfig,
 ) -> float | None:
-    candidates: list[tuple[float, float]] = []
+    candidates: list[tuple[float, float, int]] = []
+    timeframe_rank = {"5m": 1, "15m": 2, "1h": 3}
     for timeframe in ("5m", "15m", "1h"):
         bars = _bars_asof(engine.bars[timeframe], symbol, timestamp)
-        for pivot in confirmed_pivots(bars, 2, 2):
+        for pivot in confirmed_pivots(bars, 2, 2)[-12:]:
+            if pivot.strength < config.minimum_structural_strength:
+                continue
             if side == "long" and pivot.kind == "low" and pivot.price < entry:
-                candidates.append((pivot.price, pivot.strength))
+                candidates.append((pivot.price, pivot.strength, timeframe_rank[timeframe]))
             if side == "short" and pivot.kind == "high" and pivot.price > entry:
-                candidates.append((pivot.price, pivot.strength))
+                candidates.append((pivot.price, pivot.strength, timeframe_rank[timeframe]))
     h1 = _bars_asof(engine.bars["1h"], symbol, timestamp)
     atr = _atr(h1) if h1 else None
     if atr is None:
         atr = entry * 0.005
     if poi is not None:
         level_price = poi.low if side == "long" else poi.high
-        candidates.append((level_price, poi.strength))
+        candidates.append((level_price, poi.strength, 4 if poi.timeframe == "1d" else 3))
     if not candidates:
         return None
+
     if side == "long":
         valid = [item for item in candidates if item[0] < entry]
         if not valid:
             return None
-        structural = max(valid, key=lambda item: (item[0], item[1]))[0]
+        # Prefer the closest valid structural level; strength/timeframe break ties.
+        structural = max(valid, key=lambda item: (item[0], item[1], item[2]))[0]
         return structural - atr * config.stop_buffer_atr
     valid = [item for item in candidates if item[0] > entry]
     if not valid:
         return None
-    structural = min(valid, key=lambda item: (item[0], -item[1]))[0]
+    structural = min(valid, key=lambda item: (item[0], -item[1], -item[2]))[0]
     return structural + atr * config.stop_buffer_atr
 
 
@@ -282,14 +357,17 @@ def _select_target(
         dealing_range = context.dealing_range
         if dealing_range is None:
             continue
-        if side == "long":
-            for value in (dealing_range.weak_level, dealing_range.high):
-                if value is not None and value > entry:
-                    candidates.append(value)
-        else:
-            for value in (dealing_range.weak_level, dealing_range.low):
-                if value is not None and value < entry:
-                    candidates.append(value)
+        values = (dealing_range.weak_level, dealing_range.high) if side == "long" else (
+            dealing_range.weak_level,
+            dealing_range.low,
+        )
+        for value in values:
+            if value is None:
+                continue
+            if side == "long" and value > entry:
+                candidates.append(value)
+            if side == "short" and value < entry:
+                candidates.append(value)
     if not candidates:
         return None
     return min(candidates) if side == "long" else max(candidates)
@@ -321,6 +399,7 @@ class MtfEntryModelV2:
         side = side.lower()
         if side not in {"long", "short"}:
             raise ValueError("side must be long or short")
+
         snapshot = self.engine.snapshot(symbol, timestamp)
         reasons: list[str] = []
         direction_allowed = snapshot.long_allowed if side == "long" else snapshot.short_allowed
@@ -338,10 +417,10 @@ class MtfEntryModelV2:
 
         h1_rows = _bars_asof(self.engine.bars["1h"], symbol, timestamp)
         h1_raid = detect_liquidity_raid(h1_rows, side, timestamp)
-        strong_poi_route = poi is not None and poi.strength >= self.config.strong_poi_threshold
-        reaction_ready = poi is not None and (h1_raid or strong_poi_route)
+        h1_reaction = detect_h1_reaction(h1_rows, poi, side, timestamp)
+        reaction_ready = poi is not None and (h1_raid or h1_reaction)
         if poi is not None and not reaction_ready:
-            reasons.append("poi_has_no_h1_raid_or_strong_reaction")
+            reasons.append("poi_has_no_closed_h1_reaction_or_raid")
 
         bos = detect_5m_bos(self.engine.bars["5m"], side, timestamp, self.config)
         if bos is None:
@@ -358,19 +437,12 @@ class MtfEntryModelV2:
         else:
             state = SetupState.M5_BOS_CONFIRMED
 
-        entry_bar = next(
-            (
-                bar
-                for bar in self.engine.bars["5m"]
-                if bar.symbol == symbol and bar.open_time == timestamp
-            ),
-            None,
-        )
+        entry_bar = find_next_15m_entry_bar(self.engine.bars["15m"], symbol, timestamp, bos)
         if bos is not None and entry_bar is None:
             state = SetupState.M15_ARMED
             reasons.append("next_15m_open_not_available_yet")
 
-        entry = entry_bar.open if entry_bar is not None and bos is not None else None
+        entry = entry_bar.open if entry_bar is not None else None
         stop = (
             _select_stop(self.engine, symbol, timestamp, side, entry, poi, self.config)
             if entry is not None
@@ -381,6 +453,7 @@ class MtfEntryModelV2:
             if entry is not None
             else None
         )
+
         rr: float | None = None
         if entry is not None and stop is not None and target is not None:
             risk = entry - stop if side == "long" else stop - entry
@@ -389,13 +462,12 @@ class MtfEntryModelV2:
                 rr = reward / risk
             else:
                 reasons.append("invalid_structural_stop_or_target")
-        else:
-            if bos is not None:
-                reasons.append("missing_structural_stop_or_htf_target")
+        elif bos is not None:
+            reasons.append("missing_structural_stop_or_htf_target")
 
         trend_score = snapshot.scenario_strength * 0.30
         poi_score = (poi.strength if poi else 0.0) * 0.25
-        reaction_score = 15.0 if h1_raid else 8.0 if strong_poi_route else 0.0
+        reaction_score = 15.0 if h1_raid else 10.0 if h1_reaction else 0.0
         bos_score = (bos.strength if bos else 0.0) * 0.20
         target_score = 10.0 if rr is not None and rr >= self.config.min_rr else 0.0
         event_score = 5.0 * max(0.0, min(1.0, event_multiplier))
@@ -442,6 +514,7 @@ class MtfEntryModelV2:
             context=snapshot,
             poi=poi,
             h1_raid=h1_raid,
+            h1_reaction=h1_reaction,
             bos=bos,
             event_blocked=event_blocked,
             event_risk_multiplier=round(event_multiplier, 6),
