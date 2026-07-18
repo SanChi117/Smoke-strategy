@@ -92,6 +92,10 @@ jobs:
         run: python -m strategy_lab.mtf_dealing_range_v2_smoke_test
       - name: Test SMOKE MTF V2 5m BOS and next 15m execution
         run: python -m strategy_lab.mtf_entry_model_v2_smoke_test
+      - name: Test SMOKE MTF V2 fresh H1 raid
+        run: python -m strategy_lab.mtf_raid_signal_v2_smoke_test
+      - name: Test SMOKE MTF V2 H1 volume confirmation
+        run: python -m strategy_lab.mtf_volume_confirmation_v2_smoke_test
       - name: Test SMOKE MTF V2 previous D W M liquidity levels
         run: python -m strategy_lab.period_liquidity_levels_smoke_test
       - name: Test SMOKE MTF V2 unified liquidity map
