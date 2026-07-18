@@ -1,0 +1,66 @@
+{
+  "study_id": "CAUSAL_CLEANSHOT_SMC_FEATURES_V1",
+  "status": "PRE_REGISTERED_NOT_RUN",
+  "created_after": "LONG_SHORT_REGIME_FAMILIES_V1_BLOCK",
+  "research_only": true,
+  "live_trading": false,
+  "paper_promotion": false,
+  "external_holdout_forbidden": true,
+  "development_period": {"start": "2025-01-01", "end": "2026-06-30"},
+  "data_contract": {
+    "source": "Binance USD-M Futures public 15m archives",
+    "closed_candles_only": true,
+    "entry_evaluation": "all features use candles whose values were fully known before the candidate entry timestamp",
+    "higher_timeframes": "1h and 4h rebuilt only from complete 15m buckets",
+    "walk_forward_windows": 10,
+    "warmup_days": 30,
+    "portfolio_profile": "research_500",
+    "fees": 0.001,
+    "slippage": 0.0002,
+    "manual_symbol_selection": false
+  },
+  "feature_definitions": {
+    "h4_structure_bias": "compare the most recent six completed 4h candles with the preceding six; bullish requires both a higher range high and higher range low, bearish requires both lower",
+    "premium_discount": "position of the last closed 15m price inside the prior 20 completed 4h dealing range; long matches discount <= 0.50, short matches premium >= 0.50",
+    "h4_poi": "touch of a recent completed 4h three-candle imbalance/FVG or the origin candle immediately preceding a directional 4h displacement bar",
+    "h1_liquidity_raid": "within the most recent four completed 1h candles, a sweep beyond the preceding 12-candle extreme followed by a close back inside",
+    "m15_bos": "last closed 15m candle closes beyond the prior eight-candle high for long or low for short",
+    "m15_displacement": "directional body >= 0.60 ATR14, volume >= 1.20 SMA20, and close in the directional outer quartile of the candle",
+    "m15_imbalance": "three-candle 15m FVG on the last closed candle",
+    "m15_idm": "within the most recent four 15m candles, a sweep of a preceding five-candle internal extreme followed by a close back inside",
+    "volume_confirmation": "m15_bos and either m15_displacement or m15_imbalance"
+  },
+  "score_weights": {
+    "bias_match": 2,
+    "premium_discount_match": 1,
+    "h4_poi": 2,
+    "h1_liquidity_raid": 2,
+    "m15_bos": 2,
+    "m15_displacement": 1,
+    "m15_imbalance": 1,
+    "m15_idm": 1
+  },
+  "candidates": [
+    {"name": "SMC_DIRECTION_CONTROL", "rule": "side must match h4_structure_bias"},
+    {"name": "SMC_RAID_BOS_CHAIN", "rule": "bias + premium/discount + h1 raid + m15 BOS"},
+    {"name": "SMC_POI_VC_CHAIN", "rule": "bias + premium/discount + h4 POI + volume confirmation"},
+    {"name": "SMC_IDM_BOS_CHAIN", "rule": "bias + premium/discount + m15 IDM + BOS + displacement"},
+    {"name": "SMC_HYBRID_SCORE_7", "rule": "bias + score >= 7 + at least one of POI/raid + volume confirmation"},
+    {"name": "SMC_SOFT_SCORE", "rule": "bias required; risk multiplier 1.00 for score >=8, 0.80 for 6-7, 0.50 for 4-5, 0.25 below 4"}
+  ],
+  "development_gate": {
+    "minimum_trades": 60,
+    "pooled_pf_min": 1.20,
+    "avg_return_pct_gt": 0.0,
+    "positive_folds_min": 6,
+    "worst_dd_pct_max": 8.0,
+    "selection_rule": "freeze at most one passing candidate by highest pooled PF, then lowest DD, then positive-fold percentage, then trade count"
+  },
+  "anti_overfit_rules": [
+    "No candidate, threshold or coefficient changes after viewing results.",
+    "No symbol exclusions after viewing results.",
+    "No external holdout access unless exactly one candidate passes development.",
+    "This package is a deterministic research formalization, not a claim of exact equivalence to the user's discretionary manual method."
+  ],
+  "next_action": "Implement exactly these six candidates and run strict OOS development screening."
+}
