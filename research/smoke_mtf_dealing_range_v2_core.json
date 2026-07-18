@@ -1,0 +1,116 @@
+{
+  "project_id": "SMOKE_MTF_DEALING_RANGE_V2",
+  "status": "CORE_ARCHITECTURE_PREREGISTERED_NOT_BACKTESTED",
+  "created_after": "EXHAUSTED_WITHOUT_ROBUST_EDGE",
+  "purpose": "Replace the rejected Flat and coarse SMC proxy generators with an explicit multi-timeframe dealing-range state machine derived from the user's strategy materials.",
+  "research_only": true,
+  "paper_promotion": false,
+  "live_trading": false,
+  "external_holdout_forbidden": true,
+  "scope": {
+    "directions": ["long", "short"],
+    "trade_style": "trend-aligned movement inside active 1D/4H dealing ranges",
+    "base_data": "closed 5m candles",
+    "entry_execution": "a valid 5m BOS arms the current 15m bucket; entry is evaluated only after that 15m bucket closes and is placed at the next 15m open",
+    "stop": "behind the structural Strong Low/High that invalidates the setup",
+    "target": "next valid 4H/1D weak extreme, external liquidity, imbalance objective or opposite dealing-range boundary"
+  },
+  "timeframe_roles": {
+    "1M": "broad secular scenario and macro direction; context only, never a direct entry trigger",
+    "1W": "primary long-horizon scenario, external structure and major liquidity map",
+    "1D": "active higher-timeframe bias, protected/weak extremes, major POI and dealing range",
+    "4H": "tradable dealing range, internal/external structure, level map and directional narrative",
+    "1H": "liquidity raid, reaction, volume confirmation and lower-timeframe POI creation",
+    "15M": "order timeframe, risk/target validation and next-bar execution",
+    "5M": "confirmed pivot/fractal structure, IDM/raid and BOS trigger"
+  },
+  "hard_invariants": [
+    "All features use only fully closed source candles.",
+    "A pivot/fractal becomes available only after all right-side confirmation candles have closed.",
+    "Monthly, weekly, daily and intraday resampling exposes only complete calendar buckets.",
+    "No setup may skip state-machine stages from context to POI to trigger to 15m arming.",
+    "No new entry during a high-impact event blackout.",
+    "No entry when the structural invalidation stop cannot produce the preregistered minimum RR to a valid target.",
+    "No symbol, period or rule changes after viewing a development result."
+  ],
+  "soft_layers": {
+    "principle": "Hard invariants protect causality and invalidation; market quality is represented by continuous scores rather than a large collection of brittle binary filters.",
+    "trend_strength": [
+      "agreement of 1M/1W/1D/4H structure",
+      "distance and cleanliness of protected versus weak extremes",
+      "number and quality of directional BOS events",
+      "displacement efficiency and imbalance preservation",
+      "slope and persistence of the active dealing range"
+    ],
+    "level_strength": [
+      "timeframe weight",
+      "pivot/fractal prominence",
+      "freshness and number of mitigations",
+      "displacement away from the level",
+      "liquidity taken before departure",
+      "FVG/IMB, SNR, RB or OB confluence",
+      "location in premium/discount",
+      "distance to opposing liquidity and target space"
+    ],
+    "context_states": ["BULLISH", "BEARISH", "RANGE", "TRANSITION", "INSUFFICIENT"],
+    "quality_states": ["POOR", "WATCH", "QUALIFIED", "STRONG"]
+  },
+  "state_machine": [
+    "NO_CONTEXT",
+    "MACRO_SCENARIO_READY",
+    "DAILY_RANGE_READY",
+    "H4_RANGE_READY",
+    "POI_APPROACH",
+    "POI_TESTED",
+    "H1_REACTION_OR_RAID",
+    "WAIT_5M_BOS",
+    "M5_BOS_CONFIRMED",
+    "M15_ARMED",
+    "ENTRY_READY",
+    "INVALIDATED_OR_EXPIRED"
+  ],
+  "event_risk": {
+    "macro_primary_provider": "Trading Economics Economic Calendar API",
+    "crypto_primary_provider": "CoinMarketCal Events API",
+    "provider_contract": "Providers normalize into immutable scheduled events; API keys are read from environment variables and never committed.",
+    "backtest_contract": "Historical research must use a frozen point-in-time event snapshot with acquisition timestamps. A current API response may not be used to reconstruct what was known historically.",
+    "high_macro_blackout_minutes": {"before": 60, "after": 45},
+    "medium_macro_risk_multiplier": 0.50,
+    "high_crypto_blackout_minutes": {"before": 120, "after": 120},
+    "estimated_crypto_event_rule": "Estimated dates cannot create an intraday hard blackout; they may only reduce quality until a precise timestamp is available.",
+    "news_sentiment_rule": "Unscheduled news remains observational until a timestamped historical archive proves that it improves strict OOS results. It cannot silently become a directional oracle."
+  },
+  "implementation_phases": [
+    {
+      "phase": 1,
+      "name": "CORE_RECOGNITION",
+      "deliverables": ["closed calendar resampling", "confirmed pivots/fractals", "dealing ranges", "level and trend strength", "event-risk normalization", "state-machine snapshots"],
+      "gate": "deterministic smoke tests plus agreement on labelled chart examples"
+    },
+    {
+      "phase": 2,
+      "name": "ENTRY_MODEL",
+      "deliverables": ["1H raid/reaction", "5m BOS/IDM/IMB", "15m arming and next-open entry", "structural SL and HTF target selection"],
+      "gate": "causal replay on labelled examples without lookahead"
+    },
+    {
+      "phase": 3,
+      "name": "NEW_DEVELOPMENT_SCREEN",
+      "deliverables": ["small preregistered candidate set", "strict OOS", "pooled PF", "fixed fees and portfolio"],
+      "gate": "PF >= 1.20, positive average return, >=60% positive folds, DD <=8%"
+    },
+    {
+      "phase": 4,
+      "name": "UNTOUCHED_HOLDOUT",
+      "deliverables": ["exactly one frozen leader on one never-used period"],
+      "gate": "positive holdout, PF >1.10 with target >=1.20, positive average return and at least half positive folds"
+    }
+  ],
+  "anti_overfit_rules": [
+    "The old 2025-01-01 through 2026-06-30 development period remains exposed and cannot serve as the external holdout.",
+    "Recognition errors are fixed against definitions and labelled examples, not against PnL.",
+    "Only a small candidate set may be preregistered after the recognition layer is stable.",
+    "News and calendar layers are tested as independent ablations.",
+    "VPS, paper promotion and live execution remain prohibited."
+  ]
+}
