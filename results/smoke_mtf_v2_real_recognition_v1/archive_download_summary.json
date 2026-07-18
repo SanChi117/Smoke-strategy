@@ -1,0 +1,18 @@
+{
+  "source": "BINANCE_VISION_USDM_FUTURES_ARCHIVE",
+  "start_date": "2024-07-01",
+  "end_date": "2025-02-08",
+  "interval": "5m",
+  "symbols_requested": 5,
+  "archive_requests": 75,
+  "archives_downloaded": 75,
+  "archives_reused": 0,
+  "archives_missing": 0,
+  "archives_failed": 0,
+  "checksum_verified": 75,
+  "zip_verified": 75,
+  "bytes_downloaded": 13650720,
+  "missing_examples": [],
+  "failed_examples": [],
+  "status": "OK"
+}

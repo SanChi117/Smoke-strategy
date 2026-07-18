@@ -1,0 +1,10 @@
+{
+  "run_id": 29659086867,
+  "source_head_sha": "20fb8cee6148479196367b21eaced763b0966208",
+  "status": "cancelled",
+  "mode": "SMOKE_MTF_V2_REAL_RECOGNITION_RUN_V1",
+  "pnl_used": false,
+  "future_outcomes_used": false,
+  "history_period": "2024-07-01 through 2025-02-08",
+  "scan_period": "2025-02-01 through 2025-02-08"
+}
