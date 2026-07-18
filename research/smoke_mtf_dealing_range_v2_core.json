@@ -1,37 +1,67 @@
 {
   "project_id": "SMOKE_MTF_DEALING_RANGE_V2",
-  "status": "CORE_ARCHITECTURE_PREREGISTERED_NOT_BACKTESTED",
+  "status": "RECOGNITION_AND_ENTRY_CONTRACT_IMPLEMENTED_NOT_BACKTESTED",
   "created_after": "EXHAUSTED_WITHOUT_ROBUST_EDGE",
   "purpose": "Replace the rejected Flat and coarse SMC proxy generators with an explicit multi-timeframe dealing-range state machine derived from the user's strategy materials.",
   "research_only": true,
   "paper_promotion": false,
   "live_trading": false,
   "external_holdout_forbidden": true,
+  "pnl_screen_started": false,
   "scope": {
     "directions": ["long", "short"],
     "trade_style": "trend-aligned movement inside active 1D/4H dealing ranges",
     "base_data": "closed 5m candles",
-    "entry_execution": "a valid 5m BOS arms the current 15m bucket; entry is evaluated only after that 15m bucket closes and is placed at the next 15m open",
-    "stop": "behind the structural Strong Low/High that invalidates the setup",
-    "target": "next valid 4H/1D weak extreme, external liquidity, imbalance objective or opposite dealing-range boundary"
+    "entry_paths": {
+      "raid": "fresh closed H1 liquidity raid -> later confirmed 5m BOS with correct raid geometry -> next aligned 15m open",
+      "vc": "closed H1 volume confirmation after HTF POI contact -> new H1 VC zone -> later closed 15m zone test -> later confirmed 5m BOS -> next aligned 15m open"
+    },
+    "entry_execution": "the 5m BOS must be fully closed; execution uses only the next aligned 15m bar open and never its future high, low, close or volume",
+    "stop": "raid path behind the swept fresh liquidity; VC path behind the structural Strong Low/High or POI invalidation",
+    "target": "valid liquidity or FTA on the originating context timeframe, including weak extremes, EQH/EQL, BSL/SSL, FVG/IMB objectives and dealing-range boundaries"
   },
   "timeframe_roles": {
-    "1M": "broad secular scenario and macro direction; context only, never a direct entry trigger",
-    "1W": "primary long-horizon scenario, external structure and major liquidity map",
-    "1D": "active higher-timeframe bias, protected/weak extremes, major POI and dealing range",
+    "1M": "broad secular scenario and PMH/PML liquidity; context only, never a direct entry trigger",
+    "1W": "primary long-horizon scenario, external structure and PWH/PWL liquidity",
+    "1D": "active higher-timeframe bias, protected/weak extremes, PDH/PDL, major POI and dealing range",
     "4H": "tradable dealing range, internal/external structure, level map and directional narrative",
-    "1H": "liquidity raid, reaction, volume confirmation and lower-timeframe POI creation",
-    "15M": "order timeframe, risk/target validation and next-bar execution",
-    "5M": "confirmed pivot/fractal structure, IDM/raid and BOS trigger"
+    "1H": "fresh fractal raid or volume confirmation that creates a new lower-timeframe POI",
+    "15M": "test of an H1 VC-created POI, risk/target validation and next-open execution",
+    "5M": "confirmed pivot/fractal structure, IDM and body-close BOS trigger"
+  },
+  "liquidity_map": {
+    "sources": [
+      "confirmed pivot/fractal levels",
+      "FVG/IMB zones",
+      "PDH/PDL",
+      "PWH/PWL",
+      "PMH/PML",
+      "active 1D/4H dealing-range weak and protected extremes"
+    ],
+    "strength_factors": [
+      "timeframe weight",
+      "pivot prominence",
+      "displacement away",
+      "freshness",
+      "number of mitigations",
+      "liquidity interaction",
+      "distance to opposing liquidity and target space"
+    ],
+    "rule": "A level can define context, POI, FTA, stop or target, but can never replace the required confirmation and 5m trigger chain."
   },
   "hard_invariants": [
     "All features use only fully closed source candles.",
     "A pivot/fractal becomes available only after all right-side confirmation candles have closed.",
     "Monthly, weekly, daily and intraday resampling exposes only complete calendar buckets.",
-    "No setup may skip state-machine stages from context to POI to trigger to 15m arming.",
+    "The direct raid path requires a fresh confirmed H1 fractal, a wick sweep and a close back inside.",
+    "The VC path requires a closed H1 displacement with elevated volume and either a new imbalance or confirmed BOS after HTF POI contact.",
+    "An H1 VC-created POI requires a later closed 15m test and directional rejection before 5m BOS can be accepted.",
+    "A simple H1 reaction candle is diagnostic and cannot arm an entry.",
+    "A wick-only 5m break is not BOS; the signal must close beyond a pivot known before the signal opened.",
+    "No setup may skip state-machine stages from context to POI to confirmation to 5m trigger to 15m execution.",
     "No new entry during a high-impact event blackout.",
-    "No entry when the structural invalidation stop cannot produce the preregistered minimum RR to a valid target.",
-    "No symbol, period or rule changes after viewing a development result."
+    "No entry when structural invalidation cannot produce the preregistered minimum RR to a valid target.",
+    "No symbol, period, threshold or rule changes after viewing a development result."
   ],
   "soft_layers": {
     "principle": "Hard invariants protect causality and invalidation; market quality is represented by continuous scores rather than a large collection of brittle binary filters.",
@@ -55,53 +85,75 @@
     "context_states": ["BULLISH", "BEARISH", "RANGE", "TRANSITION", "INSUFFICIENT"],
     "quality_states": ["POOR", "WATCH", "QUALIFIED", "STRONG"]
   },
-  "state_machine": [
-    "NO_CONTEXT",
-    "MACRO_SCENARIO_READY",
-    "DAILY_RANGE_READY",
-    "H4_RANGE_READY",
-    "POI_APPROACH",
-    "POI_TESTED",
-    "H1_REACTION_OR_RAID",
-    "WAIT_5M_BOS",
-    "M5_BOS_CONFIRMED",
-    "M15_ARMED",
-    "ENTRY_READY",
-    "INVALIDATED_OR_EXPIRED"
-  ],
+  "state_machine": {
+    "common_prefix": [
+      "NO_CONTEXT",
+      "MACRO_SCENARIO_READY",
+      "DAILY_RANGE_READY",
+      "H4_RANGE_READY",
+      "POI_APPROACH",
+      "POI_TESTED"
+    ],
+    "raid_path": ["FRESH_H1_RAID", "WAIT_5M_BOS"],
+    "vc_path": ["H1_VC_CREATED", "WAIT_15M_VC_ZONE_TEST", "WAIT_5M_BOS"],
+    "common_suffix": ["M5_BOS_CONFIRMED", "M15_ARMED", "ENTRY_READY", "INVALIDATED_OR_EXPIRED"]
+  },
   "event_risk": {
     "macro_primary_provider": "Trading Economics Economic Calendar API",
     "crypto_primary_provider": "CoinMarketCal Events API",
     "provider_contract": "Providers normalize into immutable scheduled events; API keys are read from environment variables and never committed.",
-    "backtest_contract": "Historical research must use a frozen point-in-time event snapshot with acquisition timestamps. A current API response may not be used to reconstruct what was known historically.",
+    "backtest_contract": "Historical research must use a frozen point-in-time event snapshot with acquisition timestamps. A current API response may not reconstruct what was known historically.",
     "high_macro_blackout_minutes": {"before": 60, "after": 45},
     "medium_macro_risk_multiplier": 0.50,
     "high_crypto_blackout_minutes": {"before": 120, "after": 120},
     "estimated_crypto_event_rule": "Estimated dates cannot create an intraday hard blackout; they may only reduce quality until a precise timestamp is available.",
     "news_sentiment_rule": "Unscheduled news remains observational until a timestamped historical archive proves that it improves strict OOS results. It cannot silently become a directional oracle."
   },
+  "recognition_validation": {
+    "frozen_semantic_scenarios": 9,
+    "positive_paths": 4,
+    "blocked_cases": 5,
+    "pnl_labels_forbidden": true,
+    "dedicated_ci": "SMOKE MTF V2 Recognition",
+    "last_verified_run": 29658658857,
+    "verified_components": [
+      "closed MTF context",
+      "confirmed pivots/fractals",
+      "fresh H1 raid",
+      "H1 volume confirmation",
+      "later closed 15m VC-zone test",
+      "5m BOS",
+      "next 15m open execution",
+      "previous D/W/M liquidity",
+      "unified liquidity map",
+      "semantic branch validation",
+      "labelled replay contract"
+    ]
+  },
   "implementation_phases": [
     {
       "phase": 1,
       "name": "CORE_RECOGNITION",
-      "deliverables": ["closed calendar resampling", "confirmed pivots/fractals", "dealing ranges", "level and trend strength", "event-risk normalization", "state-machine snapshots"],
-      "gate": "deterministic smoke tests plus agreement on labelled chart examples"
+      "status": "IMPLEMENTED_AND_CAUSAL_TESTED",
+      "deliverables": ["closed calendar resampling", "confirmed pivots/fractals", "dealing ranges", "level and trend strength", "event-risk normalization", "state-machine snapshots"]
     },
     {
       "phase": 2,
       "name": "ENTRY_MODEL",
-      "deliverables": ["1H raid/reaction", "5m BOS/IDM/IMB", "15m arming and next-open entry", "structural SL and HTF target selection"],
-      "gate": "causal replay on labelled examples without lookahead"
+      "status": "IMPLEMENTED_AND_CAUSAL_TESTED_AWAITING_REAL_LABELLED_REPLAY",
+      "deliverables": ["fresh H1 raid", "H1 VC", "15m VC-zone test", "5m BOS", "next 15m open", "structural SL", "HTF target selection"]
     },
     {
       "phase": 3,
       "name": "NEW_DEVELOPMENT_SCREEN",
+      "status": "NOT_PREREGISTERED_NOT_STARTED",
       "deliverables": ["small preregistered candidate set", "strict OOS", "pooled PF", "fixed fees and portfolio"],
       "gate": "PF >= 1.20, positive average return, >=60% positive folds, DD <=8%"
     },
     {
       "phase": 4,
       "name": "UNTOUCHED_HOLDOUT",
+      "status": "FORBIDDEN_UNTIL_EXACTLY_ONE_DEVELOPMENT_PASS",
       "deliverables": ["exactly one frozen leader on one never-used period"],
       "gate": "positive holdout, PF >1.10 with target >=1.20, positive average return and at least half positive folds"
     }
