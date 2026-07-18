@@ -3,7 +3,7 @@
 
 Two causal paths are supported:
 1) fresh H1 liquidity raid -> 5m BOS;
-2) H1 volume confirmation creates a new zone -> later closed 15m zone test -> 5m BOS.
+2) H1 volume confirmation creates a zone -> later closed 15m test -> 5m BOS.
 
 Research only. This module never sends paper or live orders.
 """
@@ -25,6 +25,7 @@ from strategy_lab.mtf_dealing_range_v2 import (
 )
 from strategy_lab.mtf_liquidity_map_v2 import build_liquidity_map
 from strategy_lab.mtf_raid_signal_v2 import RaidSignal, detect_h1_raid_signal
+from strategy_lab.mtf_target_selection_v2 import TargetSelection, select_timeframe_matched_target
 from strategy_lab.mtf_vc_zone_test_v2 import VcZoneTestSignal, detect_15m_vc_zone_test
 from strategy_lab.mtf_volume_confirmation_v2 import (
     VolumeConfirmationSignal,
@@ -66,6 +67,8 @@ class EntryPlan:
     entry: float | None
     stop: float | None
     target: float | None
+    target_timeframe: str | None
+    target_source: str | None
     rr: float | None
     quality_score: float
     quality_state: str
@@ -299,7 +302,6 @@ def _select_stop(
     if atr is None:
         atr = entry * 0.005
 
-    # In the raid model, invalidation is behind the swept fresh liquidity.
     if raid is not None:
         anchor = raid.pivot.price
         if side == "long" and anchor < entry:
@@ -334,41 +336,6 @@ def _select_stop(
         return None
     anchor = min(valid, key=lambda item: (item[0], -item[1], -item[2]))[0]
     return anchor + atr * config.stop_buffer_atr
-
-
-def _select_target(
-    engine: MtfDealingRangeEngine,
-    snapshot: MtfContextSnapshot,
-    symbol: str,
-    timestamp: datetime,
-    side: str,
-    entry: float,
-) -> float | None:
-    candidates: list[float] = []
-    for level in _available_levels(engine, symbol, timestamp):
-        if side == "long" and level.side == "resistance" and level.low > entry:
-            candidates.append(level.low)
-        if side == "short" and level.side == "support" and level.high < entry:
-            candidates.append(level.high)
-    for context in (snapshot.h4, snapshot.daily):
-        dealing_range = context.dealing_range
-        if dealing_range is None:
-            continue
-        values = (
-            (dealing_range.weak_level, dealing_range.high)
-            if side == "long"
-            else (dealing_range.weak_level, dealing_range.low)
-        )
-        for value in values:
-            if value is None:
-                continue
-            if side == "long" and value > entry:
-                candidates.append(value)
-            if side == "short" and value < entry:
-                candidates.append(value)
-    if not candidates:
-        return None
-    return min(candidates) if side == "long" else max(candidates)
 
 
 def _quality_state(score: float) -> str:
@@ -467,11 +434,21 @@ class MtfEntryModelV2:
             if entry is not None
             else None
         )
-        target = (
-            _select_target(self.engine, snapshot, symbol, timestamp, side, entry)
+        target_selection: TargetSelection | None = (
+            select_timeframe_matched_target(
+                self.engine,
+                snapshot,
+                symbol,
+                timestamp,
+                side,
+                entry,
+                poi,
+                raid,
+            )
             if entry is not None
             else None
         )
+        target = target_selection.price if target_selection is not None else None
 
         rr: float | None = None
         if entry is not None and stop is not None and target is not None:
@@ -482,7 +459,7 @@ class MtfEntryModelV2:
             else:
                 reasons.append("invalid_structural_stop_or_target")
         elif bos is not None:
-            reasons.append("missing_structural_stop_or_htf_target")
+            reasons.append("missing_structural_stop_or_timeframe_matched_fta")
 
         trend_score = snapshot.scenario_strength * 0.30
         poi_score = (poi.strength if poi else 0.0) * 0.25
@@ -539,6 +516,8 @@ class MtfEntryModelV2:
             entry=round(entry, 8) if entry is not None else None,
             stop=round(stop, 8) if stop is not None else None,
             target=round(target, 8) if target is not None else None,
+            target_timeframe=target_selection.timeframe if target_selection else None,
+            target_source=target_selection.source if target_selection else None,
             rr=round(rr, 6) if rr is not None else None,
             quality_score=round(quality, 4),
             quality_state=quality_state,
