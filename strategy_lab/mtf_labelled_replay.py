@@ -34,6 +34,8 @@ SUPPORTED_EXPECTATIONS = {
     "vc_zone_test",
     "bos_required",
     "entry_required",
+    "target_timeframe",
+    "target_source",
     "required_reasons",
     "forbidden_reasons",
 }
@@ -97,6 +99,8 @@ def _observation(model: MtfEntryModelV2, symbol: str, timestamp: datetime, side:
         "entry": plan.entry,
         "stop": plan.stop,
         "target": plan.target,
+        "target_timeframe": plan.target_timeframe,
+        "target_source": plan.target_source,
         "rr": plan.rr,
         "quality_score": plan.quality_score,
         "quality_state": plan.quality_state,
