@@ -5,6 +5,7 @@ on:
     paths:
       - 'strategy_lab/**'
       - 'scripts/**'
+      - 'research/smoke_mtf_v2_reference_scenarios.json'
       - 'deployment/**'
       - 'docs/LIVE_PAPER_V2_RU.md'
       - 'docs/MULTI_PROJECT_CONTROL_PANEL_RU.md'
@@ -89,8 +90,20 @@ jobs:
         run: python -m strategy_lab.closed_context_smoke_test
       - name: Test SMOKE MTF V2 closed ranges, pivots and event causality
         run: python -m strategy_lab.mtf_dealing_range_v2_smoke_test
-      - name: Test SMOKE MTF V2 5m BOS entry causality
+      - name: Test SMOKE MTF V2 5m BOS and next 15m execution
         run: python -m strategy_lab.mtf_entry_model_v2_smoke_test
+      - name: Test frozen SMOKE MTF V2 reference semantics
+        run: python -m strategy_lab.mtf_reference_validation_smoke_test
+      - name: Test SMOKE MTF V2 labelled replay contracts
+        run: python -m strategy_lab.mtf_labelled_replay_smoke_test
+      - name: Validate committed SMOKE MTF V2 reference set
+        run: python scripts/validate_smoke_mtf_v2_reference_scenarios.py
+      - name: Upload SMOKE MTF V2 reference audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-mtf-v2-reference-audit
+          path: results/smoke_mtf_v2_reference_validation/report.json
+          if-no-files-found: error
       - name: Test adaptive structure scope
         run: python -m strategy_lab.structure_scope_smoke_test
       - name: Test pullback resumption entry
