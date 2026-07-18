@@ -7,7 +7,7 @@
     "Timestamp is the exact evaluation time; future candles must not affect the observation.",
     "Labels describe structure and setup state only. Profit, future return, TP hit and SL hit fields are forbidden.",
     "A screenshot or Drive source may be recorded as traceability metadata but is not parsed as a trading result.",
-    "h1_reaction is diagnostic; only h1_raid or h1_vc may arm the transition toward 5m BOS.",
+    "h1_reaction is diagnostic; the raid path requires a fresh h1_raid, while the VC path requires h1_vc plus vc_zone_test before 5m BOS.",
     "Recognition fixes are permitted only when the engine disagrees with the documented strategy definition, not because of later PnL."
   ],
   "cases": [
@@ -35,10 +35,16 @@
         "h1_raid": false,
         "h1_reaction": true,
         "h1_vc": true,
+        "vc_zone_test": true,
         "bos_required": false,
         "entry_required": false,
         "required_reasons": ["no_confirmed_5m_bos"],
-        "forbidden_reasons": ["context_blocks_long", "high_impact_event_blackout", "poi_has_no_closed_h1_raid_or_vc"]
+        "forbidden_reasons": [
+          "context_blocks_long",
+          "high_impact_event_blackout",
+          "poi_has_no_closed_h1_raid_or_vc",
+          "h1_vc_zone_not_tested_on_closed_15m"
+        ]
       }
     }
   ]
