@@ -1,0 +1,57 @@
+{
+  "study_id": "SMOKE_MTF_V2_REAL_RECOGNITION_RUN_V1",
+  "status": "PRE_REGISTERED_NOT_RUN",
+  "research_only": true,
+  "pnl_forbidden": true,
+  "future_outcomes_forbidden": true,
+  "paper_promotion": false,
+  "live_trading": false,
+  "purpose": "Export actual historical MTF states for manual recognition labelling before any profitability screen.",
+  "data_contract": {
+    "source": "Binance Vision USD-M Futures public archives",
+    "base_interval": "5m",
+    "history_start": "2024-07-01",
+    "history_end": "2025-02-08",
+    "scan_start": "2025-02-01T00:00:00",
+    "scan_end": "2025-02-08T00:00:00",
+    "closed_candles_only": true,
+    "higher_timeframes": ["15m", "1h", "4h", "1d", "1w", "1M"],
+    "universe_file": "research/smoke_mtf_v2_recognition_universe.txt",
+    "symbols": ["BTCUSDT", "ETHUSDT", "SOLUSDT", "LINKUSDT", "AAVEUSDT"]
+  },
+  "evaluation_contract": {
+    "evaluation_clock": "every available 15m bar open inside the scan interval",
+    "directions": ["long", "short"],
+    "include_when": "POI exists or H1 raid, H1 VC or 5m BOS exists",
+    "sampling": "first four snapshots chronologically per symbol, side and setup_state",
+    "quality_score_not_used_for_selection": true,
+    "symbol_selection_after_results_forbidden": true
+  },
+  "permitted_fields": [
+    "closed MTF context",
+    "dealing ranges",
+    "POI and liquidity levels",
+    "H1 raid",
+    "H1 VC",
+    "15m VC-zone test",
+    "5m BOS",
+    "planned next 15m open",
+    "structural stop",
+    "timeframe-matched FTA",
+    "planned RR",
+    "quality diagnostics",
+    "block reasons"
+  ],
+  "forbidden_fields": [
+    "PnL",
+    "future return",
+    "win or loss label",
+    "TP hit",
+    "SL hit",
+    "MFE",
+    "MAE",
+    "any candle after the evaluation timestamp except the next 15m open value used as the planned execution price"
+  ],
+  "success_definition": "The workflow completes and produces deterministic no-PnL candidate states. This run cannot pass or fail a trading edge gate.",
+  "next_action": "Review state distribution and convert a balanced subset into frozen human-labelled recognition cases. Do not tune for PnL."
+}
