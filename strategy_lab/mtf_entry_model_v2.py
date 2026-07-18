@@ -20,9 +20,8 @@ from strategy_lab.mtf_dealing_range_v2 import (
     Pivot,
     SetupState,
     confirmed_pivots,
-    imbalance_levels,
-    pivot_levels,
 )
+from strategy_lab.mtf_liquidity_map_v2 import build_liquidity_map
 
 
 @dataclass(frozen=True)
@@ -103,15 +102,15 @@ def _available_levels(
     engine: MtfDealingRangeEngine,
     symbol: str,
     timestamp: datetime,
-    timeframes: tuple[str, ...] = ("4h", "1d"),
+    timeframes: tuple[str, ...] = ("1h", "4h", "1d", "1w", "1M"),
 ) -> list[Level]:
-    output: list[Level] = []
-    for timeframe in timeframes:
-        bars = _bars_asof(engine.bars[timeframe], symbol, timestamp)
-        pivots = confirmed_pivots(bars, 2, 2)
-        output.extend(pivot_levels(pivots, timestamp))
-        output.extend(imbalance_levels(bars, timestamp))
-    return [level for level in output if level.confirmed_at <= timestamp]
+    """Use one causal map for POI, FTA and target selection."""
+    liquidity = build_liquidity_map(engine, symbol, timestamp)
+    return [
+        level
+        for level in liquidity.levels
+        if level.timeframe in timeframes and level.confirmed_at <= timestamp
+    ]
 
 
 def find_active_poi(
@@ -121,7 +120,7 @@ def find_active_poi(
     side: str,
     config: EntryConfig,
 ) -> Level | None:
-    """Select the strongest nearby 4H/1D level on the correct side."""
+    """Select the strongest nearby HTF level on the correct side."""
     h1 = _bars_asof(engine.bars["1h"], symbol, timestamp)
     if not h1:
         return None
@@ -135,13 +134,14 @@ def find_active_poi(
     ]
     if not candidates:
         return None
+    timeframe_rank = {"1h": 1, "4h": 2, "1d": 3, "1w": 4, "1M": 5}
     return max(
         candidates,
         key=lambda level: (
             level.strength,
-            1 if level.timeframe == "1d" else 0,
-            -level.touches,
+            timeframe_rank.get(level.timeframe, 0),
             int(level.fresh),
+            -level.touches,
             -_level_distance(level, price),
             level.confirmed_at,
         ),
@@ -321,7 +321,8 @@ def _select_stop(
         atr = entry * 0.005
     if poi is not None:
         level_price = poi.low if side == "long" else poi.high
-        candidates.append((level_price, poi.strength, 4 if poi.timeframe == "1d" else 3))
+        poi_rank = {"1h": 3, "4h": 4, "1d": 5, "1w": 6, "1M": 7}.get(poi.timeframe, 3)
+        candidates.append((level_price, poi.strength, poi_rank))
     if not candidates:
         return None
 
@@ -329,7 +330,6 @@ def _select_stop(
         valid = [item for item in candidates if item[0] < entry]
         if not valid:
             return None
-        # Prefer the closest valid structural level; strength/timeframe break ties.
         structural = max(valid, key=lambda item: (item[0], item[1], item[2]))[0]
         return structural - atr * config.stop_buffer_atr
     valid = [item for item in candidates if item[0] > entry]
@@ -413,7 +413,7 @@ class MtfEntryModelV2:
 
         poi = find_active_poi(self.engine, symbol, timestamp, side, self.config)
         if poi is None:
-            reasons.append("no_active_4h_or_daily_poi")
+            reasons.append("no_active_htf_poi")
 
         h1_rows = _bars_asof(self.engine.bars["1h"], symbol, timestamp)
         h1_raid = detect_liquidity_raid(h1_rows, side, timestamp)
