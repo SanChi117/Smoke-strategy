@@ -1,0 +1,5 @@
+CAUSAL_CLEANSHOT_SMC_FEATURES_V1
+triggered_after_long_short_regime_families_block
+fixed_development_period=2025-01-01..2026-06-30
+strict_oos_windows=10
+external_holdout=false
