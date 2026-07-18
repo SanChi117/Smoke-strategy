@@ -53,7 +53,7 @@
         "HTF_TARGET"
       ],
       "required_context": ["daily_or_h4_bearish", "price_at_premium_or_bearish_poi"],
-      "required_trigger": ["closed_h1_bsl_raid_or_rejection", "closed_5m_body_below_confirmed_pivot", "5m_displacement_or_imbalance"],
+      "required_trigger": ["closed_h1_bsl_raid_or_rejection", "closed_5m_bos_body_below_confirmed_pivot", "5m_displacement_or_imbalance"],
       "stop_anchor": "confirmed_strong_high_or_poi_invalidation",
       "target_anchor": "nearest_valid_1h_or_4h_eql_ssl_or_weak_low",
       "expected_entry_timeframe": "15m",
@@ -75,7 +75,7 @@
         "HTF_TARGET"
       ],
       "required_context": ["daily_or_h4_bullish", "price_at_discount_or_bullish_poi"],
-      "required_trigger": ["closed_h1_ssl_raid_or_rejection", "closed_5m_body_above_confirmed_pivot", "5m_displacement_or_imbalance"],
+      "required_trigger": ["closed_h1_ssl_raid_or_rejection", "closed_5m_bos_body_above_confirmed_pivot", "5m_displacement_or_imbalance"],
       "stop_anchor": "confirmed_strong_low_or_poi_invalidation",
       "target_anchor": "nearest_valid_1h_or_4h_eqh_bsl_or_weak_high",
       "expected_entry_timeframe": "15m",
