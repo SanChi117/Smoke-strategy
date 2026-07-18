@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-"""Stateful 1H reaction -> 5m BOS -> next 15m open entry model.
+"""Stateful H1 confirmation -> 5m BOS -> next 15m open entry model.
 
-The module consumes the recognition core from ``mtf_dealing_range_v2``. It uses
-hard causal/invalidation rules and a soft quality score. It creates research
-plans only; it never sends paper or live orders.
+Research only. This module never sends paper or live orders.
 """
 from __future__ import annotations
 
@@ -23,6 +21,10 @@ from strategy_lab.mtf_dealing_range_v2 import (
 )
 from strategy_lab.mtf_liquidity_map_v2 import build_liquidity_map
 from strategy_lab.mtf_raid_signal_v2 import RaidSignal, detect_h1_raid_signal
+from strategy_lab.mtf_volume_confirmation_v2 import (
+    VolumeConfirmationSignal,
+    detect_h1_volume_confirmation,
+)
 
 
 @dataclass(frozen=True)
@@ -67,6 +69,8 @@ class EntryPlan:
     h1_raid: bool
     raid: RaidSignal | None
     h1_reaction: bool
+    h1_vc: bool
+    volume_confirmation: VolumeConfirmationSignal | None
     bos: BosSignal | None
     event_blocked: bool
     event_risk_multiplier: float
@@ -89,8 +93,7 @@ def _atr(rows: Sequence[ClosedBar], length: int = 14) -> float | None:
     if len(rows) < length:
         return None
     start = len(rows) - length
-    values = [_true_range(rows, index) for index in range(start, len(rows))]
-    return sum(values) / length
+    return sum(_true_range(rows, index) for index in range(start, len(rows))) / length
 
 
 def _level_distance(level: Level, price: float) -> float:
@@ -148,12 +151,8 @@ def find_active_poi(
 
 
 def detect_liquidity_raid(
-    bars: Sequence[ClosedBar],
-    side: str,
-    timestamp: datetime,
-    lookback_bars: int = 4,
+    bars: Sequence[ClosedBar], side: str, timestamp: datetime, lookback_bars: int = 4
 ) -> bool:
-    """Backward-compatible boolean view of the fresh H1 raid signal."""
     return detect_h1_raid_signal(bars, side, timestamp, lookback_bars) is not None
 
 
@@ -164,22 +163,20 @@ def detect_h1_reaction(
     timestamp: datetime,
     lookback_bars: int = 3,
 ) -> bool:
+    """Diagnostic candle reaction; it is not sufficient to arm an entry."""
     if poi is None:
         return False
     rows = [bar for bar in bars if bar.close_time <= timestamp]
     for bar in rows[-lookback_bars:]:
-        touched = bar.low <= poi.high and bar.high >= poi.low
-        if not touched:
+        if not (bar.low <= poi.high and bar.high >= poi.low):
             continue
         full_range = max(1e-12, bar.high - bar.low)
         close_location = (bar.close - bar.low) / full_range
         midpoint = (poi.low + poi.high) / 2.0
-        if side == "long":
-            if bar.close > bar.open and bar.close >= midpoint and close_location >= 0.60:
-                return True
-        else:
-            if bar.close < bar.open and bar.close <= midpoint and close_location <= 0.40:
-                return True
+        if side == "long" and bar.close > bar.open and bar.close >= midpoint and close_location >= 0.60:
+            return True
+        if side == "short" and bar.close < bar.open and bar.close <= midpoint and close_location <= 0.40:
+            return True
     return False
 
 
@@ -190,7 +187,6 @@ def detect_5m_bos(
     config: EntryConfig,
     raid: RaidSignal | None = None,
 ) -> BosSignal | None:
-    """Detect body-close BOS over a pivot confirmed before the signal opened."""
     rows = [bar for bar in bars if bar.close_time <= timestamp]
     if len(rows) < 20:
         return None
@@ -198,11 +194,10 @@ def detect_5m_bos(
     age = timestamp - signal.close_time
     if age < timedelta(0) or age > timedelta(minutes=config.max_bos_age_minutes):
         return None
-    pivots = confirmed_pivots(rows[:-1], 2, 2)
     desired_kind = "high" if side == "long" else "low"
     candidates = [
         pivot
-        for pivot in pivots
+        for pivot in confirmed_pivots(rows[:-1], 2, 2)
         if pivot.kind == desired_kind and pivot.confirmed_at <= signal.open_time
     ]
     if not candidates:
@@ -216,16 +211,13 @@ def detect_5m_bos(
     )
     if not crossed:
         return None
-
     if raid is not None:
         if signal.open_time < raid.raid_bar.close_time:
             return None
-        if side == "long":
-            if not (pivot.price > raid.pivot.price and signal.close > raid.pivot.price):
-                return None
-        else:
-            if not (pivot.price < raid.pivot.price and signal.close < raid.pivot.price):
-                return None
+        if side == "long" and not (pivot.price > raid.pivot.price and signal.close > raid.pivot.price):
+            return None
+        if side == "short" and not (pivot.price < raid.pivot.price and signal.close < raid.pivot.price):
+            return None
 
     atr = _atr(rows) or max(1e-12, signal.high - signal.low)
     full_range = max(1e-12, signal.high - signal.low)
@@ -243,29 +235,17 @@ def detect_5m_bos(
         imbalance = signal.low > left.high if side == "long" else signal.high < left.low
     if not displacement and not imbalance:
         return None
-
     strength = min(
         100.0,
         pivot.strength * 0.45
         + min(35.0, body / max(atr, 1e-12) * 20.0)
         + (15.0 if imbalance else 0.0),
     )
-    return BosSignal(
-        symbol=signal.symbol,
-        side=side,
-        pivot=pivot,
-        signal_bar=signal,
-        displacement=displacement,
-        imbalance=imbalance,
-        strength=round(strength, 4),
-    )
+    return BosSignal(signal.symbol, side, pivot, signal, displacement, imbalance, round(strength, 4))
 
 
 def find_next_15m_entry_bar(
-    bars: Sequence[ClosedBar],
-    symbol: str,
-    timestamp: datetime,
-    bos: BosSignal | None,
+    bars: Sequence[ClosedBar], symbol: str, timestamp: datetime, bos: BosSignal | None
 ) -> ClosedBar | None:
     if bos is None or bos.signal_bar.close_time > timestamp:
         return None
@@ -295,43 +275,39 @@ def _select_stop(
     atr = _atr(h1) if h1 else None
     if atr is None:
         atr = entry * 0.005
-
     if raid is not None:
-        raid_anchor = raid.pivot.price
-        if side == "long" and raid_anchor < entry:
-            return raid_anchor - atr * config.stop_buffer_atr
-        if side == "short" and raid_anchor > entry:
-            return raid_anchor + atr * config.stop_buffer_atr
+        anchor = raid.pivot.price
+        if side == "long" and anchor < entry:
+            return anchor - atr * config.stop_buffer_atr
+        if side == "short" and anchor > entry:
+            return anchor + atr * config.stop_buffer_atr
 
     candidates: list[tuple[float, float, int]] = []
-    timeframe_rank = {"5m": 1, "15m": 2, "1h": 3}
+    rank = {"5m": 1, "15m": 2, "1h": 3}
     for timeframe in ("5m", "15m", "1h"):
         bars = _bars_asof(engine.bars[timeframe], symbol, timestamp)
         for pivot in confirmed_pivots(bars, 2, 2)[-12:]:
             if pivot.strength < config.minimum_structural_strength:
                 continue
             if side == "long" and pivot.kind == "low" and pivot.price < entry:
-                candidates.append((pivot.price, pivot.strength, timeframe_rank[timeframe]))
+                candidates.append((pivot.price, pivot.strength, rank[timeframe]))
             if side == "short" and pivot.kind == "high" and pivot.price > entry:
-                candidates.append((pivot.price, pivot.strength, timeframe_rank[timeframe]))
+                candidates.append((pivot.price, pivot.strength, rank[timeframe]))
     if poi is not None:
-        level_price = poi.low if side == "long" else poi.high
+        price = poi.low if side == "long" else poi.high
         poi_rank = {"1h": 3, "4h": 4, "1d": 5, "1w": 6, "1M": 7}.get(poi.timeframe, 3)
-        candidates.append((level_price, poi.strength, poi_rank))
-    if not candidates:
-        return None
-
+        candidates.append((price, poi.strength, poi_rank))
     if side == "long":
         valid = [item for item in candidates if item[0] < entry]
         if not valid:
             return None
-        structural = max(valid, key=lambda item: (item[0], item[1], item[2]))[0]
-        return structural - atr * config.stop_buffer_atr
+        anchor = max(valid, key=lambda item: (item[0], item[1], item[2]))[0]
+        return anchor - atr * config.stop_buffer_atr
     valid = [item for item in candidates if item[0] > entry]
     if not valid:
         return None
-    structural = min(valid, key=lambda item: (item[0], -item[1], -item[2]))[0]
-    return structural + atr * config.stop_buffer_atr
+    anchor = min(valid, key=lambda item: (item[0], -item[1], -item[2]))[0]
+    return anchor + atr * config.stop_buffer_atr
 
 
 def _select_target(
@@ -352,9 +328,10 @@ def _select_target(
         dealing_range = context.dealing_range
         if dealing_range is None:
             continue
-        values = (dealing_range.weak_level, dealing_range.high) if side == "long" else (
-            dealing_range.weak_level,
-            dealing_range.low,
+        values = (
+            (dealing_range.weak_level, dealing_range.high)
+            if side == "long"
+            else (dealing_range.weak_level, dealing_range.low)
         )
         for value in values:
             if value is None:
@@ -394,13 +371,11 @@ class MtfEntryModelV2:
         side = side.lower()
         if side not in {"long", "short"}:
             raise ValueError("side must be long or short")
-
         snapshot = self.engine.snapshot(symbol, timestamp)
         reasons: list[str] = []
         direction_allowed = snapshot.long_allowed if side == "long" else snapshot.short_allowed
         if not direction_allowed:
             reasons.append(f"context_blocks_{side}:{snapshot.scenario.value}")
-
         event_blocked = bool(event_decision and event_decision.block_new_entry)
         event_multiplier = event_decision.risk_multiplier if event_decision else 1.0
         if event_blocked:
@@ -409,24 +384,24 @@ class MtfEntryModelV2:
         poi = find_active_poi(self.engine, symbol, timestamp, side, self.config)
         if poi is None:
             reasons.append("no_active_htf_poi")
-
         h1_rows = _bars_asof(self.engine.bars["1h"], symbol, timestamp)
         raid = detect_h1_raid_signal(h1_rows, side, timestamp)
         h1_raid = raid is not None
         h1_reaction = detect_h1_reaction(h1_rows, poi, side, timestamp)
-        reaction_ready = poi is not None and (h1_raid or h1_reaction)
-        if poi is not None and not reaction_ready:
-            reasons.append("poi_has_no_closed_h1_reaction_or_raid")
+        vc = detect_h1_volume_confirmation(h1_rows, poi, side, timestamp)
+        h1_vc = vc is not None
+        confirmation_ready = poi is not None and (h1_raid or h1_vc)
+        if poi is not None and not confirmation_ready:
+            reasons.append("poi_has_no_closed_h1_raid_or_vc")
 
         bos = detect_5m_bos(self.engine.bars["5m"], side, timestamp, self.config, raid)
         if bos is None:
             reasons.append("no_confirmed_5m_bos")
-
         if not direction_allowed:
             state = SetupState.NO_CONTEXT
         elif poi is None:
             state = SetupState.H4_RANGE_READY
-        elif not reaction_ready:
+        elif not confirmation_ready:
             state = SetupState.POI_TESTED
         elif bos is None:
             state = SetupState.WAIT_5M_BOS
@@ -437,7 +412,6 @@ class MtfEntryModelV2:
         if bos is not None and entry_bar is None:
             state = SetupState.M15_ARMED
             reasons.append("next_15m_open_not_available_yet")
-
         entry = entry_bar.open if entry_bar is not None else None
         stop = (
             _select_stop(self.engine, symbol, timestamp, side, entry, poi, raid, self.config)
@@ -449,7 +423,6 @@ class MtfEntryModelV2:
             if entry is not None
             else None
         )
-
         rr: float | None = None
         if entry is not None and stop is not None and target is not None:
             risk = entry - stop if side == "long" else stop - entry
@@ -463,25 +436,23 @@ class MtfEntryModelV2:
 
         trend_score = snapshot.scenario_strength * 0.30
         poi_score = (poi.strength if poi else 0.0) * 0.25
-        reaction_score = 15.0 if h1_raid else 10.0 if h1_reaction else 0.0
+        confirmation_score = 15.0 if h1_raid else 12.0 if h1_vc else 3.0 if h1_reaction else 0.0
         bos_score = (bos.strength if bos else 0.0) * 0.20
         target_score = 10.0 if rr is not None and rr >= self.config.min_rr else 0.0
         event_score = 5.0 * max(0.0, min(1.0, event_multiplier))
-        quality = min(100.0, trend_score + poi_score + reaction_score + bos_score + target_score + event_score)
+        quality = min(100.0, trend_score + poi_score + confirmation_score + bos_score + target_score + event_score)
         quality_state = _quality_state(quality)
-
         rr_ok = rr is not None and rr >= self.config.min_rr
         if rr is not None and not rr_ok:
             reasons.append(f"rr_below_min:{rr:.4f}<{self.config.min_rr:.4f}")
         quality_ok = quality >= self.config.min_quality_score
         if not quality_ok:
             reasons.append(f"quality_below_min:{quality:.4f}")
-
         allowed = all(
             (
                 direction_allowed,
                 not event_blocked,
-                reaction_ready,
+                confirmation_ready,
                 bos is not None,
                 entry is not None,
                 stop is not None,
@@ -493,7 +464,6 @@ class MtfEntryModelV2:
         if allowed:
             state = SetupState.ENTRY_READY
             reasons.append("entry_ready_next_15m_open")
-
         return EntryPlan(
             symbol=symbol,
             side=side,
@@ -512,6 +482,8 @@ class MtfEntryModelV2:
             h1_raid=h1_raid,
             raid=raid,
             h1_reaction=h1_reaction,
+            h1_vc=h1_vc,
+            volume_confirmation=vc,
             bos=bos,
             event_blocked=event_blocked,
             event_risk_multiplier=round(event_multiplier, 6),
