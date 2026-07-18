@@ -52,6 +52,8 @@ jobs:
         run: python -m strategy_lab.mtf_vc_zone_test_v2_smoke_test
       - name: Test 5m BOS and next 15m execution
         run: python -m strategy_lab.mtf_entry_model_v2_smoke_test
+      - name: Test full raid and VC entry state machine
+        run: python -m strategy_lab.mtf_entry_state_machine_v2_smoke_test
       - name: Test timeframe-matched FTA targets
         run: python -m strategy_lab.mtf_target_selection_v2_smoke_test
       - name: Test previous D W M liquidity levels
