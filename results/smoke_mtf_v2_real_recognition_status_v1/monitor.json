@@ -1,7 +1,7 @@
 {
-  "run_id": 29673003934,
-  "source_head_sha": "f418e0d240988d4112d5bb82848cb414cb1c4cc7",
-  "status": "cancelled",
+  "run_id": 29681316239,
+  "source_head_sha": "06dd3309e4a86194dda1f2ad46a53c2885b1a905",
+  "status": "failure",
   "mode": "SMOKE_MTF_V2_REAL_RECOGNITION_RUN_V1",
   "pnl_used": false,
   "future_outcomes_used": false,
