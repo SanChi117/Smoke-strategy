@@ -1,3 +1,4 @@
 SMOKE_MTF_V2_REAL_RECOGNITION_RUN_V1
 Triggered after frozen recognition contract and green causal CI.
 PnL and future outcomes are forbidden.
+Rerun 2: execution-only symbol partitioning; frozen contract unchanged.
