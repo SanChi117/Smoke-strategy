@@ -14,7 +14,7 @@ env:
 jobs:
   real-recognition:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 360
     steps:
       - name: Checkout research branch
         uses: actions/checkout@v4
@@ -56,7 +56,7 @@ jobs:
             --scan-start '2025-02-01T00:00:00' \
             --scan-end '2025-02-08T00:00:00' \
             --per-group 4 \
-            --workers 2 \
+            --workers 5 \
             --out-dir results/smoke_mtf_v2_real_recognition_v1
       - name: Enforce no-PnL output contract
         run: |
