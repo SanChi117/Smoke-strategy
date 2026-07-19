@@ -91,7 +91,7 @@ def _context_range_candidates(
                 price=value,
                 timeframe=timeframe,
                 source=source,
-                strength=dealing_range.strength,
+                strength=dealing_range.direction_strength,
             )
         )
     return output
