@@ -12,106 +12,204 @@ env:
   PYTHONUNBUFFERED: '1'
 
 jobs:
-  real-recognition:
+  recognition-shard:
+    name: recognition-${{ matrix.symbol }}-${{ matrix.shard.id }}
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+        shard:
+          - {id: d01, start: '2025-02-01T00:00:00', end: '2025-02-02T00:00:00'}
+          - {id: d02, start: '2025-02-02T00:00:00', end: '2025-02-03T00:00:00'}
+          - {id: d03, start: '2025-02-03T00:00:00', end: '2025-02-04T00:00:00'}
+          - {id: d04, start: '2025-02-04T00:00:00', end: '2025-02-05T00:00:00'}
+          - {id: d05, start: '2025-02-05T00:00:00', end: '2025-02-06T00:00:00'}
+          - {id: d06, start: '2025-02-06T00:00:00', end: '2025-02-07T00:00:00'}
+          - {id: d07, start: '2025-02-07T00:00:00', end: '2025-02-08T00:00:00'}
     steps:
-      - name: Checkout research branch
+      - name: Checkout frozen research branch
         uses: actions/checkout@v4
         with:
           ref: agent/smoke-mtf-dealing-range-v2
-          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install and verify no-outcome exporter
+      - name: Install and verify frozen exporter
         run: |
           python -m pip install --upgrade pip
           pip install -e .
           python -m py_compile strategy_lab/mtf_recognition_export_v2.py scripts/export_smoke_mtf_v2_recognition_candidates.py
           python -m strategy_lab.mtf_recognition_export_v2_smoke_test
           python -m strategy_lab.mtf_entry_state_machine_v2_smoke_test
-      - name: Download fixed Binance Futures 5m history
+      - name: Create one-symbol frozen universe
+        run: printf '%s\n' '${{ matrix.symbol }}' > "$RUNNER_TEMP/symbol.txt"
+      - name: Download fixed Binance Futures history
         run: |
           python scripts/download_binance_vision_futures_archives.py \
-            --symbols-file research/smoke_mtf_v2_recognition_universe.txt \
+            --symbols-file "$RUNNER_TEMP/symbol.txt" \
             --interval 5m --start-date '2024-07-01' --end-date '2025-02-08' \
-            --out-dir "$RUNNER_TEMP/binance-smoke-mtf-v2-recognition" \
-            --summary-json results/smoke_mtf_v2_real_recognition_v1/archive_download_summary.json \
-            --workers 8 --retries 2 --timeout 30
+            --out-dir "$RUNNER_TEMP/binance-${{ matrix.symbol }}" \
+            --summary-json "$RUNNER_TEMP/archive_download_summary.json" \
+            --workers 4 --retries 2 --timeout 30
       - name: Merge and verify closed candles
         run: |
           python scripts/merge_binance_vision_futures_klines.py \
-            --input-dir "$RUNNER_TEMP/binance-smoke-mtf-v2-recognition" \
-            --out "$RUNNER_TEMP/smoke-mtf-v2-recognition-5m.csv" \
-            --symbols-file research/smoke_mtf_v2_recognition_universe.txt \
+            --input-dir "$RUNNER_TEMP/binance-${{ matrix.symbol }}" \
+            --out "$RUNNER_TEMP/${{ matrix.symbol }}-5m.csv" \
+            --symbols-file "$RUNNER_TEMP/symbol.txt" \
             --interval 5m --start-date '2024-07-01' --end-date '2025-02-08' \
-            --summary-json results/smoke_mtf_v2_real_recognition_v1/archive_merge_summary.json \
+            --summary-json "$RUNNER_TEMP/archive_merge_summary.json" \
             --min-coverage 0.95
-      - name: Export real recognition states without PnL
+      - name: Export one frozen symbol-day shard without PnL
         run: |
           python scripts/export_smoke_mtf_v2_recognition_candidates.py \
-            --candles "$RUNNER_TEMP/smoke-mtf-v2-recognition-5m.csv" \
-            --scan-start '2025-02-01T00:00:00' \
-            --scan-end '2025-02-08T00:00:00' \
-            --per-group 4 \
-            --workers 5 \
-            --out-dir results/smoke_mtf_v2_real_recognition_v1
-      - name: Enforce no-PnL output contract
+            --candles "$RUNNER_TEMP/${{ matrix.symbol }}-5m.csv" \
+            --scan-start '${{ matrix.shard.start }}' \
+            --scan-end '${{ matrix.shard.end }}' \
+            --per-group 4 --workers 1 \
+            --out-dir "$RUNNER_TEMP/recognition-part"
+      - name: Enforce shard no-PnL contract
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           from strategy_lab.mtf_recognition_export_v2 import assert_no_outcome_fields
-          root = Path('results/smoke_mtf_v2_real_recognition_v1')
+          root = Path('${{ runner.temp }}') / 'recognition-part'
           for name in ('summary.json', 'recognition_candidates.json'):
-              payload = json.loads((root / name).read_text(encoding='utf-8'))
-              assert_no_outcome_fields(payload)
+              assert_no_outcome_fields(json.loads((root / name).read_text(encoding='utf-8')))
+          PY
+      - name: Attach shard metadata
+        run: |
+          cp "$RUNNER_TEMP/archive_download_summary.json" "$RUNNER_TEMP/recognition-part/archive_download_summary.json"
+          cp "$RUNNER_TEMP/archive_merge_summary.json" "$RUNNER_TEMP/recognition-part/archive_merge_summary.json"
+      - name: Upload recognition shard
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-mtf-v2-real-recognition-part-${{ matrix.symbol }}-${{ matrix.shard.id }}
+          path: ${{ runner.temp }}/recognition-part/**
+          if-no-files-found: error
+          retention-days: 7
+
+  aggregate-recognition:
+    name: aggregate-35-frozen-shards
+    needs: recognition-shard
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout frozen research branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/smoke-mtf-dealing-range-v2
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install merger
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          python -m py_compile scripts/merge_smoke_mtf_v2_recognition_parts.py
+          python -m strategy_lab.mtf_recognition_partition_merge_smoke_test
+      - name: Download all frozen shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: smoke-mtf-v2-real-recognition-part-*
+          path: ${{ runner.temp }}/recognition-parts
+          merge-multiple: false
+      - name: Merge with original global chronological rule
+        run: |
+          python scripts/merge_smoke_mtf_v2_recognition_parts.py \
+            --parts-root "$RUNNER_TEMP/recognition-parts" \
+            --out-dir "$RUNNER_TEMP/combined-recognition" \
+            --scan-start '2025-02-01T00:00:00' \
+            --scan-end '2025-02-08T00:00:00' \
+            --per-group 4 --expected-parts 35
+      - name: Enforce combined no-PnL contract
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from strategy_lab.mtf_recognition_export_v2 import assert_no_outcome_fields
+          root = Path('${{ runner.temp }}') / 'combined-recognition'
+          for name in ('summary.json', 'recognition_candidates.json'):
+              assert_no_outcome_fields(json.loads((root / name).read_text(encoding='utf-8')))
           text = (root / 'recognition_candidates.csv').read_text(encoding='utf-8').lower()
           forbidden = ('pnl', 'future_return', 'realized_return', 'tp_hit', 'sl_hit', 'mfe', 'mae')
           found = [token for token in forbidden if token in text]
           if found:
               raise RuntimeError(f'forbidden outcome fields in CSV: {found}')
-          print('No-PnL output contract: OK')
+          print('Combined no-PnL output contract: OK')
           PY
-      - name: Upload full recognition audit
+      - name: Upload combined recognition result
         uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: smoke-mtf-v2-real-recognition-v1
-          path: |
-            results/smoke_mtf_v2_real_recognition_v1/**
-            research/smoke_mtf_v2_real_recognition_run_v1.json
-            research/smoke_mtf_v2_recognition_universe.txt
-          if-no-files-found: warn
-      - name: Commit compact recognition result and monitor
-        if: always()
+          name: smoke-mtf-v2-real-recognition-v1-combined
+          path: ${{ runner.temp }}/combined-recognition/**
+          if-no-files-found: error
+          retention-days: 14
+
+  record-result:
+    name: record-recognition-result
+    if: always()
+    needs: [recognition-shard, aggregate-recognition]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout research branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/smoke-mtf-dealing-range-v2
+          fetch-depth: 0
+      - name: Download combined result on success
+        if: needs.aggregate-recognition.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: smoke-mtf-v2-real-recognition-v1-combined
+          path: ${{ runner.temp }}/combined-recognition
+      - name: Commit compact result and monitor
+        env:
+          SHARD_RESULT: ${{ needs.recognition-shard.result }}
+          AGGREGATE_RESULT: ${{ needs.aggregate-recognition.result }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git pull --rebase origin agent/smoke-mtf-dealing-range-v2
           mkdir -p results/smoke_mtf_v2_real_recognition_status_v1
+          if [ "$AGGREGATE_RESULT" = "success" ]; then
+            mkdir -p results/smoke_mtf_v2_real_recognition_v1
+            find "$RUNNER_TEMP/combined-recognition" -name summary.json -exec cp {} results/smoke_mtf_v2_real_recognition_v1/summary.json \;
+            find "$RUNNER_TEMP/combined-recognition" -name recognition_candidates.csv -exec cp {} results/smoke_mtf_v2_real_recognition_v1/recognition_candidates.csv \;
+          fi
           python - <<'PY'
           import json, os
           from pathlib import Path
+          success = os.environ.get('AGGREGATE_RESULT') == 'success'
           payload = {
               'run_id': int(os.environ['GITHUB_RUN_ID']),
               'source_head_sha': os.environ['GITHUB_SHA'],
-              'status': '${{ job.status }}',
+              'status': 'success' if success else 'failure',
+              'shard_result': os.environ.get('SHARD_RESULT'),
+              'aggregate_result': os.environ.get('AGGREGATE_RESULT'),
+              'execution': '5_symbols_x_7_days_35_shards',
               'mode': 'SMOKE_MTF_V2_REAL_RECOGNITION_RUN_V1',
               'pnl_used': False,
               'future_outcomes_used': False,
               'history_period': '2024-07-01 through 2025-02-08',
               'scan_period': '2025-02-01 through 2025-02-08',
+              'selection_rule': 'first 4 chronologically per symbol, side and setup_state',
           }
           Path('results/smoke_mtf_v2_real_recognition_status_v1/monitor.json').write_text(
               json.dumps(payload, indent=2) + '\n', encoding='utf-8'
           )
           PY
           git add results/smoke_mtf_v2_real_recognition_status_v1/monitor.json
-          for file in summary.json recognition_candidates.csv archive_download_summary.json archive_merge_summary.json; do
-            test -f "results/smoke_mtf_v2_real_recognition_v1/$file" && git add "results/smoke_mtf_v2_real_recognition_v1/$file"
-          done
-          git commit -m 'Record first real no-PnL MTF recognition run' || exit 0
+          if [ "$AGGREGATE_RESULT" = "success" ]; then
+            git add results/smoke_mtf_v2_real_recognition_v1/summary.json
+            git add results/smoke_mtf_v2_real_recognition_v1/recognition_candidates.csv
+          fi
+          git commit -m 'Record sharded no-PnL MTF recognition run' || exit 0
           git push origin HEAD:agent/smoke-mtf-dealing-range-v2
