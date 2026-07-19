@@ -1,4 +1,4 @@
 SMOKE_MTF_V2_REAL_RECOGNITION_RUN_V1
-Triggered after frozen recognition contract and green causal CI.
+Recognition contract unchanged.
 PnL and future outcomes are forbidden.
-Rerun 4: execution-only 5-symbol x 7-day sharding; frozen contract unchanged.
+Rerun 5: one job per symbol; results stored as workflow artifacts.
