@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+from types import SimpleNamespace
 
 from strategy_lab.mtf_dealing_range_v2 import ClosedBar, Level, Pivot
 from strategy_lab.mtf_raid_signal_v2 import RaidSignal
-from strategy_lab.mtf_target_selection_v2 import directional_target_levels, preferred_target_timeframe
+from strategy_lab.mtf_target_selection_v2 import (
+    _context_range_candidates,
+    directional_target_levels,
+    preferred_target_timeframe,
+)
 
 
 BASE = datetime(2026, 1, 1)
@@ -86,11 +91,33 @@ def test_directional_filter_rejects_levels_behind_entry() -> None:
     assert directional_target_levels(levels, "short", 100.0, "1h") == []
 
 
+def test_context_range_target_uses_direction_strength_field() -> None:
+    dealing_range = SimpleNamespace(
+        symbol="BTCUSDT",
+        weak_level=104.0,
+        high=106.0,
+        low=94.0,
+        direction_strength=63.5,
+    )
+    context = SimpleNamespace(dealing_range=dealing_range)
+    snapshot = SimpleNamespace(
+        h1=context,
+        h4=context,
+        daily=context,
+        weekly=context,
+        monthly=context,
+    )
+    candidates = _context_range_candidates(snapshot, "4h", "long", 100.0)
+    assert [item.source for item in candidates] == ["weak_high", "range_high"]
+    assert all(item.strength == 63.5 for item in candidates)
+
+
 def main() -> int:
     test_raid_uses_raid_timeframe()
     test_poi_uses_its_tradable_timeframe()
     test_closer_wrong_timeframe_target_is_ignored()
     test_directional_filter_rejects_levels_behind_entry()
+    test_context_range_target_uses_direction_strength_field()
     print("SMOKE MTF V2 target selection tests: OK")
     return 0
 
