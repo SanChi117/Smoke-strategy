@@ -23,12 +23,9 @@ jobs:
           PR_NUMBER: '2'
         run: |
           python - <<'PY'
-          import io, json, os, urllib.request, zipfile
+          import io, json, os, urllib.error, urllib.request, zipfile
           marker = '<!-- smoke-mtf-v2-semantic-replay-status -->'
-          token = os.environ['GH_TOKEN']
-          repo = os.environ['REPO']
-          sha = os.environ['TARGET_SHA']
-          pr = os.environ['PR_NUMBER']
+          token = os.environ['GH_TOKEN']; repo = os.environ['REPO']; sha = os.environ['TARGET_SHA']; pr = os.environ['PR_NUMBER']
           def req(path, method='GET', payload=None):
               url = path if path.startswith('http') else f'https://api.github.com{path}'
               data = None if payload is None else json.dumps(payload).encode()
@@ -37,11 +34,14 @@ jobs:
               r.add_header('Accept', 'application/vnd.github+json')
               r.add_header('X-GitHub-Api-Version', '2022-11-28')
               if data is not None: r.add_header('Content-Type','application/json')
-              with urllib.request.urlopen(r, timeout=60) as x:
-                  raw=x.read(); ct=x.headers.get('Content-Type','')
-                  return json.loads(raw.decode()) if 'json' in ct else raw
-          runs=req(f'/repos/{repo}/actions/runs?head_sha={sha}&per_page=100').get('workflow_runs',[])
-          runs=[r for r in runs if r.get('name')=='SMOKE MTF V2 Semantic Replay V1']
+              try:
+                  with urllib.request.urlopen(r, timeout=60) as x:
+                      raw=x.read(); ct=x.headers.get('Content-Type','')
+                      return json.loads(raw.decode()) if 'json' in ct else raw
+              except urllib.error.HTTPError as e:
+                  raise RuntimeError(f'GitHub API {e.code} {url}: {e.read().decode(errors="replace")}') from e
+          payload=req(f'/repos/{repo}/actions/workflows/smoke-mtf-v2-semantic-replay-v1.yml/runs?branch=agent%2Fsmoke-mtf-dealing-range-v2&per_page=50')
+          runs=[r for r in payload.get('workflow_runs',[]) if r.get('head_sha')==sha]
           if not runs:
               body=f'{marker}\n## SMOKE MTF V2 — semantic replay\n\n- Target SHA: `{sha}`\n- Status: **RUN_NOT_FOUND**'
           else:
@@ -53,15 +53,12 @@ jobs:
                   if art:
                       raw=req(art['archive_download_url'])
                       with zipfile.ZipFile(io.BytesIO(raw)) as z:
-                          names=z.namelist()
-                          summary_name=next((n for n in names if n.endswith('summary.json')),None)
+                          summary_name=next((n for n in z.namelist() if n.endswith('summary.json')),None)
                           if summary_name:
                               s=json.loads(z.read(summary_name).decode())
                               lines += ['', '### Result', f"- Exact replay matches: **{s.get('exact_replay_matches')}**", f"- Exact replay mismatches: **{s.get('exact_replay_mismatches')}**", f"- Entry-ready cases: **{s.get('entry_ready_cases')}**", '- No-PnL/outcome-field exclusion: **PASS**' if run.get('conclusion')=='success' else '- No-PnL/outcome-field exclusion: **not confirmed**']
-                          else:
-                              lines += ['', '- Artifact exists, but summary.json is missing.']
-                  else:
-                      lines += ['', '- Semantic replay artifact is missing.']
+                          else: lines += ['', '- Artifact exists, but summary.json is missing.']
+                  else: lines += ['', '- Semantic replay artifact is missing.']
               body='\n'.join(lines)
           comments=req(f'/repos/{repo}/issues/{pr}/comments?per_page=100')
           existing=next((c for c in comments if marker in str(c.get('body',''))),None)
