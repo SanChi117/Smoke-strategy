@@ -32,7 +32,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .
-          python -m py_compile strategy_lab/mtf_recognition_export_v2.py scripts/export_smoke_mtf_v2_recognition_candidates.py
+          python -m py_compile \
+            strategy_lab/mtf_recognition_fast_runtime_v2.py \
+            strategy_lab/mtf_recognition_export_v2.py \
+            scripts/export_smoke_mtf_v2_recognition_candidates.py
+          python -m strategy_lab.mtf_recognition_fast_runtime_v2_smoke_test
           python -m strategy_lab.mtf_recognition_export_v2_smoke_test
           python -m strategy_lab.mtf_entry_state_machine_v2_smoke_test
       - name: Create one-symbol frozen universe
@@ -56,12 +60,14 @@ jobs:
             --min-coverage 0.95
       - name: Export frozen symbol without PnL
         run: |
-          python scripts/export_smoke_mtf_v2_recognition_candidates.py \
-            --candles "$RUNNER_TEMP/${{ matrix.symbol }}-5m.csv" \
-            --scan-start '2025-02-01T00:00:00' \
-            --scan-end '2025-02-08T00:00:00' \
-            --per-group 4 --workers 1 \
-            --out-dir "$RUNNER_TEMP/recognition-part"
+          mkdir -p "$RUNNER_TEMP/recognition-part"
+          /usr/bin/time -v -o "$RUNNER_TEMP/recognition-part/performance.txt" \
+            python scripts/export_smoke_mtf_v2_recognition_candidates.py \
+              --candles "$RUNNER_TEMP/${{ matrix.symbol }}-5m.csv" \
+              --scan-start '2025-02-01T00:00:00' \
+              --scan-end '2025-02-08T00:00:00' \
+              --per-group 4 --workers 1 \
+              --out-dir "$RUNNER_TEMP/recognition-part"
       - name: Enforce symbol no-PnL contract
         run: |
           python - <<'PY'
@@ -105,8 +111,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .
-          python -m py_compile scripts/merge_smoke_mtf_v2_recognition_parts.py
+          python -m py_compile \
+            scripts/merge_smoke_mtf_v2_recognition_parts.py \
+            scripts/build_smoke_mtf_v2_review_queue.py
           python -m strategy_lab.mtf_recognition_partition_merge_smoke_test
+          python -m strategy_lab.mtf_review_queue_smoke_test
       - name: Download all five frozen symbol results
         uses: actions/download-artifact@v4
         with:
@@ -137,13 +146,19 @@ jobs:
               raise RuntimeError(f'forbidden outcome fields in CSV: {found}')
           print('Combined no-PnL output contract: OK')
           PY
+      - name: Build balanced causal review queue
+        run: |
+          python scripts/build_smoke_mtf_v2_review_queue.py \
+            --candidates-json "$RUNNER_TEMP/combined-recognition/recognition_candidates.json" \
+            --out-dir "$RUNNER_TEMP/combined-recognition/review_queue"
       - name: Write visible workflow summary
         run: |
           python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import json
           from pathlib import Path
-          p = Path('${{ runner.temp }}') / 'combined-recognition' / 'summary.json'
-          data = json.loads(p.read_text(encoding='utf-8'))
+          root = Path('${{ runner.temp }}') / 'combined-recognition'
+          data = json.loads((root / 'summary.json').read_text(encoding='utf-8'))
+          queue = json.loads((root / 'review_queue' / 'recognition_review_queue.json').read_text(encoding='utf-8'))
           print('## SMOKE MTF V2 real recognition')
           print('')
           print('- Status: **success**')
@@ -151,6 +166,7 @@ jobs:
           print(f"- Side snapshots: **{data['evaluated_side_snapshots']}**")
           print(f"- Qualifying snapshots: **{data['qualifying_snapshots']}**")
           print(f"- Selected review snapshots: **{data['selected_snapshots']}**")
+          print(f"- Causal review packets: **{queue['row_count']}**")
           print('- PnL/future outcomes: **not used**')
           PY
       - name: Upload combined recognition result
