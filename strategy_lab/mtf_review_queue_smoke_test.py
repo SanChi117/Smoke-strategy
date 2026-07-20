@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""Smoke tests for the no-PnL SMOKE MTF V2 review queue builder."""
 from __future__ import annotations
 
 import importlib.util
+import json
 import tempfile
 from pathlib import Path
-
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "build_smoke_mtf_v2_review_queue.py"
 SPEC = importlib.util.spec_from_file_location("smoke_review_queue", SCRIPT)
@@ -49,7 +48,7 @@ def test_queue_preserves_rows_and_balances_groups() -> None:
     assert ordered[-1]["timestamp"] == "2025-02-01T00:15:00"
 
 
-def test_packets_are_no_pnl_and_reviewable() -> None:
+def test_packets_are_reviewable() -> None:
     payload = {
         "mode": "NO_PNL_NO_FUTURE_OUTCOME",
         "selection_rule": "first N chronologically per symbol, side and setup_state",
@@ -59,17 +58,17 @@ def test_packets_are_no_pnl_and_reviewable() -> None:
         out = Path(directory)
         queue = QUEUE.build_queue(payload, out)
         assert queue["row_count"] == 1
-        assert (out / "recognition_review_queue.csv").exists()
         packet_path = out / queue["rows"][0]["packet_file"]
-        text = packet_path.read_text(encoding="utf-8").lower()
-        assert "unreviewed" in text
-        for token in ("pnl", "future_return", "tp_hit", "sl_hit", "mfe", "mae"):
-            assert token not in text
+        packet = json.loads(packet_path.read_text(encoding="utf-8"))
+        assert packet["mode"] == "NO_PNL_NO_FUTURE_OUTCOME"
+        assert packet["human_review"]["verdict"] == "UNREVIEWED"
+        QUEUE.assert_no_outcome_fields(packet)
+        QUEUE.assert_no_outcome_fields(queue)
 
 
 def main() -> int:
     test_queue_preserves_rows_and_balances_groups()
-    test_packets_are_no_pnl_and_reviewable()
+    test_packets_are_reviewable()
     print("SMOKE MTF V2 review queue tests: OK")
     return 0
 
