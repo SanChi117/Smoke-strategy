@@ -13,6 +13,9 @@ from typing import Any
 
 MARKER = "<!-- smoke-mtf-v2-export-diagnostic-status -->"
 FORBIDDEN = ("pnl", "future_return", "realized_return", "tp_hit", "sl_hit", "mfe", "mae")
+JOB_LIMIT_MINUTES = 340.0
+SAFETY_FRACTION = 0.80
+SAFE_PROJECTION_MINUTES = JOB_LIMIT_MINUTES * SAFETY_FRACTION
 
 
 def request(path_or_url: str, method: str = "GET", payload: Any | None = None) -> Any:
@@ -58,11 +61,16 @@ def parse_log(text: str) -> dict[str, Any]:
     elapsed_raw, elapsed_seconds = parse_elapsed(text)
     rss = re.search(r"Maximum resident set size \(kbytes\):\s*(\d+)", text)
     status = re.search(r"Exit status:\s*(\d+)", text)
+    projection = elapsed_seconds * 7.0 / 60.0 if elapsed_seconds is not None else None
+    exit_status = int(status.group(1)) if status else None
     return {
         "elapsed_raw": elapsed_raw,
         "elapsed_seconds": elapsed_seconds,
         "max_rss_kb": int(rss.group(1)) if rss else None,
-        "process_exit_status": int(status.group(1)) if status else None,
+        "process_exit_status": exit_status,
+        "projected_seven_day_minutes": round(projection, 4) if projection is not None else None,
+        "safe_projection_limit_minutes": SAFE_PROJECTION_MINUTES,
+        "full_run_time_gate": "PASS" if exit_status == 0 and projection is not None and projection <= SAFE_PROJECTION_MINUTES else "BLOCK",
     }
 
 
@@ -99,6 +107,8 @@ def analyse_artifact(artifact: dict[str, Any], out: Path) -> dict[str, Any]:
         result["no_pnl_contract"] = "PASS"
     else:
         result["summary_missing"] = True
+    perf = result.get("performance") or {}
+    result["full_run_gate"] = "PASS" if perf.get("full_run_time_gate") == "PASS" and result.get("no_pnl_contract") == "PASS" else "BLOCK"
     return result
 
 
@@ -121,11 +131,10 @@ def render(report: dict[str, Any]) -> str:
             f"- Wall time: **{perf.get('elapsed_raw')}**",
             f"- Peak RSS: **{perf.get('max_rss_kb')} kB**",
             f"- Process exit: **{perf.get('process_exit_status')}**",
+            f"- Linear 7-day projection: **{perf.get('projected_seven_day_minutes')} min**",
+            f"- Safe projection limit: **{perf.get('safe_projection_limit_minutes')} min**",
+            f"- Full-run time gate: **{perf.get('full_run_time_gate')}**",
         ]
-        seconds = perf.get("elapsed_seconds")
-        if seconds is not None:
-            projected = seconds * 7 / 60
-            lines.append(f"- Linear 7-day projection: **{projected:.2f} min**")
     if summary:
         lines += [
             f"- Evaluated 15m bars: **{summary.get('evaluated_15m_bars', 0)}**",
@@ -134,6 +143,8 @@ def render(report: dict[str, Any]) -> str:
             f"- No-PnL contract: **{diagnostic.get('no_pnl_contract')}**",
             f"- Execution cache: `{json.dumps(summary.get('execution_cache', {}), ensure_ascii=False)}`",
         ]
+    if diagnostic:
+        lines.append(f"- Combined technical gate: **{diagnostic.get('full_run_gate', 'BLOCK')}**")
     lines += ["", "Trading rules, thresholds, periods and sampling were not changed."]
     return "\n".join(lines)
 
