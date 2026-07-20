@@ -22,11 +22,15 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install exporter
+      - name: Install exporter and prove output equivalence
         run: |
           python -m pip install --upgrade pip
           pip install -e .
-          python -m py_compile strategy_lab/mtf_recognition_export_v2.py scripts/export_smoke_mtf_v2_recognition_candidates.py
+          python -m py_compile \
+            strategy_lab/mtf_recognition_fast_runtime_v2.py \
+            strategy_lab/mtf_recognition_export_v2.py \
+            scripts/export_smoke_mtf_v2_recognition_candidates.py
+          python -m strategy_lab.mtf_recognition_fast_runtime_v2_smoke_test
           python -m strategy_lab.mtf_recognition_export_v2_smoke_test
       - name: Prepare fixed SOL history
         run: |
