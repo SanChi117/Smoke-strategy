@@ -1,0 +1,46 @@
+name: SMOKE MTF V2 Status Probe
+
+on:
+  push:
+    branches: ['agent/smoke-mtf-dealing-range-v2']
+    paths: ['research_triggers/smoke_mtf_v2_status_probe.txt']
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+
+jobs:
+  probe-frozen-real-recognition:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout probe code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Read frozen target SHA
+        shell: bash
+        run: |
+          target="$(head -n 1 research_triggers/smoke_mtf_v2_status_probe.txt | tr -d '[:space:]')"
+          test -n "$target"
+          echo "TARGET_SHA=$target" >> "$GITHUB_ENV"
+      - name: Compile probe
+        run: python -m py_compile scripts/probe_smoke_mtf_v2_real_recognition.py
+      - name: Probe run, validate artifact and update PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: '2'
+          WORKFLOW_NAME: SMOKE MTF V2 Real Recognition V1
+          OUT_DIR: results/smoke_mtf_v2_status_probe
+        run: python scripts/probe_smoke_mtf_v2_real_recognition.py
+      - name: Upload probe and review queue
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-mtf-v2-status-probe
+          path: results/smoke_mtf_v2_status_probe/**
+          if-no-files-found: warn
+          retention-days: 14
