@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Build a balanced, no-PnL review queue from frozen recognition candidates."""
+"""Build a balanced, outcome-blind review queue from frozen recognition candidates."""
 from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
-from collections import defaultdict, deque
+from collections import Counter, defaultdict, deque
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +19,9 @@ QUEUE_FIELDS = [
     "side",
     "setup_state",
     "stage_rank",
+    "case_fingerprint",
+    "cluster_size",
+    "cluster_occurrence",
     "scenario",
     "daily_state",
     "h4_state",
@@ -38,6 +42,40 @@ QUEUE_FIELDS = [
 
 def _key(row: dict[str, Any]) -> tuple[str, str, str]:
     return str(row.get("setup_state", "")), str(row.get("side", "")), str(row.get("symbol", ""))
+
+
+def case_fingerprint(row: dict[str, Any]) -> str:
+    """Identify repeated structural snapshots without using timestamp or outcomes."""
+    poi = row.get("poi") or {}
+    identity = {
+        "symbol": row.get("symbol"),
+        "side": row.get("side"),
+        "setup_state": row.get("setup_state"),
+        "scenario": row.get("scenario"),
+        "monthly_state": row.get("monthly_state"),
+        "weekly_state": row.get("weekly_state"),
+        "daily_state": row.get("daily_state"),
+        "h4_state": row.get("h4_state"),
+        "h1_state": row.get("h1_state"),
+        "poi": {
+            "timeframe": poi.get("timeframe"),
+            "kind": poi.get("kind"),
+            "side": poi.get("side"),
+            "low": poi.get("low"),
+            "high": poi.get("high"),
+            "confirmed_at": poi.get("confirmed_at"),
+            "source": poi.get("source"),
+        },
+        "h1_raid": row.get("h1_raid"),
+        "h1_vc": row.get("h1_vc"),
+        "vc_zone_test": row.get("vc_zone_test"),
+        "m5_bos": row.get("m5_bos"),
+        "entry_ready": row.get("entry_ready"),
+        "target_timeframe": row.get("target_timeframe"),
+        "target_source": row.get("target_source"),
+    }
+    raw = json.dumps(identity, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 
 
 def balanced_review_order(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -68,11 +106,20 @@ def balanced_review_order(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return ordered
 
 
-def packet_payload(row: dict[str, Any], review_index: int) -> dict[str, Any]:
+def packet_payload(
+    row: dict[str, Any],
+    review_index: int,
+    fingerprint: str,
+    cluster_size: int,
+    cluster_occurrence: int,
+) -> dict[str, Any]:
     packet = {
         "study_id": "SMOKE_MTF_V2_RECOGNITION_REVIEW_PACKET",
         "mode": "NO_PNL_NO_FUTURE_OUTCOME",
         "review_index": review_index,
+        "case_fingerprint": fingerprint,
+        "cluster_size": cluster_size,
+        "cluster_occurrence": cluster_occurrence,
         "timestamp": row.get("timestamp"),
         "symbol": row.get("symbol"),
         "side": row.get("side"),
@@ -145,12 +192,17 @@ def build_queue(payload: dict[str, Any], out_dir: Path) -> dict[str, Any]:
     if not isinstance(rows, list):
         raise RuntimeError("candidates list missing")
     ordered = balanced_review_order(rows)
+    fingerprints = [case_fingerprint(row) for row in ordered]
+    cluster_sizes = Counter(fingerprints)
+    cluster_seen: Counter[str] = Counter()
     packets_dir = out_dir / "packets"
     packets_dir.mkdir(parents=True, exist_ok=True)
     queue_rows: list[dict[str, Any]] = []
-    for index, row in enumerate(ordered, start=1):
+    for index, (row, fingerprint) in enumerate(zip(ordered, fingerprints), start=1):
+        cluster_seen[fingerprint] += 1
+        occurrence = cluster_seen[fingerprint]
         packet_name = f"{index:04d}_{row.get('symbol')}_{row.get('side')}_{row.get('setup_state')}.json"
-        packet = packet_payload(row, index)
+        packet = packet_payload(row, index, fingerprint, cluster_sizes[fingerprint], occurrence)
         (packets_dir / packet_name).write_text(json.dumps(packet, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         poi = row.get("poi") or {}
         queue_rows.append(
@@ -161,6 +213,9 @@ def build_queue(payload: dict[str, Any], out_dir: Path) -> dict[str, Any]:
                 "side": row.get("side"),
                 "setup_state": row.get("setup_state"),
                 "stage_rank": row.get("stage_rank"),
+                "case_fingerprint": fingerprint,
+                "cluster_size": cluster_sizes[fingerprint],
+                "cluster_occurrence": occurrence,
                 "scenario": row.get("scenario"),
                 "daily_state": row.get("daily_state"),
                 "h4_state": row.get("h4_state"),
@@ -188,6 +243,9 @@ def build_queue(payload: dict[str, Any], out_dir: Path) -> dict[str, Any]:
         "source_selection_rule": payload.get("selection_rule"),
         "review_order_rule": "round-robin across setup_state, side and symbol; no rows dropped",
         "row_count": len(queue_rows),
+        "unique_case_fingerprints": len(cluster_sizes),
+        "repeated_snapshot_rows": sum(size - 1 for size in cluster_sizes.values()),
+        "cluster_sizes": dict(sorted(cluster_sizes.items())),
         "rows": queue_rows,
     }
     assert_no_outcome_fields(queue_json)
@@ -204,7 +262,10 @@ def main() -> int:
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
     queue = build_queue(payload, out)
-    print(f"Built {queue['row_count']} no-PnL review packets")
+    print(
+        f"Built {queue['row_count']} review packets across "
+        f"{queue['unique_case_fingerprints']} structural fingerprints"
+    )
     return 0
 
 
