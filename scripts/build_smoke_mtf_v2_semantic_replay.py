@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Build causal semantic-review packets for frozen SMOKE MTF V2 cases.
+"""Build source-faithful causal semantic-review packets for frozen SMOKE MTF V2 cases.
 
-Only information available at each evaluation timestamp is exported. The
-current recognition model must reproduce the frozen candidate payload exactly;
-otherwise the replay fails before writing a review artifact.
+The frozen real-recognition workflow evaluated every symbol in an independent
+engine. This replay preserves that execution geometry, evaluates each symbol's
+unique cases chronologically, and only then orders packets for human review.
+Only information closed at each evaluation timestamp is exported.
 """
 from __future__ import annotations
 
@@ -11,14 +12,19 @@ import argparse
 import csv
 import hashlib
 import json
-from collections import Counter
+from collections import Counter, defaultdict
 from dataclasses import fields, is_dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from strategy_lab.market_data import parse_dt, read_candles_csv, validate_candles
+from strategy_lab.market_data import (
+    group_candles_by_symbol,
+    parse_dt,
+    read_candles_csv,
+    validate_candles,
+)
 from strategy_lab.mtf_dealing_range_v2 import MtfDealingRangeEngine
 from strategy_lab.mtf_entry_model_v2 import MtfEntryModelV2
 from strategy_lab.mtf_recognition_export_v2 import assert_no_outcome_fields, plan_payload
@@ -104,19 +110,34 @@ def case_fingerprint(row: dict[str, Any]) -> str:
 
 
 def frozen_unique_cases(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], Counter[str]]:
+    """Return first chronological row per structural fingerprint."""
     ordered = sorted(rows, key=lambda row: (row["timestamp"], row["symbol"], row["side"]))
     clusters = Counter(case_fingerprint(row) for row in ordered)
     unique: dict[str, dict[str, Any]] = {}
     for row in ordered:
         unique.setdefault(case_fingerprint(row), row)
-    cases = sorted(
-        unique.values(),
-        key=lambda row: (-int(row.get("stage_rank", -1)), row["timestamp"], row["symbol"], row["side"]),
+    return list(unique.values()), clusters
+
+
+def review_priority(cases: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Order only the already-replayed packets; never alter evaluation order."""
+    return sorted(
+        cases,
+        key=lambda row: (
+            -int(row.get("stage_rank", -1)),
+            row["timestamp"],
+            row["symbol"],
+            row["side"],
+        ),
     )
-    return cases, clusters
 
 
-def closed_window(engine: MtfDealingRangeEngine, symbol: str, timeframe: str, timestamp: datetime) -> list[dict[str, Any]]:
+def closed_window(
+    engine: MtfDealingRangeEngine,
+    symbol: str,
+    timeframe: str,
+    timestamp: datetime,
+) -> list[dict[str, Any]]:
     rows = [
         bar
         for bar in engine.bars[timeframe]
@@ -155,7 +176,7 @@ def first_difference(expected: Any, actual: Any, path: str = "root") -> str | No
     return None
 
 
-def route_name(plan) -> str:
+def route_name(plan: Any) -> str:
     if plan.raid is not None:
         return "fresh_h1_raid"
     if plan.volume_confirmation is not None:
@@ -187,6 +208,7 @@ def build_packet(
         "case_id": case_fingerprint(frozen),
         "cluster_size": cluster_size,
         "frozen_payload_exact_match": True,
+        "source_execution_geometry": "independent_engine_per_symbol",
         "timestamp": frozen["timestamp"],
         "symbol": frozen["symbol"],
         "side": frozen["side"],
@@ -217,7 +239,7 @@ def build_packet(
             },
             "reasons": list(plan.reasons),
         },
-        "closed_candle_windows": {
+        "closed_candles_by_timeframe": {
             timeframe: closed_window(engine, frozen["symbol"], timeframe, timestamp)
             for timeframe in WINDOWS
         },
@@ -239,6 +261,44 @@ def build_packet(
     return packet
 
 
+def replay_source_geometry(
+    candles: list[Any],
+    cases: list[dict[str, Any]],
+    clusters: Counter[str],
+) -> tuple[dict[str, dict[str, Any]], dict[str, Any]]:
+    """Replay chronological cases inside independent per-symbol engines."""
+    candles_by_symbol = group_candles_by_symbol(candles)
+    cases_by_symbol: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for case in cases:
+        cases_by_symbol[case["symbol"]].append(case)
+
+    packets: dict[str, dict[str, Any]] = {}
+    runtime_stats: dict[str, Any] = {}
+    chronological_index = 0
+    for symbol in sorted(cases_by_symbol):
+        symbol_candles = candles_by_symbol.get(symbol)
+        if not symbol_candles:
+            raise RuntimeError(f"No candles for frozen symbol {symbol}")
+        engine = MtfDealingRangeEngine(symbol_candles)
+        runtime = install_fast_runtime(engine)
+        model = MtfEntryModelV2(engine)
+        for frozen in sorted(
+            cases_by_symbol[symbol],
+            key=lambda row: (row["timestamp"], row["side"]),
+        ):
+            chronological_index += 1
+            case_id = case_fingerprint(frozen)
+            packets[case_id] = build_packet(
+                engine,
+                model,
+                frozen,
+                chronological_index,
+                clusters[case_id],
+            )
+        runtime_stats[symbol] = runtime.stats()
+    return packets, runtime_stats
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build SMOKE MTF V2 causal semantic replay packets")
     parser.add_argument("--candles", required=True)
@@ -257,19 +317,22 @@ def main() -> int:
         raise RuntimeError("frozen candidates are missing")
 
     cases, clusters = frozen_unique_cases(rows)
-    engine = MtfDealingRangeEngine(candles)
-    runtime = install_fast_runtime(engine)
-    model = MtfEntryModelV2(engine)
+    packets_by_id, runtime_stats = replay_source_geometry(candles, cases, clusters)
+    prioritized = review_priority(cases)
+
     out = Path(args.out_dir)
     packets_dir = out / "packets"
     packets_dir.mkdir(parents=True, exist_ok=True)
-
     index_rows: list[dict[str, Any]] = []
-    for review_index, frozen in enumerate(cases, start=1):
+    for review_index, frozen in enumerate(prioritized, start=1):
         case_id = case_fingerprint(frozen)
-        packet = build_packet(engine, model, frozen, review_index, clusters[case_id])
+        packet = dict(packets_by_id[case_id])
+        packet["review_index"] = review_index
         filename = f"{review_index:04d}_{frozen['symbol']}_{frozen['side']}_{frozen['setup_state']}_{case_id}.json"
-        (packets_dir / filename).write_text(json.dumps(packet, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        (packets_dir / filename).write_text(
+            json.dumps(packet, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
         poi = frozen.get("poi") or {}
         index_rows.append(
             {
@@ -299,6 +362,9 @@ def main() -> int:
     summary = {
         "study_id": "SMOKE_MTF_V2_SEMANTIC_REPLAY_V1",
         "mode": "CLOSED_INFORMATION_ONLY_NO_OUTCOME_FIELDS",
+        "source_execution_geometry": "independent_engine_per_symbol",
+        "evaluation_order": "chronological_within_symbol",
+        "human_review_order": "highest_setup_stage_then_chronological",
         "frozen_rows": len(rows),
         "unique_cases": len(cases),
         "repeated_rows": len(rows) - len(cases),
@@ -307,15 +373,21 @@ def main() -> int:
         "state_counts": dict(Counter(row["setup_state"] for row in cases)),
         "route_counts": dict(Counter(row["route"] for row in index_rows)),
         "entry_ready_cases": sum(bool(row["entry_ready"]) for row in index_rows),
-        "runtime_cache": runtime.stats(),
-        "candle_windows": WINDOWS,
+        "runtime_cache_by_symbol": runtime_stats,
+        "candle_window_sizes": WINDOWS,
         "review_rule": "semantic correctness only; no outcome or profitability information",
     }
     assert_no_outcome_fields(summary)
-    (out / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    (out / "semantic_replay_index.json").write_text(json.dumps(index_rows, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (out / "summary.json").write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    (out / "semantic_replay_index.json").write_text(
+        json.dumps(index_rows, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
     print(
-        f"Built {len(cases)} exact causal replay packets from {len(rows)} frozen rows; "
+        f"Built {len(cases)} exact source-faithful replay packets from {len(rows)} frozen rows; "
         "no outcome fields exported"
     )
     return 0
