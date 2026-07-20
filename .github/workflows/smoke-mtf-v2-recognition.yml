@@ -43,7 +43,8 @@ jobs:
             strategy_lab/mtf_reference_validation.py \
             strategy_lab/mtf_labelled_replay.py \
             strategy_lab/mtf_recognition_export_v2.py \
-            scripts/merge_smoke_mtf_v2_recognition_parts.py
+            scripts/merge_smoke_mtf_v2_recognition_parts.py \
+            scripts/probe_smoke_mtf_v2_real_recognition.py
       - name: Test closed MTF context and levels
         run: python -m strategy_lab.mtf_dealing_range_v2_smoke_test
       - name: Test fresh H1 raid
@@ -56,7 +57,7 @@ jobs:
         run: python -m strategy_lab.mtf_entry_model_v2_smoke_test
       - name: Test full raid and VC entry state machine
         run: python -m strategy_lab.mtf_entry_state_machine_v2_smoke_test
-      - name: Test deterministic 35-shard merge
+      - name: Test deterministic frozen-part merge
         run: python -m strategy_lab.mtf_recognition_partition_merge_smoke_test
       - name: Test timeframe-matched FTA targets
         run: python -m strategy_lab.mtf_target_selection_v2_smoke_test
@@ -68,6 +69,8 @@ jobs:
         run: python -m strategy_lab.mtf_reference_validation_smoke_test
       - name: Test labelled replay contract
         run: python -m strategy_lab.mtf_labelled_replay_smoke_test
+      - name: Test artifact-only status probe
+        run: python -m strategy_lab.mtf_status_probe_smoke_test
       - name: Write semantic audit
         run: python scripts/validate_smoke_mtf_v2_reference_scenarios.py
       - name: Upload semantic audit
