@@ -10,7 +10,6 @@ import io
 import json
 import os
 import shutil
-import sys
 import urllib.parse
 import urllib.request
 import zipfile
@@ -195,10 +194,16 @@ def main() -> int:
             else:
                 report["recognition"] = _analyse_artifact(combined, out)
 
-    (out / "probe.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     body = _render(report)
     (out / "pr_comment.md").write_text(body + "\n", encoding="utf-8")
-    _upsert_comment(repo, pr_number, body)
+    try:
+        _upsert_comment(repo, pr_number, body)
+        report["comment_status"] = "published"
+    except Exception as exc:  # Status artifact remains authoritative if comments are restricted.
+        report["comment_status"] = "not_published"
+        report["comment_error"] = f"{type(exc).__name__}: {exc}"
+        print(f"::warning::PR comment was not published: {report['comment_error']}")
+    (out / "probe.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(body)
     return 0
 
