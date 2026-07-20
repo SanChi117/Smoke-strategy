@@ -17,7 +17,7 @@ permissions:
 jobs:
   recognition-contract:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,6 +42,7 @@ jobs:
             strategy_lab/mtf_liquidity_map_v2.py \
             strategy_lab/mtf_reference_validation.py \
             strategy_lab/mtf_labelled_replay.py \
+            strategy_lab/mtf_recognition_fast_runtime_v2.py \
             strategy_lab/mtf_recognition_export_v2.py \
             scripts/merge_smoke_mtf_v2_recognition_parts.py \
             scripts/probe_smoke_mtf_v2_real_recognition.py
@@ -69,6 +70,10 @@ jobs:
         run: python -m strategy_lab.mtf_reference_validation_smoke_test
       - name: Test labelled replay contract
         run: python -m strategy_lab.mtf_labelled_replay_smoke_test
+      - name: Test cached runtime output equivalence
+        run: python -m strategy_lab.mtf_recognition_fast_runtime_v2_smoke_test
+      - name: Test recognition export contract
+        run: python -m strategy_lab.mtf_recognition_export_v2_smoke_test
       - name: Test artifact-only status probe
         run: python -m strategy_lab.mtf_status_probe_smoke_test
       - name: Write semantic audit
