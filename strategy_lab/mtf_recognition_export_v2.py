@@ -2,6 +2,7 @@
 """Export real SMOKE MTF V2 recognition states without future outcomes or PnL."""
 from __future__ import annotations
 
+import re
 from collections import Counter, defaultdict
 from datetime import datetime
 from typing import Any, Iterable
@@ -41,11 +42,24 @@ STAGE_RANK = {
 }
 
 
+def _contains_outcome_token(field_name: str) -> bool:
+    """Reject outcome fields without false positives such as candle_windows."""
+    normalized = str(field_name).strip().lower()
+    parts = {part for part in re.split(r"[^a-z0-9]+", normalized) if part}
+    for token in FORBIDDEN_OUTCOME_TOKENS:
+        if token in {"win", "loss"}:
+            if token in parts:
+                return True
+            continue
+        if token in normalized:
+            return True
+    return False
+
+
 def assert_no_outcome_fields(value: Any, path: str = "root") -> None:
     if isinstance(value, dict):
         for key, item in value.items():
-            normalized = str(key).lower()
-            if any(token in normalized for token in FORBIDDEN_OUTCOME_TOKENS):
+            if _contains_outcome_token(str(key)):
                 raise ValueError(f"forbidden outcome field at {path}.{key}")
             assert_no_outcome_fields(item, f"{path}.{key}")
     elif isinstance(value, (list, tuple)):
