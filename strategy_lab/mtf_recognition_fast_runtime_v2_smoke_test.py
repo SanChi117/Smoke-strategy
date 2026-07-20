@@ -39,7 +39,8 @@ def test_cached_runtime_is_output_equivalent() -> None:
     stats = runtime.stats()
     assert stats["hits"].get("snapshot", 0) >= len(checkpoints)
     assert stats["hits"].get("bars_asof", 0) > 0
-    assert stats["hits"].get("pivots", 0) > 0
+    assert stats["hits"].get("pivot_prefix_filter", 0) > 0
+    assert stats["hits"].get("imbalance_prefix_filter", 0) > 0
     assert stats["hits"].get("liquidity_map", 0) >= len(checkpoints)
 
 
