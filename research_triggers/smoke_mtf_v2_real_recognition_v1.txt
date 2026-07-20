@@ -1,4 +1,4 @@
 SMOKE_MTF_V2_REAL_RECOGNITION_RUN_V1
 Recognition contract unchanged.
-PnL and future outcomes are forbidden.
-Rerun 6: target-field execution fix verified by diagnostic; one job per symbol; artifact-only results.
+Outcome fields remain excluded.
+Rerun 7: exact-equivalent incremental runtime passed 20 percent performance safety gate.
