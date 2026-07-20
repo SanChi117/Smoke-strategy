@@ -3,7 +3,7 @@ name: SMOKE MTF V2 Status Probe
 on:
   push:
     branches: ['agent/smoke-mtf-dealing-range-v2']
-    paths: ['research_triggers/smoke_mtf_v2_status_probe.txt']
+    paths: ['research_triggers/smoke_mtf_v2_status_probe*.txt']
 
 permissions:
   contents: read
@@ -22,12 +22,15 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Read frozen target SHA
+      - name: Read newest frozen target SHA
         shell: bash
         run: |
-          target="$(head -n 1 research_triggers/smoke_mtf_v2_status_probe.txt | tr -d '[:space:]')"
+          file="$(find research_triggers -maxdepth 1 -type f -name 'smoke_mtf_v2_status_probe*.txt' | sort | tail -n 1)"
+          test -n "$file"
+          target="$(head -n 1 "$file" | tr -d '[:space:]')"
           test -n "$target"
           echo "TARGET_SHA=$target" >> "$GITHUB_ENV"
+          echo "STATUS_PROBE_FILE=$file" >> "$GITHUB_ENV"
       - name: Compile probe
         run: python -m py_compile scripts/probe_smoke_mtf_v2_real_recognition.py
       - name: Probe run, validate artifact and update PR
