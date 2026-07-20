@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from dataclasses import asdict
 from datetime import datetime
 from typing import Any, Iterable
 
 from strategy_lab.market_data import Candle
 from strategy_lab.mtf_dealing_range_v2 import MtfDealingRangeEngine, SetupState
 from strategy_lab.mtf_entry_model_v2 import MtfEntryModelV2
+from strategy_lab.mtf_recognition_fast_runtime_v2 import install_fast_runtime
 
 
 FORBIDDEN_OUTCOME_TOKENS = (
@@ -121,6 +121,7 @@ def export_recognition_candidates(
     per_group: int = 4,
 ) -> dict[str, Any]:
     engine = MtfDealingRangeEngine(candles)
+    runtime = install_fast_runtime(engine)
     model = MtfEntryModelV2(engine)
     scanned = 0
     qualifying: list[dict[str, Any]] = []
@@ -139,8 +140,6 @@ def export_recognition_candidates(
             if payload["poi"] is not None or plan.h1_raid or plan.h1_vc or plan.bos is not None:
                 qualifying.append(payload)
 
-    # Deterministic, non-PnL sampling: earliest observations per
-    # symbol/direction/state. Quality does not choose inclusion.
     groups: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
     for row in sorted(qualifying, key=lambda item: (item["timestamp"], item["symbol"], item["side"])):
         key = (row["symbol"], row["side"], row["setup_state"])
@@ -162,6 +161,7 @@ def export_recognition_candidates(
         "per_group": per_group,
         "state_counts": dict(sorted(state_counts.items())),
         "reason_counts": dict(reason_counts.most_common(30)),
+        "execution_cache": runtime.stats(),
         "candidates": selected,
     }
     assert_no_outcome_fields(result)
