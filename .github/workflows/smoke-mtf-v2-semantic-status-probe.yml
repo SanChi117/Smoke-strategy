@@ -62,3 +62,4 @@ jobs:
           except Exception as exc:
               print(f'PR comment skipped: {exc}', flush=True)
           PY
+          exit 1
