@@ -1,0 +1,4 @@
+SMOKE_MTF_V2_SEMANTIC_REPLAY_V1
+Source run: 29727847823
+Source artifact: 8455210237
+Closed information only; exact frozen payload reproduction required.
