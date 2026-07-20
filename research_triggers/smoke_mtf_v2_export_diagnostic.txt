@@ -1,4 +1,4 @@
 SMOKE_MTF_V2_EXPORT_DIAGNOSTIC_V1
 Technical diagnostics only: SOLUSDT, frozen history 2024-07-01 through 2025-02-08, scan 2025-02-01 through 2025-02-02.
 No PnL, no future outcomes, no trading-rule changes.
-Rerun 2 after fixing DealingRange.direction_strength field mismatch.
+Rerun 3 after output-equivalent causal runtime caching.
