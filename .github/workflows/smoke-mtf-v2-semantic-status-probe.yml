@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Probe latest semantic replay and update PR
+      - name: Probe latest semantic replay
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
@@ -53,9 +53,12 @@ jobs:
                           else: lines += ['', '- Artifact exists, but summary.json is missing.']
                   else: lines += ['', '- Semantic replay artifact is missing.']
               body='\n'.join(lines)
-          comments=req(f'/repos/{repo}/issues/{pr}/comments?per_page=100')
-          existing=next((c for c in comments if marker in str(c.get('body',''))),None)
-          if existing: req(f"/repos/{repo}/issues/comments/{existing['id']}",'PATCH',{'body':body})
-          else: req(f'/repos/{repo}/issues/{pr}/comments','POST',{'body':body})
-          print(body)
+          print(body, flush=True)
+          try:
+              comments=req(f'/repos/{repo}/issues/{pr}/comments?per_page=100')
+              existing=next((c for c in comments if marker in str(c.get('body',''))),None)
+              if existing: req(f"/repos/{repo}/issues/comments/{existing['id']}",'PATCH',{'body':body})
+              else: req(f'/repos/{repo}/issues/{pr}/comments','POST',{'body':body})
+          except Exception as exc:
+              print(f'PR comment skipped: {exc}', flush=True)
           PY
