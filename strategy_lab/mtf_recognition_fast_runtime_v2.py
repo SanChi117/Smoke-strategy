@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from bisect import bisect_right
 from collections import defaultdict
+from dataclasses import replace
 from datetime import datetime
 from typing import Any, Sequence
 
@@ -21,6 +22,7 @@ import strategy_lab.mtf_volume_confirmation_v2 as volume
 
 _ORIGINAL_CONFIRMED_PIVOTS = dealing.confirmed_pivots
 _ORIGINAL_IMBALANCE_LEVELS = dealing.imbalance_levels
+_ORIGINAL_MARK_LEVEL_USAGE = dealing._mark_level_usage
 _ORIGINAL_LIQUIDITY_MAP = liquidity.build_liquidity_map
 _ORIGINAL_BARS_ASOF = entry._bars_asof
 
@@ -33,6 +35,7 @@ class FastRecognitionRuntime:
         self._original_snapshot = engine.snapshot
         self._original_confirmed_pivots = _ORIGINAL_CONFIRMED_PIVOTS
         self._original_imbalance_levels = _ORIGINAL_IMBALANCE_LEVELS
+        self._original_mark_level_usage = _ORIGINAL_MARK_LEVEL_USAGE
         self._original_liquidity_map = _ORIGINAL_LIQUIDITY_MAP
         self._original_entry_bars_asof = _ORIGINAL_BARS_ASOF
 
@@ -45,6 +48,8 @@ class FastRecognitionRuntime:
         self._fallback_imbalance_cache: dict[tuple[Any, ...], tuple[Any, ...]] = {}
         self._liquidity_cache: dict[tuple[str, datetime, tuple[str, ...]], Any] = {}
         self._prefix_cache: dict[tuple[int, str, datetime], tuple[Any, ...]] = {}
+        self._level_touch_state: dict[tuple[Any, ...], tuple[int, int]] = {}
+        self._level_series_end: dict[tuple[str, str], int] = {}
         self._series_by_container: dict[int, dict[str, tuple[Any, ...]]] = {}
         self._times_by_container: dict[int, dict[str, tuple[datetime, ...]]] = {}
         self._series_by_key: dict[tuple[str, str], tuple[Any, ...]] = {}
@@ -85,6 +90,21 @@ class FastRecognitionRuntime:
             getattr(last, "close_time", None),
             left_bars,
             right_bars,
+        )
+
+    @staticmethod
+    def _level_key(level: Any) -> tuple[Any, ...]:
+        return (
+            level.symbol.upper(),
+            level.timeframe,
+            level.kind,
+            level.side,
+            round(float(level.low), 12),
+            round(float(level.high), 12),
+            level.formed_at,
+            level.confirmed_at,
+            round(float(level.strength), 8),
+            level.source,
         )
 
     def _prefix_identity(self, bars: Sequence[Any]) -> tuple[str, str, datetime] | None:
@@ -183,6 +203,52 @@ class FastRecognitionRuntime:
         self.misses["fallback_imbalances"] += 1
         return list(value)
 
+    def mark_level_usage(self, levels: Sequence[Any], bars: Sequence[Any], asof: datetime) -> list[Any]:
+        identity = self._prefix_identity(bars)
+        if identity is None:
+            self.misses["level_usage_fallback"] += 1
+            return self._original_mark_level_usage(levels, bars, asof)
+        symbol, timeframe, _ = identity
+        series_key = (symbol, timeframe)
+        full = self._series_by_key[series_key]
+        times = self._times_by_key[series_key]
+        end = bisect_right(times, asof)
+        previous_series_end = self._level_series_end.get(series_key, 0)
+        if end < previous_series_end:
+            self.misses["level_usage_nonmonotonic"] += 1
+            return self._original_mark_level_usage(levels, bars, asof)
+
+        output: list[Any] = []
+        for level in levels:
+            key = self._level_key(level)
+            state = self._level_touch_state.get(key)
+            if state is None:
+                processed_end = bisect_right(times, level.confirmed_at)
+                touches = 0
+                self.misses["level_touch_state"] += 1
+            else:
+                processed_end, touches = state
+                self.hits["level_touch_state"] += 1
+            if processed_end > end:
+                self.misses["level_touch_nonmonotonic"] += 1
+                return self._original_mark_level_usage(levels, bars, asof)
+            for bar in full[processed_end:end]:
+                if bar.low <= level.high and bar.high >= level.low:
+                    touches += 1
+            self._level_touch_state[key] = (end, touches)
+            decay = min(35.0, touches * 9.0)
+            output.append(
+                replace(
+                    level,
+                    strength=round(max(0.0, level.strength - decay), 4),
+                    fresh=touches == 0,
+                    touches=touches,
+                )
+            )
+        self._level_series_end[series_key] = max(previous_series_end, end)
+        self.hits["level_usage_incremental"] += 1
+        return output
+
     def snapshot(self, symbol: str, timestamp: datetime) -> Any:
         key = (symbol.upper(), timestamp)
         cached = self._snapshot_cache.get(key)
@@ -217,6 +283,7 @@ class FastRecognitionRuntime:
         self.engine.snapshot = self.snapshot  # type: ignore[method-assign]
         dealing.confirmed_pivots = self.confirmed_pivots
         dealing.imbalance_levels = self.imbalance_levels
+        dealing._mark_level_usage = self.mark_level_usage
         entry.confirmed_pivots = self.confirmed_pivots
         entry._bars_asof = self.bars_asof
         entry.build_liquidity_map = self.build_liquidity_map
@@ -240,6 +307,7 @@ class FastRecognitionRuntime:
                 "fallback_imbalances": len(self._fallback_imbalance_cache),
                 "liquidity_maps": len(self._liquidity_cache),
                 "bar_prefixes": len(self._prefix_cache),
+                "level_touch_states": len(self._level_touch_state),
             },
         }
 
