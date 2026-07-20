@@ -59,14 +59,26 @@ jobs:
             --summary-json "$RUNNER_TEMP/archive_merge_summary.json" \
             --min-coverage 0.95
       - name: Build exact causal semantic replay packets
+        id: replay
+        shell: bash
         run: |
+          set +e
+          mkdir -p "$RUNNER_TEMP/semantic-replay"
           python scripts/build_smoke_mtf_v2_semantic_replay.py \
             --candles "$RUNNER_TEMP/five-symbols-5m.csv" \
             --frozen-candidates "$RUNNER_TEMP/frozen-recognition/recognition_candidates.json" \
-            --out-dir "$RUNNER_TEMP/semantic-replay"
+            --out-dir "$RUNNER_TEMP/semantic-replay" \
+            > "$RUNNER_TEMP/semantic-replay/replay.log" 2>&1
+          status=$?
+          echo "status=$status" >> "$GITHUB_OUTPUT"
           cp "$RUNNER_TEMP/archive_download_summary.json" "$RUNNER_TEMP/semantic-replay/archive_download_summary.json"
           cp "$RUNNER_TEMP/archive_merge_summary.json" "$RUNNER_TEMP/semantic-replay/archive_merge_summary.json"
+          echo '----- semantic replay log -----'
+          cat "$RUNNER_TEMP/semantic-replay/replay.log"
+          echo '----- end semantic replay log -----'
+          exit 0
       - name: Enforce replay outcome-field exclusion
+        if: steps.replay.outputs.status == '0'
         run: |
           python - <<'PY'
           import json
@@ -79,6 +91,7 @@ jobs:
           print('Semantic replay closed-information contract: OK')
           PY
       - name: Write workflow summary
+        if: steps.replay.outputs.status == '0'
         run: |
           python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import json
@@ -93,10 +106,16 @@ jobs:
           print(f"- Entry-ready cases: **{data['entry_ready_cases']}**")
           print('- Outcome fields: **excluded**')
           PY
-      - name: Upload semantic replay packets
+      - name: Upload semantic replay or mismatch diagnostics
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: smoke-mtf-v2-semantic-replay-v1
           path: ${{ runner.temp }}/semantic-replay/**
           if-no-files-found: error
           retention-days: 30
+      - name: Fail on replay mismatch
+        if: steps.replay.outputs.status != '0'
+        run: |
+          echo 'Frozen semantic replay did not reproduce the source artifact.' >&2
+          exit 1
