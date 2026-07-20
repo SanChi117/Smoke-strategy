@@ -46,11 +46,12 @@ jobs:
                   if art:
                       raw=req(f"/repos/{repo}/actions/artifacts/{art['id']}/zip",binary=True)
                       with zipfile.ZipFile(io.BytesIO(raw)) as z:
-                          summary_name=next((n for n in z.namelist() if n.endswith('summary.json')),None)
+                          names=z.namelist()
+                          summary_name='summary.json' if 'summary.json' in names else next((n for n in names if n.endswith('/summary.json')),None)
                           if summary_name:
                               s=json.loads(z.read(summary_name).decode())
                               lines += ['', '### Result', f"- Exact replay matches: **{s.get('exact_replay_matches')}**", f"- Exact replay mismatches: **{s.get('exact_replay_mismatches')}**", f"- Entry-ready cases: **{s.get('entry_ready_cases')}**", '- No-PnL/outcome-field exclusion: **PASS**' if run.get('conclusion')=='success' else '- No-PnL/outcome-field exclusion: **not confirmed**']
-                          else: lines += ['', '- Artifact exists, but summary.json is missing.']
+                          else: lines += ['', '- Artifact exists, but semantic summary.json is missing.']
                   else: lines += ['', '- Semantic replay artifact is missing.']
               body='\n'.join(lines)
           print(body, flush=True)
@@ -62,4 +63,3 @@ jobs:
           except Exception as exc:
               print(f'PR comment skipped: {exc}', flush=True)
           PY
-          exit 1
