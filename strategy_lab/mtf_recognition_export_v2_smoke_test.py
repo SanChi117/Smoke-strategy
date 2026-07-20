@@ -102,17 +102,25 @@ class FakeModel:
         return plan(timestamp, side, SetupState.POI_TESTED)
 
 
+class FakeRuntime:
+    def stats(self):
+        return {"hits": {}, "misses": {}, "sizes": {}}
+
+
 @contextmanager
 def patched_export():
     old_engine = export.MtfDealingRangeEngine
     old_model = export.MtfEntryModelV2
+    old_runtime = export.install_fast_runtime
     export.MtfDealingRangeEngine = FakeEngine
     export.MtfEntryModelV2 = FakeModel
+    export.install_fast_runtime = lambda _engine: FakeRuntime()
     try:
         yield
     finally:
         export.MtfDealingRangeEngine = old_engine
         export.MtfEntryModelV2 = old_model
+        export.install_fast_runtime = old_runtime
 
 
 def test_forbidden_outcome_fields_are_rejected() -> None:
@@ -128,13 +136,12 @@ def test_forbidden_outcome_fields_are_rejected() -> None:
 
 def test_sampling_is_chronological_and_group_bounded() -> None:
     with patched_export():
-        result = export.export_recognition_candidates(
-            [], BASE, BASE + timedelta(hours=1), per_group=2
-        )
+        result = export.export_recognition_candidates([], BASE, BASE + timedelta(hours=1), per_group=2)
     assert result["mode"] == "NO_PNL_NO_FUTURE_OUTCOME"
     assert result["evaluated_15m_bars"] == 3
     assert result["evaluated_side_snapshots"] == 6
     assert result["selected_snapshots"] == 4
+    assert "execution_cache" in result
     timestamps = [row["timestamp"] for row in result["candidates"]]
     assert timestamps == sorted(timestamps)
     export.assert_no_outcome_fields(result)
