@@ -10,7 +10,7 @@ permissions:
   actions: read
 
 jobs:
-  inspect-rerun-8:
+  inspect-development-v2:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -19,11 +19,11 @@ jobs:
         with:
           ref: agent/smoke-mtf-dealing-range-v2
           fetch-depth: 0
-      - name: Inspect exact frozen run
+      - name: Inspect exact development run
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
-          TARGET_SHA: d16b865e9d678591e76b2d8aebe3cc89042b1f0d
+          TARGET_SHA: ad973b05701321f5ba67f12708ed0d5a9d0be5c2
         run: |
           python - <<'PY'
           import json, os, urllib.parse, urllib.request
@@ -39,7 +39,7 @@ jobs:
                   return json.loads(r.read().decode())
           query=urllib.parse.urlencode({'head_sha':sha,'per_page':100})
           payload=get(f'/repos/{repo}/actions/runs?{query}')
-          runs=[r for r in payload.get('workflow_runs',[]) if r.get('name')=='SMOKE MTF V2 Real Recognition V1' and r.get('head_sha')==sha]
+          runs=[r for r in payload.get('workflow_runs',[]) if r.get('name')=='SMOKE MTF V2 Development Profitability V2' and r.get('head_sha')==sha]
           result={'target_sha':sha,'run_found':bool(runs)}
           if runs:
               run=max(runs,key=lambda x:int(x['id']))
@@ -58,6 +58,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add results/smoke_mtf_v2_run_inspector.json
-          git commit -m 'Record Rerun 8 action status' || exit 0
+          git commit -m 'Record development profitability action status' || exit 0
           git pull --rebase origin agent/smoke-mtf-dealing-range-v2
           git push origin HEAD:agent/smoke-mtf-dealing-range-v2
