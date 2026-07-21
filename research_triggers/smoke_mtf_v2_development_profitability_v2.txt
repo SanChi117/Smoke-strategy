@@ -1,0 +1,4 @@
+SMOKE_MTF_V2_DEVELOPMENT_PROFITABILITY_V2
+Recognition freeze: 492eee9fdba5993b7f518e9a1ff38576e8b14285
+Preregistration: research/smoke_mtf_v2_development_profitability_prereg_v2.json
+One frozen candidate. Five symbols. Ten chronological folds. Official Binance 5m data and funding. No tuning after result.
