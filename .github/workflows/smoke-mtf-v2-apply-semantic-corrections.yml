@@ -1,0 +1,79 @@
+name: SMOKE MTF V2 Apply Semantic Corrections
+
+on:
+  push:
+    branches: ['agent/smoke-mtf-dealing-range-v2']
+    paths: ['research_triggers/smoke_mtf_v2_apply_semantic_corrections.txt']
+
+permissions:
+  contents: write
+
+jobs:
+  apply-definition-only-corrections:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/smoke-mtf-dealing-range-v2
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply exact semantic corrections
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              file = Path(path)
+              text = file.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected one exact match, found {count}')
+              file.write_text(text.replace(old, new), encoding='utf-8')
+
+          replace_once(
+              'strategy_lab/mtf_entry_model_v2.py',
+              '''    if raid is not None:\n        anchor = raid.pivot.price\n        if side == "long" and anchor < entry:\n            return anchor - atr * config.stop_buffer_atr\n        if side == "short" and anchor > entry:\n            return anchor + atr * config.stop_buffer_atr\n''',
+              '''    if raid is not None:\n        # The raid invalidation is the actual swept wick extreme, not the\n        # reference pivot that was crossed. A stop inside the sweep candle\n        # contradicts the frozen structural-stop contract.\n        anchor = raid.raid_bar.low if side == "long" else raid.raid_bar.high\n        if side == "long" and anchor < entry:\n            return anchor - atr * config.stop_buffer_atr\n        if side == "short" and anchor > entry:\n            return anchor + atr * config.stop_buffer_atr\n''',
+          )
+
+          replace_once(
+              'strategy_lab/mtf_target_selection_v2.py',
+              '''    for level in levels:\n        if level.timeframe != timeframe:\n            continue\n        if normalized_side == "long" and level.side == "resistance" and level.low > entry:\n''',
+              '''    for level in levels:\n        if level.timeframe != timeframe:\n            continue\n        # A fully mitigated level is not active external liquidity or an FTA.\n        # Dealing-range weak/range extremes remain available as deterministic\n        # fallbacks when no fresh mapped level exists.\n        if not level.fresh:\n            continue\n        if normalized_side == "long" and level.side == "resistance" and level.low > entry:\n''',
+          )
+
+          replace_once(
+              'strategy_lab/mtf_dealing_range_v2.py',
+              '''def _nearest_levels(levels: Sequence[Level], price: float) -> tuple[Level | None, Level | None]:\n    support = [level for level in levels if level.high <= price]\n    resistance = [level for level in levels if level.low >= price]\n''',
+              '''def _nearest_levels(levels: Sequence[Level], price: float) -> tuple[Level | None, Level | None]:\n    support = [level for level in levels if level.side == "support" and level.high <= price]\n    resistance = [level for level in levels if level.side == "resistance" and level.low >= price]\n''',
+          )
+
+          replace_once(
+              '.github/workflows/smoke-mtf-v2-recognition.yml',
+              '''      - name: Test labelled replay contract\n        run: python -m strategy_lab.mtf_labelled_replay_smoke_test\n      - name: Test cached runtime output equivalence\n''',
+              '''      - name: Test labelled replay contract\n        run: python -m strategy_lab.mtf_labelled_replay_smoke_test\n      - name: Test semantic definition corrections\n        run: python -m strategy_lab.mtf_semantic_corrections_v2_smoke_test\n      - name: Test cached runtime output equivalence\n''',
+          )
+          PY
+      - name: Install and run definition tests
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          python -m strategy_lab.mtf_semantic_corrections_v2_smoke_test
+          python -m strategy_lab.mtf_target_selection_v2_smoke_test
+          python -m strategy_lab.mtf_entry_model_v2_smoke_test
+          python -m strategy_lab.mtf_recognition_fast_runtime_v2_smoke_test
+      - name: Commit corrections
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add strategy_lab/mtf_entry_model_v2.py \
+                  strategy_lab/mtf_target_selection_v2.py \
+                  strategy_lab/mtf_dealing_range_v2.py \
+                  .github/workflows/smoke-mtf-v2-recognition.yml
+          git commit -m 'Correct raid invalidation and active FTA semantics'
+          git push origin HEAD:agent/smoke-mtf-dealing-range-v2
