@@ -1,0 +1,109 @@
+{
+  "target_sha": "d16b865e9d678591e76b2d8aebe3cc89042b1f0d",
+  "run_found": true,
+  "run": {
+    "id": 29847860881,
+    "name": "SMOKE MTF V2 Real Recognition V1",
+    "status": "completed",
+    "conclusion": "success",
+    "run_number": 8,
+    "html_url": "https://github.com/SanChi117/Smoke-strategy/actions/runs/29847860881",
+    "created_at": "2026-07-21T16:16:37Z",
+    "updated_at": "2026-07-21T16:25:09Z",
+    "head_sha": "d16b865e9d678591e76b2d8aebe3cc89042b1f0d"
+  },
+  "jobs": [
+    {
+      "id": 88692940516,
+      "name": "recognition-SOLUSDT",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-21T16:16:40Z",
+      "completed_at": "2026-07-21T16:24:30Z"
+    },
+    {
+      "id": 88692940549,
+      "name": "recognition-ETHUSDT",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-21T16:16:41Z",
+      "completed_at": "2026-07-21T16:24:48Z"
+    },
+    {
+      "id": 88692940552,
+      "name": "recognition-LINKUSDT",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-21T16:16:40Z",
+      "completed_at": "2026-07-21T16:24:01Z"
+    },
+    {
+      "id": 88692940594,
+      "name": "recognition-AAVEUSDT",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-21T16:16:40Z",
+      "completed_at": "2026-07-21T16:24:23Z"
+    },
+    {
+      "id": 88692940736,
+      "name": "recognition-BTCUSDT",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-21T16:16:40Z",
+      "completed_at": "2026-07-21T16:24:39Z"
+    },
+    {
+      "id": 88694977295,
+      "name": "aggregate-5-frozen-symbols",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-21T16:24:51Z",
+      "completed_at": "2026-07-21T16:25:08Z"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 8502319570,
+      "name": "smoke-mtf-v2-real-recognition-v1-combined",
+      "size_in_bytes": 105084,
+      "expired": false,
+      "digest": "sha256:a1a1edc234c2fb2363391e8239869f3a0f72e04c2aad87c551e413a47c44ee0e"
+    },
+    {
+      "id": 8502310082,
+      "name": "smoke-mtf-v2-real-recognition-part-ETHUSDT",
+      "size_in_bytes": 4221,
+      "expired": false,
+      "digest": "sha256:38257066c138b4015db3d352c8a4c625e9fb173bb130193d901cd59076b6cf19"
+    },
+    {
+      "id": 8502306262,
+      "name": "smoke-mtf-v2-real-recognition-part-BTCUSDT",
+      "size_in_bytes": 5088,
+      "expired": false,
+      "digest": "sha256:6b366303bd454193757c1a630f90bfa8c30bf9ec1bee4ba150d0bfc7c32a0357"
+    },
+    {
+      "id": 8502301413,
+      "name": "smoke-mtf-v2-real-recognition-part-SOLUSDT",
+      "size_in_bytes": 4873,
+      "expired": false,
+      "digest": "sha256:bd77d589878204f030fbc9bee17cee33c1c244f89225dd10f728b68c32a0eeae"
+    },
+    {
+      "id": 8502297781,
+      "name": "smoke-mtf-v2-real-recognition-part-AAVEUSDT",
+      "size_in_bytes": 5420,
+      "expired": false,
+      "digest": "sha256:6c8218e655776b1576377bc0e117c574aed13daa0f63f8df0f3192346977dddc"
+    },
+    {
+      "id": 8502286862,
+      "name": "smoke-mtf-v2-real-recognition-part-LINKUSDT",
+      "size_in_bytes": 5773,
+      "expired": false,
+      "digest": "sha256:ecbb02d56b0e96988f4107ce6812c72d54f49a02c8095f12a405ecb4760aa93c"
+    }
+  ]
+}
