@@ -1,0 +1,240 @@
+{
+  "artifact_digest": "sha256:bcb645fddec649b938b6ac069b3754faa5c458c91cb9d717600aa1dab1f84568",
+  "artifact_files": [
+    "archive_download_summary.json",
+    "archive_merge_summary.json",
+    "packets/0001_AAVEUSDT_long_M5_BOS_CONFIRMED_5f3d9d228432342e.json",
+    "packets/0002_AAVEUSDT_long_M5_BOS_CONFIRMED_ff0529a454dd307b.json",
+    "packets/0003_LINKUSDT_long_M5_BOS_CONFIRMED_2aadd5a2b5c55f09.json",
+    "packets/0004_BTCUSDT_short_M5_BOS_CONFIRMED_1e87ba0021d01273.json",
+    "packets/0005_BTCUSDT_short_WAIT_5M_BOS_67248bb01d82af99.json",
+    "packets/0006_AAVEUSDT_long_WAIT_5M_BOS_e6fec59b985084b7.json",
+    "packets/0007_LINKUSDT_long_WAIT_5M_BOS_a5719cffe889f3f5.json",
+    "packets/0008_LINKUSDT_short_WAIT_5M_BOS_29f1f3ae48ebf7b7.json",
+    "packets/0009_SOLUSDT_short_WAIT_5M_BOS_efa66976ee94322d.json",
+    "packets/0010_BTCUSDT_short_POI_TESTED_fca6d5f5299d6351.json",
+    "packets/0011_AAVEUSDT_long_POI_TESTED_a047371f976a8b66.json",
+    "packets/0012_LINKUSDT_long_POI_TESTED_a1ecb93243d215ac.json",
+    "packets/0013_LINKUSDT_long_POI_TESTED_4ec38d030e82cb3e.json",
+    "packets/0014_AAVEUSDT_short_POI_TESTED_a71d60d3b54d5aa7.json",
+    "packets/0015_LINKUSDT_short_POI_TESTED_7118761f1b57957b.json",
+    "packets/0016_LINKUSDT_short_POI_TESTED_bf85dc589b39ea7d.json",
+    "packets/0017_SOLUSDT_short_POI_TESTED_dc41571270ccdf47.json",
+    "packets/0018_SOLUSDT_short_POI_TESTED_fb4b741232cf0128.json",
+    "packets/0019_AAVEUSDT_long_NO_CONTEXT_6d711be6b83129de.json",
+    "packets/0020_AAVEUSDT_short_NO_CONTEXT_3737f3d66a373d35.json",
+    "packets/0021_BTCUSDT_long_NO_CONTEXT_eb0babf945719c32.json",
+    "packets/0022_ETHUSDT_long_NO_CONTEXT_dd657779add7983e.json",
+    "packets/0023_ETHUSDT_short_NO_CONTEXT_b4137c386b6c2bfb.json",
+    "packets/0024_LINKUSDT_long_NO_CONTEXT_cbd11155ccf43b82.json",
+    "packets/0025_LINKUSDT_short_NO_CONTEXT_4af1f9a8a6514ce5.json",
+    "packets/0026_SOLUSDT_long_NO_CONTEXT_4b81e9f12a5c7dc4.json",
+    "packets/0027_SOLUSDT_short_NO_CONTEXT_03180ff0a6f3153e.json",
+    "replay.log",
+    "packets/0028_BTCUSDT_short_NO_CONTEXT_30e4bdd998e9d55a.json",
+    "semantic_replay_index.csv",
+    "semantic_replay_index.json",
+    "summary.json"
+  ],
+  "artifact_id": 8503935998,
+  "artifact_name": "smoke-mtf-v2-semantic-replay-v1",
+  "artifact_size": 884445,
+  "conclusion": "success",
+  "no_pnl_outcome_exclusion": "PASS",
+  "run_id": 29852278087,
+  "run_url": "https://github.com/SanChi117/Smoke-strategy/actions/runs/29852278087",
+  "status": "completed",
+  "summary": {
+    "candle_window_sizes": {
+      "15m": 192,
+      "1M": 24,
+      "1d": 240,
+      "1h": 168,
+      "1w": 80,
+      "4h": 180,
+      "5m": 144
+    },
+    "entry_ready_cases": 0,
+    "evaluation_order": "chronological_within_symbol",
+    "exact_replay_matches": 28,
+    "exact_replay_mismatches": 0,
+    "frozen_rows": 87,
+    "human_review_order": "highest_setup_stage_then_chronological",
+    "mode": "CLOSED_INFORMATION_ONLY_NO_OUTCOME_FIELDS",
+    "repeated_rows": 59,
+    "review_rule": "semantic correctness only; no outcome or profitability information",
+    "route_counts": {
+      "fresh_h1_raid": 9,
+      "h1_vc_with_15m_test": 3,
+      "none": 16
+    },
+    "runtime_cache_by_symbol": {
+      "AAVEUSDT": {
+        "hits": {
+          "bars_asof": 10,
+          "full_imbalances": 65,
+          "full_pivots": 81,
+          "imbalance_prefix_filter": 72,
+          "level_touch_state": 220078,
+          "level_usage_incremental": 42,
+          "liquidity_map": 3,
+          "pivot_prefix_filter": 88,
+          "snapshot": 1
+        },
+        "misses": {
+          "bars_asof": 6,
+          "full_imbalances": 7,
+          "full_pivots": 7,
+          "level_touch_state": 44329,
+          "liquidity_map": 6,
+          "snapshot": 6
+        },
+        "sizes": {
+          "bar_prefixes": 6,
+          "fallback_imbalances": 0,
+          "fallback_pivots": 0,
+          "full_imbalance_series": 7,
+          "full_pivot_series": 7,
+          "level_touch_states": 44329,
+          "liquidity_maps": 6,
+          "snapshots": 6
+        }
+      },
+      "BTCUSDT": {
+        "hits": {
+          "bars_asof": 7,
+          "full_imbalances": 41,
+          "full_pivots": 50,
+          "imbalance_prefix_filter": 48,
+          "level_touch_state": 134916,
+          "level_usage_incremental": 28,
+          "liquidity_map": 2,
+          "pivot_prefix_filter": 57,
+          "snapshot": 1
+        },
+        "misses": {
+          "bars_asof": 4,
+          "full_imbalances": 7,
+          "full_pivots": 7,
+          "level_touch_state": 45586,
+          "liquidity_map": 4,
+          "snapshot": 4
+        },
+        "sizes": {
+          "bar_prefixes": 4,
+          "fallback_imbalances": 0,
+          "fallback_pivots": 0,
+          "full_imbalance_series": 7,
+          "full_pivot_series": 7,
+          "level_touch_states": 45586,
+          "liquidity_maps": 4,
+          "snapshots": 4
+        }
+      },
+      "ETHUSDT": {
+        "hits": {
+          "bars_asof": 3,
+          "full_imbalances": 5,
+          "full_pivots": 9,
+          "imbalance_prefix_filter": 12,
+          "level_usage_incremental": 7,
+          "liquidity_map": 1,
+          "pivot_prefix_filter": 16,
+          "snapshot": 1
+        },
+        "misses": {
+          "bars_asof": 1,
+          "full_imbalances": 7,
+          "full_pivots": 7,
+          "level_touch_state": 43675,
+          "liquidity_map": 1,
+          "snapshot": 1
+        },
+        "sizes": {
+          "bar_prefixes": 1,
+          "fallback_imbalances": 0,
+          "fallback_pivots": 0,
+          "full_imbalance_series": 7,
+          "full_pivot_series": 7,
+          "level_touch_states": 43675,
+          "liquidity_maps": 1,
+          "snapshots": 1
+        }
+      },
+      "LINKUSDT": {
+        "hits": {
+          "bars_asof": 15,
+          "full_imbalances": 89,
+          "full_pivots": 113,
+          "imbalance_prefix_filter": 96,
+          "level_touch_state": 310098,
+          "level_usage_incremental": 56,
+          "liquidity_map": 4,
+          "pivot_prefix_filter": 120,
+          "snapshot": 1
+        },
+        "misses": {
+          "bars_asof": 12,
+          "full_imbalances": 7,
+          "full_pivots": 7,
+          "level_touch_state": 44777,
+          "liquidity_map": 8,
+          "snapshot": 8
+        },
+        "sizes": {
+          "bar_prefixes": 12,
+          "fallback_imbalances": 0,
+          "fallback_pivots": 0,
+          "full_imbalance_series": 7,
+          "full_pivot_series": 7,
+          "level_touch_states": 44777,
+          "liquidity_maps": 8,
+          "snapshots": 8
+        }
+      },
+      "SOLUSDT": {
+        "hits": {
+          "bars_asof": 8,
+          "full_imbalances": 41,
+          "full_pivots": 54,
+          "imbalance_prefix_filter": 48,
+          "level_touch_state": 131228,
+          "level_usage_incremental": 28,
+          "liquidity_map": 2,
+          "pivot_prefix_filter": 61,
+          "snapshot": 1
+        },
+        "misses": {
+          "bars_asof": 6,
+          "full_imbalances": 7,
+          "full_pivots": 7,
+          "level_touch_state": 44138,
+          "liquidity_map": 4,
+          "snapshot": 4
+        },
+        "sizes": {
+          "bar_prefixes": 6,
+          "fallback_imbalances": 0,
+          "fallback_pivots": 0,
+          "full_imbalance_series": 7,
+          "full_pivot_series": 7,
+          "level_touch_states": 44138,
+          "liquidity_maps": 4,
+          "snapshots": 4
+        }
+      }
+    },
+    "source_execution_geometry": "independent_engine_per_symbol",
+    "state_counts": {
+      "M5_BOS_CONFIRMED": 4,
+      "NO_CONTEXT": 10,
+      "POI_TESTED": 9,
+      "WAIT_5M_BOS": 5
+    },
+    "study_id": "SMOKE_MTF_V2_SEMANTIC_REPLAY_V1",
+    "unique_cases": 28
+  },
+  "summary_file": "summary.json",
+  "target_sha": "492eee9fdba5993b7f518e9a1ff38576e8b14285",
+  "workflow": "SMOKE MTF V2 Semantic Replay V1"
+}
