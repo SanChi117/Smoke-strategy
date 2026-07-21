@@ -47,6 +47,11 @@ def directional_target_levels(
     for level in levels:
         if level.timeframe != timeframe:
             continue
+        # A fully mitigated level is not active external liquidity or an FTA.
+        # Dealing-range weak/range extremes remain available as deterministic
+        # fallbacks when no fresh mapped level exists.
+        if not level.fresh:
+            continue
         if normalized_side == "long" and level.side == "resistance" and level.low > entry:
             rows.append(level)
         if normalized_side == "short" and level.side == "support" and level.high < entry:

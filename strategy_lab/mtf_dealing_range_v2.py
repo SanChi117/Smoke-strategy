@@ -482,8 +482,8 @@ def build_dealing_range(
 
 
 def _nearest_levels(levels: Sequence[Level], price: float) -> tuple[Level | None, Level | None]:
-    support = [level for level in levels if level.high <= price]
-    resistance = [level for level in levels if level.low >= price]
+    support = [level for level in levels if level.side == "support" and level.high <= price]
+    resistance = [level for level in levels if level.side == "resistance" and level.low >= price]
     nearest_support = max(support, key=lambda level: (level.high, level.strength), default=None)
     nearest_resistance = min(resistance, key=lambda level: (level.low, -level.strength), default=None)
     return nearest_support, nearest_resistance

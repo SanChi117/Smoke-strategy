@@ -303,7 +303,10 @@ def _select_stop(
         atr = entry * 0.005
 
     if raid is not None:
-        anchor = raid.pivot.price
+        # The raid invalidation is the actual swept wick extreme, not the
+        # reference pivot that was crossed. A stop inside the sweep candle
+        # contradicts the frozen structural-stop contract.
+        anchor = raid.raid_bar.low if side == "long" else raid.raid_bar.high
         if side == "long" and anchor < entry:
             return anchor - atr * config.stop_buffer_atr
         if side == "short" and anchor > entry:
