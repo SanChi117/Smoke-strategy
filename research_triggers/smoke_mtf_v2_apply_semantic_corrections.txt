@@ -4,3 +4,4 @@ Definition-only corrections from frozen 28-case semantic replay.
 2. Exclude mitigated levels from active FTA selection.
 3. Nearest support/resistance diagnostics respect level side.
 No PnL, future outcomes, threshold changes, period changes or symbol changes.
+Rerun 2: source files only; CI workflow update is committed separately.
