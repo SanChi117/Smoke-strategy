@@ -44,6 +44,7 @@ jobs:
             strategy_lab/mtf_labelled_replay.py \
             strategy_lab/mtf_recognition_fast_runtime_v2.py \
             strategy_lab/mtf_recognition_export_v2.py \
+            strategy_lab/mtf_semantic_corrections_v2_smoke_test.py \
             scripts/merge_smoke_mtf_v2_recognition_parts.py \
             scripts/probe_smoke_mtf_v2_real_recognition.py \
             scripts/probe_smoke_mtf_v2_export_diagnostic.py \
@@ -73,6 +74,8 @@ jobs:
         run: python -m strategy_lab.mtf_reference_validation_smoke_test
       - name: Test labelled replay contract
         run: python -m strategy_lab.mtf_labelled_replay_smoke_test
+      - name: Test semantic definition corrections
+        run: python -m strategy_lab.mtf_semantic_corrections_v2_smoke_test
       - name: Test cached runtime output equivalence
         run: python -m strategy_lab.mtf_recognition_fast_runtime_v2_smoke_test
       - name: Test recognition export contract
