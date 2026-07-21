@@ -6,60 +6,69 @@ on:
     paths: ['research_triggers/smoke_mtf_v2_semantic_status_probe.txt']
 
 permissions:
-  contents: read
+  contents: write
   actions: read
-  issues: write
 
 jobs:
   probe-semantic-replay:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/smoke-mtf-dealing-range-v2
+          fetch-depth: 0
       - name: Probe latest semantic replay
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           TARGET_SHA: '492eee9fdba5993b7f518e9a1ff38576e8b14285'
-          PR_NUMBER: '2'
         run: |
           python - <<'PY'
-          import io, json, os, zipfile, requests
-          marker = '<!-- smoke-mtf-v2-semantic-replay-status -->'
-          token = os.environ['GH_TOKEN']; repo = os.environ['REPO']; sha = os.environ['TARGET_SHA']; pr = os.environ['PR_NUMBER']
+          import io, json, os, pathlib, zipfile, requests
+          token=os.environ['GH_TOKEN']; repo=os.environ['REPO']; sha=os.environ['TARGET_SHA']
           session=requests.Session()
           session.headers.update({'Authorization':f'Bearer {token}','Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'})
-          def req(path, method='GET', payload=None, binary=False):
-              url=path if path.startswith('http') else f'https://api.github.com{path}'
-              r=session.request(method,url,json=payload,timeout=60,allow_redirects=True)
+          def req(path, binary=False):
+              r=session.get(f'https://api.github.com{path}',timeout=60,allow_redirects=True)
               r.raise_for_status()
               return r.content if binary else r.json()
           payload=req(f'/repos/{repo}/actions/workflows/smoke-mtf-v2-semantic-replay-v1.yml/runs?branch=agent%2Fsmoke-mtf-dealing-range-v2&per_page=50')
           runs=[r for r in payload.get('workflow_runs',[]) if r.get('head_sha')==sha]
+          result={'target_sha':sha,'workflow':'SMOKE MTF V2 Semantic Replay V1'}
           if not runs:
-              body=f'{marker}\n## SMOKE MTF V2 — semantic replay\n\n- Target SHA: `{sha}`\n- Status: **RUN_NOT_FOUND**'
+              result.update({'status':'RUN_NOT_FOUND','conclusion':None})
           else:
               run=max(runs,key=lambda r:int(r['id']))
-              lines=[marker,'## SMOKE MTF V2 — semantic replay','',f"- Run: [{run['id']}]({run['html_url']})",f"- Status: **{run['status']} / {run.get('conclusion') or 'pending'}**"]
+              result.update({'run_id':run['id'],'run_url':run['html_url'],'status':run['status'],'conclusion':run.get('conclusion')})
               if run.get('status')=='completed':
                   arts=req(f"/repos/{repo}/actions/runs/{run['id']}/artifacts?per_page=100").get('artifacts',[])
                   art=next((a for a in arts if a.get('name')=='smoke-mtf-v2-semantic-replay-v1' and not a.get('expired')),None)
                   if art:
+                      result.update({'artifact_id':art['id'],'artifact_name':art['name'],'artifact_digest':art.get('digest'),'artifact_size':art.get('size_in_bytes')})
                       raw=req(f"/repos/{repo}/actions/artifacts/{art['id']}/zip",binary=True)
                       with zipfile.ZipFile(io.BytesIO(raw)) as z:
                           names=z.namelist()
                           summary_name='summary.json' if 'summary.json' in names else next((n for n in names if n.endswith('/summary.json') and 'archive_' not in n),None)
+                          result['artifact_files']=names
                           if summary_name:
-                              s=json.loads(z.read(summary_name).decode())
-                              lines += ['', '### Result', f"- Artifact id: **{art['id']}**", f"- Artifact digest: **{art.get('digest')}**", f"- Exact replay matches: **{s.get('exact_replay_matches')}**", f"- Exact replay mismatches: **{s.get('exact_replay_mismatches')}**", f"- Entry-ready cases: **{s.get('entry_ready_cases')}**", '- No-PnL/outcome-field exclusion: **PASS**' if run.get('conclusion')=='success' else '- No-PnL/outcome-field exclusion: **not confirmed**']
-                          else: lines += ['', '- Artifact exists, but semantic summary.json is missing.']
-                  else: lines += ['', '- Semantic replay artifact is missing.']
-              body='\n'.join(lines)
-          print(body, flush=True)
-          try:
-              comments=req(f'/repos/{repo}/issues/{pr}/comments?per_page=100')
-              existing=next((c for c in comments if marker in str(c.get('body',''))),None)
-              if existing: req(f"/repos/{repo}/issues/comments/{existing['id']}",'PATCH',{'body':body})
-              else: req(f'/repos/{repo}/issues/{pr}/comments','POST',{'body':body})
-          except Exception as exc:
-              print(f'PR comment skipped: {exc}', flush=True)
+                              summary=json.loads(z.read(summary_name).decode())
+                              result['summary_file']=summary_name
+                              result['summary']=summary
+                              result['no_pnl_outcome_exclusion']='PASS' if run.get('conclusion')=='success' else 'NOT_CONFIRMED'
+                          else:
+                              result['summary_error']='semantic summary.json missing'
+                  else:
+                      result['artifact_error']='artifact missing'
+          path=pathlib.Path('research/smoke_mtf_v2_semantic_probe_rerun8.json')
+          path.write_text(json.dumps(result,indent=2,sort_keys=True),encoding='utf-8')
+          print(json.dumps(result,indent=2,sort_keys=True))
           PY
+      - name: Commit probe result
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research/smoke_mtf_v2_semantic_probe_rerun8.json
+          git commit -m 'Record Rerun 8 semantic replay probe' || exit 0
+          git push origin HEAD:agent/smoke-mtf-dealing-range-v2
