@@ -52,12 +52,6 @@ jobs:
               '''def _nearest_levels(levels: Sequence[Level], price: float) -> tuple[Level | None, Level | None]:\n    support = [level for level in levels if level.high <= price]\n    resistance = [level for level in levels if level.low >= price]\n''',
               '''def _nearest_levels(levels: Sequence[Level], price: float) -> tuple[Level | None, Level | None]:\n    support = [level for level in levels if level.side == "support" and level.high <= price]\n    resistance = [level for level in levels if level.side == "resistance" and level.low >= price]\n''',
           )
-
-          replace_once(
-              '.github/workflows/smoke-mtf-v2-recognition.yml',
-              '''      - name: Test labelled replay contract\n        run: python -m strategy_lab.mtf_labelled_replay_smoke_test\n      - name: Test cached runtime output equivalence\n''',
-              '''      - name: Test labelled replay contract\n        run: python -m strategy_lab.mtf_labelled_replay_smoke_test\n      - name: Test semantic definition corrections\n        run: python -m strategy_lab.mtf_semantic_corrections_v2_smoke_test\n      - name: Test cached runtime output equivalence\n''',
-          )
           PY
       - name: Install and run definition tests
         run: |
@@ -73,7 +67,6 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add strategy_lab/mtf_entry_model_v2.py \
                   strategy_lab/mtf_target_selection_v2.py \
-                  strategy_lab/mtf_dealing_range_v2.py \
-                  .github/workflows/smoke-mtf-v2-recognition.yml
+                  strategy_lab/mtf_dealing_range_v2.py
           git commit -m 'Correct raid invalidation and active FTA semantics'
           git push origin HEAD:agent/smoke-mtf-dealing-range-v2
