@@ -1,0 +1,6 @@
+SMOKE_MTF_V2_APPLY_SEMANTIC_CORRECTIONS
+Definition-only corrections from frozen 28-case semantic replay.
+1. Raid stop behind actual swept wick extreme.
+2. Exclude mitigated levels from active FTA selection.
+3. Nearest support/resistance diagnostics respect level side.
+No PnL, future outcomes, threshold changes, period changes or symbol changes.
