@@ -19,7 +19,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
-          TARGET_SHA: '310b2e5d378fe140edcca5baf219cf7a72d660a8'
+          TARGET_SHA: '492eee9fdba5993b7f518e9a1ff38576e8b14285'
           PR_NUMBER: '2'
         run: |
           python - <<'PY'
@@ -47,10 +47,10 @@ jobs:
                       raw=req(f"/repos/{repo}/actions/artifacts/{art['id']}/zip",binary=True)
                       with zipfile.ZipFile(io.BytesIO(raw)) as z:
                           names=z.namelist()
-                          summary_name='summary.json' if 'summary.json' in names else next((n for n in names if n.endswith('/summary.json')),None)
+                          summary_name='summary.json' if 'summary.json' in names else next((n for n in names if n.endswith('/summary.json') and 'archive_' not in n),None)
                           if summary_name:
                               s=json.loads(z.read(summary_name).decode())
-                              lines += ['', '### Result', f"- Exact replay matches: **{s.get('exact_replay_matches')}**", f"- Exact replay mismatches: **{s.get('exact_replay_mismatches')}**", f"- Entry-ready cases: **{s.get('entry_ready_cases')}**", '- No-PnL/outcome-field exclusion: **PASS**' if run.get('conclusion')=='success' else '- No-PnL/outcome-field exclusion: **not confirmed**']
+                              lines += ['', '### Result', f"- Artifact id: **{art['id']}**", f"- Artifact digest: **{art.get('digest')}**", f"- Exact replay matches: **{s.get('exact_replay_matches')}**", f"- Exact replay mismatches: **{s.get('exact_replay_mismatches')}**", f"- Entry-ready cases: **{s.get('entry_ready_cases')}**", '- No-PnL/outcome-field exclusion: **PASS**' if run.get('conclusion')=='success' else '- No-PnL/outcome-field exclusion: **not confirmed**']
                           else: lines += ['', '- Artifact exists, but semantic summary.json is missing.']
                   else: lines += ['', '- Semantic replay artifact is missing.']
               body='\n'.join(lines)
