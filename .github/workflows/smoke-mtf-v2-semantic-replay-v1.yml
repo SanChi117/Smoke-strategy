@@ -30,6 +30,7 @@ jobs:
           python -m py_compile scripts/build_smoke_mtf_v2_semantic_replay.py
           python -m strategy_lab.mtf_recognition_fast_runtime_v2_smoke_test
           python -m strategy_lab.mtf_semantic_replay_smoke_test
+          python -m strategy_lab.mtf_semantic_corrections_v2_smoke_test
       - name: Download frozen combined recognition artifact
         uses: actions/download-artifact@v4
         with:
@@ -37,7 +38,7 @@ jobs:
           path: ${{ runner.temp }}/frozen-recognition
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: SanChi117/Smoke-strategy
-          run-id: '29727847823'
+          run-id: '29847860881'
       - name: Create frozen five-symbol universe
         run: |
           printf '%s\n' BTCUSDT ETHUSDT SOLUSDT LINKUSDT AAVEUSDT > "$RUNNER_TEMP/symbols.txt"
