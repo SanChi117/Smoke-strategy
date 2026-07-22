@@ -23,13 +23,16 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
-          TARGET_SHA: ad973b05701321f5ba67f12708ed0d5a9d0be5c2
         run: |
           python - <<'PY'
           import json, os, urllib.parse, urllib.request
           from pathlib import Path
 
-          token=os.environ['GH_TOKEN']; repo=os.environ['REPO']; sha=os.environ['TARGET_SHA']
+          token=os.environ['GH_TOKEN']; repo=os.environ['REPO']
+          trigger=Path('research_triggers/smoke_mtf_v2_run_inspector.txt').read_text(encoding='utf-8').splitlines()
+          if len(trigger) < 2 or len(trigger[1].strip()) != 40:
+              raise RuntimeError('run inspector trigger must contain target SHA on line 2')
+          sha=trigger[1].strip()
           def get(path):
               req=urllib.request.Request(f'https://api.github.com{path}')
               req.add_header('Authorization',f'Bearer {token}')
