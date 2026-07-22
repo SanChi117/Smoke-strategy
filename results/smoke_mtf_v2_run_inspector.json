@@ -4,12 +4,12 @@
   "run": {
     "id": 29863080114,
     "name": "SMOKE MTF V2 Development Profitability V2",
-    "status": "queued",
+    "status": "in_progress",
     "conclusion": null,
     "run_number": 1,
     "html_url": "https://github.com/SanChi117/Smoke-strategy/actions/runs/29863080114",
     "created_at": "2026-07-21T19:48:37Z",
-    "updated_at": "2026-07-21T19:49:09Z",
+    "updated_at": "2026-07-22T04:44:37Z",
     "head_sha": "ad973b05701321f5ba67f12708ed0d5a9d0be5c2"
   },
   "jobs": [
@@ -160,26 +160,26 @@
     {
       "id": 88744566172,
       "name": "fold-9-ETHUSDT",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-21T22:42:20Z",
-      "completed_at": null
+      "completed_at": "2026-07-22T02:01:26Z"
     },
     {
       "id": 88744566179,
       "name": "fold-5-ETHUSDT",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-21T21:46:26Z",
-      "completed_at": null
+      "completed_at": "2026-07-22T00:04:39Z"
     },
     {
       "id": 88744566180,
       "name": "fold-8-ETHUSDT",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-21T22:24:28Z",
-      "completed_at": null
+      "completed_at": "2026-07-22T01:26:14Z"
     },
     {
       "id": 88744566212,
@@ -192,10 +192,10 @@
     {
       "id": 88744566219,
       "name": "fold-7-ETHUSDT",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-21T22:20:55Z",
-      "completed_at": null
+      "completed_at": "2026-07-22T01:18:51Z"
     },
     {
       "id": 88744566228,
@@ -208,10 +208,10 @@
     {
       "id": 88744566231,
       "name": "fold-6-ETHUSDT",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-21T22:18:31Z",
-      "completed_at": null
+      "completed_at": "2026-07-22T00:52:02Z"
     },
     {
       "id": 88744567194,
@@ -224,237 +224,461 @@
     {
       "id": 88744567308,
       "name": "fold-1-SOLUSDT",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-21T23:00:25Z",
-      "completed_at": null
+      "completed_at": "2026-07-22T00:14:46Z"
     },
     {
       "id": 88744567331,
       "name": "fold-6-SOLUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:09Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T00:04:41Z",
+      "completed_at": "2026-07-22T02:38:12Z"
     },
     {
       "id": 88744567332,
       "name": "fold-2-SOLUSDT",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-21T23:16:06Z",
-      "completed_at": null
+      "completed_at": "2026-07-22T00:45:13Z"
     },
     {
       "id": 88744567333,
       "name": "fold-4-SOLUSDT",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-21T23:39:01Z",
-      "completed_at": null
+      "completed_at": "2026-07-22T01:40:12Z"
     },
     {
       "id": 88744567364,
       "name": "fold-5-SOLUSDT",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-21T23:50:32Z",
-      "completed_at": null
+      "completed_at": "2026-07-22T02:14:17Z"
     },
     {
       "id": 88744567370,
       "name": "fold-7-SOLUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:09Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T00:14:48Z",
+      "completed_at": "2026-07-22T02:34:11Z"
     },
     {
       "id": 88744567440,
       "name": "fold-8-SOLUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:09Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T00:45:15Z",
+      "completed_at": "2026-07-22T03:44:07Z"
     },
     {
       "id": 88744567445,
       "name": "fold-9-SOLUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:09Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T00:52:04Z",
+      "completed_at": "2026-07-22T03:08:44Z"
     },
     {
       "id": 88744567467,
       "name": "fold-3-SOLUSDT",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-21T23:25:37Z",
-      "completed_at": null
+      "completed_at": "2026-07-22T01:10:20Z"
     },
     {
       "id": 88744568208,
       "name": "fold-0-LINKUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:09Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T01:10:21Z",
+      "completed_at": "2026-07-22T02:07:24Z"
     },
     {
       "id": 88744568221,
       "name": "fold-1-LINKUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:09Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T01:18:54Z",
+      "completed_at": "2026-07-22T02:33:16Z"
     },
     {
       "id": 88744568275,
       "name": "fold-4-LINKUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:10Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T02:01:28Z",
+      "completed_at": "2026-07-22T03:27:00Z"
     },
     {
       "id": 88744568299,
       "name": "fold-2-LINKUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:10Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T01:26:16Z",
+      "completed_at": "2026-07-22T02:54:20Z"
     },
     {
       "id": 88744568354,
       "name": "fold-3-LINKUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:10Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T01:40:14Z",
+      "completed_at": "2026-07-22T03:25:17Z"
     },
     {
       "id": 88744568369,
       "name": "fold-5-LINKUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:10Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "failure",
+      "started_at": "2026-07-22T02:07:26Z",
+      "completed_at": "2026-07-22T03:07:37Z"
     },
     {
       "id": 88744568388,
       "name": "fold-7-LINKUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:10Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T02:33:17Z",
+      "completed_at": "2026-07-22T05:24:21Z"
     },
     {
       "id": 88744568417,
       "name": "fold-6-LINKUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:10Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T02:14:20Z",
+      "completed_at": "2026-07-22T04:44:34Z"
     },
     {
       "id": 88744568468,
       "name": "fold-8-LINKUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:10Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T02:34:13Z",
+      "completed_at": "2026-07-22T05:31:30Z"
     },
     {
       "id": 88744568486,
       "name": "fold-9-LINKUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:10Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T02:38:14Z",
+      "completed_at": "2026-07-22T06:03:17Z"
     },
     {
       "id": 88744569319,
       "name": "fold-0-AAVEUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:10Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T02:54:22Z",
+      "completed_at": "2026-07-22T03:50:41Z"
     },
     {
       "id": 88744569345,
       "name": "fold-2-AAVEUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:10Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T03:08:46Z",
+      "completed_at": "2026-07-22T04:34:30Z"
     },
     {
       "id": 88744569354,
       "name": "fold-1-AAVEUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:10Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T03:07:39Z",
+      "completed_at": "2026-07-22T04:07:51Z"
     },
     {
       "id": 88744569570,
       "name": "fold-3-AAVEUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:10Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T03:25:19Z",
+      "completed_at": "2026-07-22T05:09:47Z"
     },
     {
       "id": 88744569590,
       "name": "fold-5-AAVEUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:10Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T03:44:09Z",
+      "completed_at": "2026-07-22T05:43:43Z"
     },
     {
       "id": 88744569592,
       "name": "fold-4-AAVEUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:10Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T03:27:02Z",
+      "completed_at": "2026-07-22T05:24:24Z"
     },
     {
       "id": 88744569627,
       "name": "fold-6-AAVEUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:10Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T03:50:43Z",
+      "completed_at": "2026-07-22T06:18:58Z"
     },
     {
       "id": 88744569639,
       "name": "fold-8-AAVEUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:10Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T04:34:34Z",
+      "completed_at": "2026-07-22T07:35:27Z"
     },
     {
       "id": 88744569666,
       "name": "fold-7-AAVEUSDT",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-21T19:49:10Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T04:07:53Z",
+      "completed_at": "2026-07-22T06:52:01Z"
     },
     {
       "id": 88744569748,
       "name": "fold-9-AAVEUSDT",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-21T19:49:10Z",
+      "started_at": "2026-07-22T04:44:36Z",
       "completed_at": null
     }
   ],
   "artifacts": [
+    {
+      "id": 8521762654,
+      "name": "smoke-mtf-v2-development-fold-8-AAVEUSDT",
+      "size_in_bytes": 2352,
+      "expired": false,
+      "digest": "sha256:fb6a740af597b9e9f0a8a74c72a3a775292b223d2f2980088616155bf4898f39"
+    },
+    {
+      "id": 8520770238,
+      "name": "smoke-mtf-v2-development-fold-7-AAVEUSDT",
+      "size_in_bytes": 2344,
+      "expired": false,
+      "digest": "sha256:625fa47d3266bef0e5aa8a009dc1da2bb68ce38c3a9342d6d85f14bf6a3b7af0"
+    },
+    {
+      "id": 8520123302,
+      "name": "smoke-mtf-v2-development-fold-6-AAVEUSDT",
+      "size_in_bytes": 2350,
+      "expired": false,
+      "digest": "sha256:66c9df20ed54aaa372386961a66d2c120968357ff9a724055003ba9efea665ed"
+    },
+    {
+      "id": 8519826649,
+      "name": "smoke-mtf-v2-development-fold-9-LINKUSDT",
+      "size_in_bytes": 2350,
+      "expired": false,
+      "digest": "sha256:4a80729f2aff2458ee40da2c7ecb418cdec8571a59cdfcd891e5a40f9ffa0765"
+    },
+    {
+      "id": 8519482193,
+      "name": "smoke-mtf-v2-development-fold-5-AAVEUSDT",
+      "size_in_bytes": 2334,
+      "expired": false,
+      "digest": "sha256:0c65acb8e9ed118b5c58f22ff8dcc515e9a0a46ba2034e7c4979f81e881f9957"
+    },
+    {
+      "id": 8519272327,
+      "name": "smoke-mtf-v2-development-fold-8-LINKUSDT",
+      "size_in_bytes": 2349,
+      "expired": false,
+      "digest": "sha256:061e18d81d44f36c440499c4cb3f65169ed10804ed8902654729fa4ca8121145"
+    },
+    {
+      "id": 8519148856,
+      "name": "smoke-mtf-v2-development-fold-4-AAVEUSDT",
+      "size_in_bytes": 2343,
+      "expired": false,
+      "digest": "sha256:6670a0507d0a419474f78ca965baefce9c40e51f4963d2e1730d8d5802c263d6"
+    },
+    {
+      "id": 8519148436,
+      "name": "smoke-mtf-v2-development-fold-7-LINKUSDT",
+      "size_in_bytes": 2345,
+      "expired": false,
+      "digest": "sha256:f17cc7c5f51a01281dcb447b0b58250ff32e7ea64fcd4e77fdbc70b9944e9c65"
+    },
+    {
+      "id": 8518895206,
+      "name": "smoke-mtf-v2-development-fold-3-AAVEUSDT",
+      "size_in_bytes": 2335,
+      "expired": false,
+      "digest": "sha256:556cee0640b17a8b9f540ec08f8828660a37e7012164b281931baaf5c784b487"
+    },
+    {
+      "id": 8518511233,
+      "name": "smoke-mtf-v2-development-fold-6-LINKUSDT",
+      "size_in_bytes": 2351,
+      "expired": false,
+      "digest": "sha256:dbf4d31f7105a178973a163def356368eec8e921d3fc46a18114b0be6790825f"
+    },
+    {
+      "id": 8518364230,
+      "name": "smoke-mtf-v2-development-fold-2-AAVEUSDT",
+      "size_in_bytes": 2340,
+      "expired": false,
+      "digest": "sha256:264912918cb75a90a9eb007055b28214c981872f8cbc0042da37743efab56636"
+    },
+    {
+      "id": 8517968529,
+      "name": "smoke-mtf-v2-development-fold-1-AAVEUSDT",
+      "size_in_bytes": 2335,
+      "expired": false,
+      "digest": "sha256:15dee72d9c3ffcf2118560be3bcaddba3ec590fa9811f9f9e2824469d2c129de"
+    },
+    {
+      "id": 8517711195,
+      "name": "smoke-mtf-v2-development-fold-0-AAVEUSDT",
+      "size_in_bytes": 2335,
+      "expired": false,
+      "digest": "sha256:18fceb8c9759dce024aef807817b89cbae8e7f7ebf30b72d7c77ef23ac4cf691"
+    },
+    {
+      "id": 8517616508,
+      "name": "smoke-mtf-v2-development-fold-8-SOLUSDT",
+      "size_in_bytes": 2345,
+      "expired": false,
+      "digest": "sha256:1985cf063e207d367aff718db800dcceff5b03ae9bc6dec74663b745a5ae5e84"
+    },
+    {
+      "id": 8517373144,
+      "name": "smoke-mtf-v2-development-fold-4-LINKUSDT",
+      "size_in_bytes": 2354,
+      "expired": false,
+      "digest": "sha256:27814df2465fff7263ab9b39454e1d429643ff4da5e66cedc760c03a36db7e1e"
+    },
+    {
+      "id": 8517348483,
+      "name": "smoke-mtf-v2-development-fold-3-LINKUSDT",
+      "size_in_bytes": 2341,
+      "expired": false,
+      "digest": "sha256:83f95d021942ccb47fe04d907cecb31036d7c1e0e5a52606c54bc227b7f2958f"
+    },
+    {
+      "id": 8517079465,
+      "name": "smoke-mtf-v2-development-fold-9-SOLUSDT",
+      "size_in_bytes": 2333,
+      "expired": false,
+      "digest": "sha256:a4577774466d2d439335310de4da629eb31806863ee23b7ff7a2d12d7db2fe5f"
+    },
+    {
+      "id": 8516857253,
+      "name": "smoke-mtf-v2-development-fold-2-LINKUSDT",
+      "size_in_bytes": 2344,
+      "expired": false,
+      "digest": "sha256:8dd303fc4e1ff479a85c063ca909d1074b580ad04f5f61df7e14c6ffb92146dd"
+    },
+    {
+      "id": 8516631975,
+      "name": "smoke-mtf-v2-development-fold-6-SOLUSDT",
+      "size_in_bytes": 2341,
+      "expired": false,
+      "digest": "sha256:8482f65b68f949c4fc665b7b6ce6190d53eaf320b8a87776a7ad938038a0f14f"
+    },
+    {
+      "id": 8516573713,
+      "name": "smoke-mtf-v2-development-fold-7-SOLUSDT",
+      "size_in_bytes": 2341,
+      "expired": false,
+      "digest": "sha256:0cc4d8a6d4a1906b364c035d129a99f22c5d18b1cb4d9aea24490a24585df798"
+    },
+    {
+      "id": 8516560507,
+      "name": "smoke-mtf-v2-development-fold-1-LINKUSDT",
+      "size_in_bytes": 2345,
+      "expired": false,
+      "digest": "sha256:63d3707b2bd3e69fbd46c18817368024347273ad4b5172d7b865e28a5fad2bc4"
+    },
+    {
+      "id": 8516279034,
+      "name": "smoke-mtf-v2-development-fold-5-SOLUSDT",
+      "size_in_bytes": 2335,
+      "expired": false,
+      "digest": "sha256:37e9399263deda1628377ec0d6ccf568b9edddf750170ce679f48b13e349e493"
+    },
+    {
+      "id": 8516174232,
+      "name": "smoke-mtf-v2-development-fold-0-LINKUSDT",
+      "size_in_bytes": 2340,
+      "expired": false,
+      "digest": "sha256:624f46b3cb272fb23901d16d35a9fceb42252cc6c81d4974531f5b45bc8ed43f"
+    },
+    {
+      "id": 8516085389,
+      "name": "smoke-mtf-v2-development-fold-9-ETHUSDT",
+      "size_in_bytes": 2343,
+      "expired": false,
+      "digest": "sha256:97516b34ff192d658f54a371abe247c2d9c037ff3ce6539f6d3651d1854128bf"
+    },
+    {
+      "id": 8515730932,
+      "name": "smoke-mtf-v2-development-fold-4-SOLUSDT",
+      "size_in_bytes": 2341,
+      "expired": false,
+      "digest": "sha256:92ceb63741031075a943f329304b1dadca89257c064c72d1a9b6656b64e5bb3b"
+    },
+    {
+      "id": 8515497021,
+      "name": "smoke-mtf-v2-development-fold-8-ETHUSDT",
+      "size_in_bytes": 2339,
+      "expired": false,
+      "digest": "sha256:3c55ae94c65edbb3e31c517d9267cab084536ed866a6b243e8b10d6403073a78"
+    },
+    {
+      "id": 8515383756,
+      "name": "smoke-mtf-v2-development-fold-7-ETHUSDT",
+      "size_in_bytes": 2340,
+      "expired": false,
+      "digest": "sha256:2a42dc1c11d7bd2319c22edd7aa591a5545844415e3a76798d0598efe044350d"
+    },
+    {
+      "id": 8515241620,
+      "name": "smoke-mtf-v2-development-fold-3-SOLUSDT",
+      "size_in_bytes": 2333,
+      "expired": false,
+      "digest": "sha256:3946b938498fa33c6626dd5b1ad87c8bec81b0d5b193a8bd099bcb276ee8cd98"
+    },
+    {
+      "id": 8514917884,
+      "name": "smoke-mtf-v2-development-fold-6-ETHUSDT",
+      "size_in_bytes": 2340,
+      "expired": false,
+      "digest": "sha256:a7ea8d7cf8b95b61d3a82b60af556c8b6bdc9c84875df3b7b952ae6de6e99c4a"
+    },
+    {
+      "id": 8514792412,
+      "name": "smoke-mtf-v2-development-fold-2-SOLUSDT",
+      "size_in_bytes": 2333,
+      "expired": false,
+      "digest": "sha256:1334f88661af1bc8678e2c6119e40d2349559177a921b2dae50eec63f204ab05"
+    },
+    {
+      "id": 8514252314,
+      "name": "smoke-mtf-v2-development-fold-1-SOLUSDT",
+      "size_in_bytes": 2340,
+      "expired": false,
+      "digest": "sha256:6494094e6ff68303fda8571d3611d837d876770198e4c364bfd9c171b26eb7f0"
+    },
+    {
+      "id": 8514077785,
+      "name": "smoke-mtf-v2-development-fold-5-ETHUSDT",
+      "size_in_bytes": 2338,
+      "expired": false,
+      "digest": "sha256:0c844aa4d2dddffd5126827fdb72262d97e36dd36c816fc213bdfb6e456e2828"
+    },
     {
       "id": 8513821138,
       "name": "smoke-mtf-v2-development-fold-0-SOLUSDT",
