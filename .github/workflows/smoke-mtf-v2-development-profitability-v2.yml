@@ -80,7 +80,7 @@ jobs:
           retention-days: 7
 
   development-fold:
-    name: fold-${{ matrix.fold }}-${{ matrix.symbol }}
+    name: fold-${{ matrix.fold }}-${{ matrix.symbol }}-${{ matrix.side }}
     needs: prepare-symbol-data
     runs-on: ubuntu-latest
     timeout-minutes: 340
@@ -90,6 +90,7 @@ jobs:
       matrix:
         symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
         fold: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        side: [long, short]
     steps:
       - name: Checkout exact preregistered trigger commit
         uses: actions/checkout@v4
@@ -102,13 +103,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .
           python -m strategy_lab.mtf_development_backtest_v1_smoke_test
+          python -m strategy_lab.mtf_development_partition_v2_smoke_test
           python -m strategy_lab.mtf_recognition_fast_runtime_v2_smoke_test
       - name: Download immutable symbol data
         uses: actions/download-artifact@v4
         with:
           name: smoke-mtf-v2-development-data-${{ matrix.symbol }}
           path: ${{ runner.temp }}/development-data
-      - name: Run frozen symbol-fold evaluation
+      - name: Run frozen symbol-fold-side evaluation
         run: |
           CANDLES=$(find "$RUNNER_TEMP/development-data" -name '*-5m.csv' -print -quit)
           FUNDING=$(find "$RUNNER_TEMP/development-data" -name 'funding.csv' -print -quit)
@@ -121,11 +123,12 @@ jobs:
               --funding "$FUNDING" \
               --funding-summary "$FUNDING_SUMMARY" \
               --fold '${{ matrix.fold }}' \
+              --side '${{ matrix.side }}' \
               --out-dir "$RUNNER_TEMP/fold-result"
       - name: Upload frozen fold result
         uses: actions/upload-artifact@v4
         with:
-          name: smoke-mtf-v2-development-fold-${{ matrix.fold }}-${{ matrix.symbol }}
+          name: smoke-mtf-v2-development-fold-${{ matrix.fold }}-${{ matrix.symbol }}-${{ matrix.side }}
           path: ${{ runner.temp }}/fold-result/**
           if-no-files-found: error
           retention-days: 30
@@ -147,7 +150,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .
           python -m strategy_lab.mtf_development_backtest_v1_smoke_test
-      - name: Download all 50 fold results
+          python -m strategy_lab.mtf_development_partition_v2_smoke_test
+      - name: Download all 100 fold-side results
         uses: actions/download-artifact@v4
         with:
           pattern: smoke-mtf-v2-development-fold-*
@@ -158,7 +162,7 @@ jobs:
           python scripts/aggregate_smoke_mtf_v2_development.py \
             --parts-root "$RUNNER_TEMP/development-parts" \
             --out-dir "$RUNNER_TEMP/development-result" \
-            --expected-parts 50
+            --expected-parts 100
       - name: Write visible result
         run: cat "$RUNNER_TEMP/development-result/DEVELOPMENT_RESULT.md" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload final development result
