@@ -432,10 +432,10 @@
     {
       "id": 89150209345,
       "name": "funnel-4-SOLUSDT-long",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-23T16:38:56Z",
-      "completed_at": null
+      "completed_at": "2026-07-23T18:36:51Z"
     },
     {
       "id": 89150209356,
@@ -528,9 +528,9 @@
     {
       "id": 89150210241,
       "name": "funnel-9-SOLUSDT-short",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-23T08:01:02Z",
+      "started_at": "2026-07-23T18:37:00Z",
       "completed_at": null
     },
     {
@@ -815,6 +815,13 @@
     }
   ],
   "artifacts": [
+    {
+      "id": 8574640087,
+      "name": "smoke-mtf-v3-no-pnl-part-4-SOLUSDT-long",
+      "size_in_bytes": 22253,
+      "expired": false,
+      "digest": "sha256:5cb06a472abe2f1cf0bbdf5579e94eca8601eb328ba7ceac862f2c99b7e9b46a"
+    },
     {
       "id": 8574185665,
       "name": "smoke-mtf-v3-no-pnl-part-4-SOLUSDT-short",
