@@ -256,10 +256,10 @@
     {
       "id": 89150207753,
       "name": "funnel-3-ETHUSDT-long",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-23T12:13:06Z",
-      "completed_at": null
+      "completed_at": "2026-07-23T14:04:24Z"
     },
     {
       "id": 89150207757,
@@ -272,42 +272,42 @@
     {
       "id": 89150207779,
       "name": "funnel-4-ETHUSDT-long",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-23T12:23:26Z",
-      "completed_at": null
+      "completed_at": "2026-07-23T14:18:43Z"
     },
     {
       "id": 89150207808,
       "name": "funnel-3-ETHUSDT-short",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-23T12:21:20Z",
-      "completed_at": null
+      "completed_at": "2026-07-23T14:11:24Z"
     },
     {
       "id": 89150207871,
       "name": "funnel-4-ETHUSDT-short",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-23T12:24:27Z",
-      "completed_at": null
+      "completed_at": "2026-07-23T14:18:46Z"
     },
     {
       "id": 89150208358,
       "name": "funnel-5-ETHUSDT-short",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-23T12:55:52Z",
-      "completed_at": null
+      "completed_at": "2026-07-23T14:30:45Z"
     },
     {
       "id": 89150208388,
       "name": "funnel-5-ETHUSDT-long",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-23T12:40:23Z",
-      "completed_at": null
+      "completed_at": "2026-07-23T14:11:46Z"
     },
     {
       "id": 89150208399,
@@ -336,25 +336,25 @@
     {
       "id": 89150208492,
       "name": "funnel-8-ETHUSDT-long",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-23T08:01:02Z",
+      "started_at": "2026-07-23T14:04:26Z",
       "completed_at": null
     },
     {
       "id": 89150208497,
       "name": "funnel-9-ETHUSDT-long",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-23T08:01:02Z",
+      "started_at": "2026-07-23T14:11:49Z",
       "completed_at": null
     },
     {
       "id": 89150208505,
       "name": "funnel-8-ETHUSDT-short",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-23T08:01:02Z",
+      "started_at": "2026-07-23T14:11:27Z",
       "completed_at": null
     },
     {
@@ -368,17 +368,17 @@
     {
       "id": 89150208580,
       "name": "funnel-9-ETHUSDT-short",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-23T08:01:02Z",
+      "started_at": "2026-07-23T14:18:48Z",
       "completed_at": null
     },
     {
       "id": 89150209156,
       "name": "funnel-0-SOLUSDT-long",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-23T08:01:02Z",
+      "started_at": "2026-07-23T14:18:50Z",
       "completed_at": null
     },
     {
@@ -408,9 +408,9 @@
     {
       "id": 89150209327,
       "name": "funnel-0-SOLUSDT-short",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-23T08:01:02Z",
+      "started_at": "2026-07-23T14:30:48Z",
       "completed_at": null
     },
     {
@@ -815,6 +815,48 @@
     }
   ],
   "artifacts": [
+    {
+      "id": 8567193775,
+      "name": "smoke-mtf-v3-no-pnl-part-5-ETHUSDT-short",
+      "size_in_bytes": 20128,
+      "expired": false,
+      "digest": "sha256:39b852a36b8764d9d3e1a68284e8a536be86f2e3a8148f2d6bf6546811882d93"
+    },
+    {
+      "id": 8566801660,
+      "name": "smoke-mtf-v3-no-pnl-part-4-ETHUSDT-short",
+      "size_in_bytes": 19402,
+      "expired": false,
+      "digest": "sha256:43b015350d54983eb47821d167109b60e96ad3bcff7361b9943d44a484368ed8"
+    },
+    {
+      "id": 8566799941,
+      "name": "smoke-mtf-v3-no-pnl-part-4-ETHUSDT-long",
+      "size_in_bytes": 20918,
+      "expired": false,
+      "digest": "sha256:2296d5abc69954e82380970a68286d593605caf9fb21300695e751fba6b659e2"
+    },
+    {
+      "id": 8566549732,
+      "name": "smoke-mtf-v3-no-pnl-part-5-ETHUSDT-long",
+      "size_in_bytes": 21705,
+      "expired": false,
+      "digest": "sha256:04f07f5b1cad51853783a475718abdc973dca73cc629baf39033819945869aba"
+    },
+    {
+      "id": 8566537426,
+      "name": "smoke-mtf-v3-no-pnl-part-3-ETHUSDT-short",
+      "size_in_bytes": 20066,
+      "expired": false,
+      "digest": "sha256:ee99fbe05be412813792c6b7c943c3c960d1ab5bd73e0f40e1cff5b2f9b3581e"
+    },
+    {
+      "id": 8566309457,
+      "name": "smoke-mtf-v3-no-pnl-part-3-ETHUSDT-long",
+      "size_in_bytes": 20371,
+      "expired": false,
+      "digest": "sha256:6edd2bee7b8eb6b35a5b6ef8705d4f78f6f973db8d225af84f6ef5565f9d015f"
+    },
     {
       "id": 8565283583,
       "name": "smoke-mtf-v3-no-pnl-part-2-ETHUSDT-long",
