@@ -76,20 +76,22 @@ def route_name(plan: Any) -> str:
 
 def stage_flags(plan: Any, side: str, min_rr: float) -> dict[str, bool]:
     direction_allowed = bool(plan.context.long_allowed if side == "long" else plan.context.short_allowed)
-    active_poi = plan.poi is not None
-    route_triggered = bool(plan.h1_raid or plan.h1_vc)
-    poi_tested = bool(active_poi and (plan.h1_raid or plan.vc_zone_test))
-    bos_confirmed = plan.bos is not None
-    execution_eligible = plan.entry is not None
+    active_poi = bool(direction_allowed and plan.poi is not None)
+    route_triggered = bool(active_poi and (plan.h1_raid or plan.h1_vc))
+    poi_tested = bool(route_triggered and (plan.h1_raid or plan.vc_zone_test))
+    bos_confirmed = bool(poi_tested and plan.bos is not None)
+    execution_eligible = bool(bos_confirmed and plan.entry is not None)
     stop_valid = bool(
         execution_eligible and plan.stop is not None and
         ((side == "long" and plan.stop < plan.entry) or (side == "short" and plan.stop > plan.entry))
     )
-    fta_valid = bool(
-        execution_eligible and plan.target is not None and
+    fta_geometry_valid = bool(
+        plan.target is not None and
         ((side == "long" and plan.target > plan.entry) or (side == "short" and plan.target < plan.entry))
-    )
-    rr_passed = bool(plan.rr is not None and plan.rr >= min_rr)
+    ) if execution_eligible else False
+    fta_valid = bool(stop_valid and fta_geometry_valid)
+    rr_passed = bool(fta_valid and plan.rr is not None and plan.rr >= min_rr)
+    entry_ready = bool(rr_passed and plan.allowed)
     return {
         "CLOSED_DATA_AVAILABLE": True,
         "CONTEXT_ALIGNED": direction_allowed,
@@ -101,7 +103,7 @@ def stage_flags(plan: Any, side: str, min_rr: float) -> dict[str, bool]:
         "STRUCTURAL_STOP_VALID": stop_valid,
         "ACTIVE_FTA_VALID": fta_valid,
         "RR_GATE_PASSED": rr_passed,
-        "ENTRY_READY": bool(plan.allowed),
+        "ENTRY_READY": entry_ready,
     }
 
 
