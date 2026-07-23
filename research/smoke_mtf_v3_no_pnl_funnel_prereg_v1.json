@@ -1,0 +1,82 @@
+{
+  "study_id": "SMOKE_MTF_V3_NO_PNL_FUNNEL_V1",
+  "status": "PREREGISTERED_NOT_STARTED",
+  "purpose": "Diagnose where the frozen V2 causal recognition funnel collapses before designing one materially new V3 candidate.",
+  "source_candidate": {
+    "recognition_freeze_sha": "492eee9fdba5993b7f518e9a1ff38576e8b14285",
+    "development_run_id": 29906237656,
+    "development_verdict": "FAIL"
+  },
+  "universe": [
+    "BTCUSDT",
+    "ETHUSDT",
+    "SOLUSDT",
+    "LINKUSDT",
+    "AAVEUSDT"
+  ],
+  "history_start": "2024-07-01",
+  "audit_start": "2025-01-01",
+  "audit_end_exclusive": "2026-07-01",
+  "timeframes": ["5m", "15m", "1H", "4H", "1D", "1W", "1M"],
+  "allowed_outputs": [
+    "closed-candle coverage",
+    "state counts by symbol side fold and month",
+    "transition counts and transition rates",
+    "fresh H1 raid route counts",
+    "H1 VC plus later 15m retest route counts",
+    "5m BOS confirmation counts",
+    "next 15m execution eligibility counts",
+    "rejection reason counts",
+    "context direction and POI counts",
+    "pre-outcome structural stop distance",
+    "pre-outcome FTA distance",
+    "pre-outcome structural RR distribution",
+    "time spent between causal states",
+    "duplicate structural fingerprint counts"
+  ],
+  "forbidden_outputs": [
+    "PnL",
+    "future return",
+    "trade outcome",
+    "TP or SL result",
+    "MFE",
+    "MAE",
+    "win rate",
+    "profit factor",
+    "net return",
+    "drawdown",
+    "any ranking by subsequent price movement"
+  ],
+  "required_funnel_stages": [
+    "CLOSED_DATA_AVAILABLE",
+    "CONTEXT_ALIGNED",
+    "ACTIVE_POI",
+    "ROUTE_TRIGGERED",
+    "POI_TESTED",
+    "M5_BOS_CONFIRMED",
+    "STRUCTURAL_STOP_VALID",
+    "ACTIVE_FTA_VALID",
+    "RR_GATE_PASSED",
+    "ENTRY_READY"
+  ],
+  "design_rule_after_audit": {
+    "max_new_candidates": 1,
+    "must_be_materially_new": true,
+    "no_threshold_tuning_from_outcomes": true,
+    "minimum_entry_ready_cases_before_profitability": 60,
+    "semantic_replay_required": true,
+    "recognition_freeze_required": true
+  },
+  "next_profitability_governance": {
+    "same_symbols": true,
+    "same_cost_model": true,
+    "same_portfolio_model": true,
+    "chronological_folds": 10,
+    "minimum_trades": 60,
+    "minimum_pooled_pf": 1.2,
+    "average_net_trade_return_must_be_positive": true,
+    "minimum_positive_folds": 6,
+    "maximum_drawdown_pct": 8.0,
+    "holdout_allowed_only_after_development_pass": true
+  }
+}
