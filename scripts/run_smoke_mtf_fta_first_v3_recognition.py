@@ -60,6 +60,7 @@ def scan(
     side: str,
     scan_start: datetime,
     scan_end: datetime,
+    fold: int | None = None,
     sample_limit_per_state: int = 4,
 ) -> dict[str, Any]:
     normalized = symbol.upper()
@@ -109,12 +110,22 @@ def scan(
             raise AssertionError("allowed V3 plan has no independent fingerprint")
         independent.setdefault(fingerprint, record)
 
+    partition = {
+        "symbol": normalized,
+        "side": side,
+        "fold": fold,
+        "scan_start": scan_start.isoformat(),
+        "scan_end": scan_end.isoformat(),
+    }
     payload: dict[str, Any] = {
         "study_id": "SMOKE_MTF_FTA_FIRST_V3_RECOGNITION_V1",
         "mode": "OUTCOME_BLIND_RECOGNITION",
         "candidate_id": "SMOKE_MTF_FTA_FIRST_V3_FROZEN_CANDIDATE_1",
+        "partition": partition,
+        "partition_key": f"{fold if fold is not None else 'benchmark'}:{normalized}:{side}",
         "symbol": normalized,
         "side": side,
+        "fold": fold,
         "scan_start": scan_start.isoformat(),
         "scan_end": scan_end.isoformat(),
         "evaluated_15m_snapshots": evaluated,
@@ -147,6 +158,7 @@ def main() -> int:
     parser.add_argument("--side", required=True, choices=("long", "short"))
     parser.add_argument("--scan-start", required=True)
     parser.add_argument("--scan-end", required=True)
+    parser.add_argument("--fold", type=int)
     parser.add_argument("--out", required=True)
     args = parser.parse_args()
 
@@ -158,12 +170,13 @@ def main() -> int:
         side=args.side,
         scan_start=parse_dt(args.scan_start),
         scan_end=parse_dt(args.scan_end),
+        fold=args.fold,
     )
     output = Path(args.out)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(
-        f"symbol={payload['symbol']} side={payload['side']} "
+        f"partition={payload['partition_key']} "
         f"evaluated={payload['evaluated_15m_snapshots']} "
         f"independent_entry_ready={payload['independent_entry_ready_count']}"
     )
