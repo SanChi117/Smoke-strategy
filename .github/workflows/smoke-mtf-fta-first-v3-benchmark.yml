@@ -1,0 +1,97 @@
+name: SMOKE MTF FTA-First V3 Benchmark
+
+on:
+  push:
+    branches: ['agent/smoke-mtf-fta-first-v3']
+    paths: ['research_triggers/smoke_mtf_fta_first_v3_benchmark.txt']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install and verify V3 core
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          python -m py_compile scripts/run_smoke_mtf_fta_first_v3_recognition.py
+          python -m strategy_lab.mtf_fta_first_entry_v3_smoke_test
+      - name: Download official SOLUSDT closed 5m history
+        run: |
+          printf '%s\n' 'SOLUSDT' > "$RUNNER_TEMP/symbols.txt"
+          python scripts/download_binance_vision_futures_archives.py \
+            --symbols-file "$RUNNER_TEMP/symbols.txt" \
+            --interval 5m --start-date '2024-07-01' --end-date '2025-02-02' \
+            --out-dir "$RUNNER_TEMP/klines" \
+            --summary-json "$RUNNER_TEMP/download_summary.json" \
+            --workers 6 --retries 2 --timeout 30
+      - name: Merge and verify candles
+        run: |
+          mkdir -p "$RUNNER_TEMP/data" "$RUNNER_TEMP/result"
+          python scripts/merge_binance_vision_futures_klines.py \
+            --input-dir "$RUNNER_TEMP/klines" \
+            --out "$RUNNER_TEMP/data/SOLUSDT-5m.csv" \
+            --symbols-file "$RUNNER_TEMP/symbols.txt" \
+            --interval 5m --start-date '2024-07-01' --end-date '2025-02-02' \
+            --summary-json "$RUNNER_TEMP/result/merge_summary.json" \
+            --min-coverage 0.95
+          cp "$RUNNER_TEMP/download_summary.json" "$RUNNER_TEMP/result/"
+      - name: Benchmark LONG
+        run: |
+          /usr/bin/time -f '%e' -o "$RUNNER_TEMP/result/long_elapsed_seconds.txt" \
+            python scripts/run_smoke_mtf_fta_first_v3_recognition.py \
+              --candles "$RUNNER_TEMP/data/SOLUSDT-5m.csv" \
+              --symbol SOLUSDT --side long \
+              --scan-start '2025-02-01T00:00:00' \
+              --scan-end '2025-02-02T00:00:00' \
+              --out "$RUNNER_TEMP/result/long.json"
+      - name: Benchmark SHORT
+        run: |
+          /usr/bin/time -f '%e' -o "$RUNNER_TEMP/result/short_elapsed_seconds.txt" \
+            python scripts/run_smoke_mtf_fta_first_v3_recognition.py \
+              --candles "$RUNNER_TEMP/data/SOLUSDT-5m.csv" \
+              --symbol SOLUSDT --side short \
+              --scan-start '2025-02-01T00:00:00' \
+              --scan-end '2025-02-02T00:00:00' \
+              --out "$RUNNER_TEMP/result/short.json"
+      - name: Build runtime decision
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          root=Path(os.environ['RUNNER_TEMP'])/'result'
+          long_s=float((root/'long_elapsed_seconds.txt').read_text().strip())
+          short_s=float((root/'short_elapsed_seconds.txt').read_text().strip())
+          maximum=max(long_s,short_s)
+          forecast_55_days=maximum*55.0
+          payload={
+            'study_id':'SMOKE_MTF_FTA_FIRST_V3_RECOGNITION_V1',
+            'benchmark_symbol':'SOLUSDT',
+            'scan_days':1,
+            'long_elapsed_seconds':long_s,
+            'short_elapsed_seconds':short_s,
+            'max_elapsed_seconds':maximum,
+            'forecast_seconds_per_55_day_symbol_side_part':forecast_55_days,
+            'github_part_limit_seconds':20400,
+            'required_margin':0.20,
+            'maximum_acceptable_forecast_seconds':16320,
+            'decision':'READY_FOR_PARTITIONED_RECOGNITION' if forecast_55_days <= 16320 else 'OPTIMIZE_REQUIRED',
+          }
+          (root/'benchmark_summary.json').write_text(json.dumps(payload,indent=2)+'\n')
+          print(json.dumps(payload,indent=2))
+          PY
+      - name: Upload benchmark
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-mtf-fta-first-v3-benchmark
+          path: ${{ runner.temp }}/result/**
+          if-no-files-found: error
+          retention-days: 30
