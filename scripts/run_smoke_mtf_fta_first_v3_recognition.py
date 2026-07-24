@@ -7,50 +7,13 @@ from collections import Counter, defaultdict
 from datetime import datetime
 import json
 from pathlib import Path
-import re
-from typing import Any, Mapping
+from typing import Any
 
 from strategy_lab.market_data import parse_dt, read_candles_csv, validate_candles
 from strategy_lab.mtf_dealing_range_v2 import MtfDealingRangeEngine
-from strategy_lab.mtf_fta_first_entry_v3 import (
-    MtfFtaFirstEntryModelV3,
-    independent_fingerprint,
-    plan_to_no_pnl_dict,
-)
+from strategy_lab.mtf_fta_first_entry_v3 import MtfFtaFirstEntryModelV3, independent_fingerprint
+from strategy_lab.mtf_fta_first_no_pnl_v3 import assert_outcome_blind, export_plan
 from strategy_lab.mtf_recognition_fast_runtime_v2 import install_fast_runtime
-
-
-FORBIDDEN_KEY_FRAGMENTS = (
-    "pnl",
-    "future_return",
-    "trade_outcome",
-    "tp_result",
-    "sl_result",
-    "mfe",
-    "mae",
-    "win_rate",
-    "profit_factor",
-    "net_return",
-    "drawdown",
-    "exit_time",
-    "exit_price",
-    "exit_reason",
-    "gross_return",
-    "funding_return",
-)
-
-
-def assert_outcome_blind(value: Any, path: str = "$") -> None:
-    if isinstance(value, Mapping):
-        for raw_key, child in value.items():
-            key = re.sub(r"[^a-z0-9]+", "_", str(raw_key).lower()).strip("_")
-            for fragment in FORBIDDEN_KEY_FRAGMENTS:
-                if fragment in key:
-                    raise AssertionError(f"forbidden outcome field at {path}.{raw_key}: {fragment}")
-            assert_outcome_blind(child, f"{path}.{raw_key}")
-    elif isinstance(value, (list, tuple)):
-        for index, child in enumerate(value):
-            assert_outcome_blind(child, f"{path}[{index}]")
 
 
 def scan(
@@ -98,7 +61,7 @@ def scan(
         if plan.stop_selection is not None:
             stop_source_counts[f"{plan.stop_selection.timeframe}:{plan.stop_selection.source}"] += 1
 
-        record = plan_to_no_pnl_dict(plan)
+        record = export_plan(plan)
         if len(samples[plan.state.value]) < sample_limit_per_state:
             samples[plan.state.value].append(record)
 
