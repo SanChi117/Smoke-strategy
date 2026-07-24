@@ -1,0 +1,4 @@
+SMOKE_MTF_FTA_FIRST_V3_RECOGNITION_CI
+preregistration=research/smoke_mtf_fta_first_v3_prereg_v1.json
+candidate=SMOKE_MTF_FTA_FIRST_V3_FROZEN_CANDIDATE_1
+triggered_at=2026-07-24T08:15:00Z
