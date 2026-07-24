@@ -456,365 +456,631 @@
     {
       "id": 89150209912,
       "name": "funnel-5-SOLUSDT-long",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-23T17:05:57Z",
-      "completed_at": null
+      "completed_at": "2026-07-23T19:27:21Z"
     },
     {
       "id": 89150209926,
       "name": "funnel-5-SOLUSDT-short",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-23T17:06:03Z",
-      "completed_at": null
+      "completed_at": "2026-07-23T19:20:58Z"
     },
     {
       "id": 89150209943,
       "name": "funnel-6-SOLUSDT-long",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-23T17:07:27Z",
-      "completed_at": null
+      "completed_at": "2026-07-23T19:41:45Z"
     },
     {
       "id": 89150209987,
       "name": "funnel-6-SOLUSDT-short",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-23T17:09:26Z",
-      "completed_at": null
+      "completed_at": "2026-07-23T19:39:32Z"
     },
     {
       "id": 89150209999,
       "name": "funnel-7-SOLUSDT-long",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-23T17:30:51Z",
-      "completed_at": null
+      "completed_at": "2026-07-23T20:26:05Z"
     },
     {
       "id": 89150210030,
       "name": "funnel-7-SOLUSDT-short",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-23T17:33:51Z",
-      "completed_at": null
+      "completed_at": "2026-07-23T19:24:40Z"
     },
     {
       "id": 89150210073,
       "name": "funnel-8-SOLUSDT-long",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-23T17:57:53Z",
-      "completed_at": null
+      "completed_at": "2026-07-23T20:49:29Z"
     },
     {
       "id": 89150210185,
       "name": "funnel-8-SOLUSDT-short",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-23T17:58:25Z",
-      "completed_at": null
+      "completed_at": "2026-07-23T20:56:55Z"
     },
     {
       "id": 89150210201,
       "name": "funnel-9-SOLUSDT-long",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-23T18:21:04Z",
-      "completed_at": null
+      "completed_at": "2026-07-23T21:43:08Z"
     },
     {
       "id": 89150210241,
       "name": "funnel-9-SOLUSDT-short",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-23T18:37:00Z",
-      "completed_at": null
+      "completed_at": "2026-07-23T21:23:12Z"
     },
     {
       "id": 89150210618,
       "name": "funnel-0-LINKUSDT-long",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T19:21:00Z",
+      "completed_at": "2026-07-23T20:20:54Z"
     },
     {
       "id": 89150210726,
       "name": "funnel-1-LINKUSDT-long",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T19:27:23Z",
+      "completed_at": "2026-07-23T20:38:13Z"
     },
     {
       "id": 89150210745,
       "name": "funnel-0-LINKUSDT-short",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T19:24:42Z",
+      "completed_at": "2026-07-23T20:10:25Z"
     },
     {
       "id": 89150210807,
       "name": "funnel-1-LINKUSDT-short",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T19:39:33Z",
+      "completed_at": "2026-07-23T20:49:29Z"
     },
     {
       "id": 89150210853,
       "name": "funnel-2-LINKUSDT-long",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T19:41:47Z",
+      "completed_at": "2026-07-23T21:09:37Z"
     },
     {
       "id": 89150210900,
       "name": "funnel-3-LINKUSDT-long",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T20:21:20Z",
+      "completed_at": "2026-07-23T22:01:37Z"
     },
     {
       "id": 89150211031,
       "name": "funnel-2-LINKUSDT-short",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T20:10:27Z",
+      "completed_at": "2026-07-23T21:36:36Z"
     },
     {
       "id": 89150211100,
       "name": "funnel-4-LINKUSDT-short",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T20:49:31Z",
+      "completed_at": "2026-07-23T22:28:22Z"
     },
     {
       "id": 89150211104,
       "name": "funnel-3-LINKUSDT-short",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T20:26:06Z",
+      "completed_at": "2026-07-23T22:10:03Z"
     },
     {
       "id": 89150211116,
       "name": "funnel-4-LINKUSDT-long",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T20:38:14Z",
+      "completed_at": "2026-07-23T22:38:26Z"
     },
     {
       "id": 89150211456,
       "name": "funnel-5-LINKUSDT-long",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T20:49:31Z",
+      "completed_at": "2026-07-23T23:04:14Z"
     },
     {
       "id": 89150211515,
       "name": "funnel-5-LINKUSDT-short",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T20:56:57Z",
+      "completed_at": "2026-07-23T23:15:08Z"
     },
     {
       "id": 89150211599,
       "name": "funnel-6-LINKUSDT-long",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T21:09:39Z",
+      "completed_at": "2026-07-23T23:15:06Z"
     },
     {
       "id": 89150211642,
       "name": "funnel-6-LINKUSDT-short",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T21:23:14Z",
+      "completed_at": "2026-07-23T23:56:27Z"
     },
     {
       "id": 89150211686,
       "name": "funnel-7-LINKUSDT-long",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T21:36:38Z",
+      "completed_at": "2026-07-24T00:16:33Z"
     },
     {
       "id": 89150211714,
       "name": "funnel-7-LINKUSDT-short",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T21:43:10Z",
+      "completed_at": "2026-07-24T00:39:39Z"
     },
     {
       "id": 89150211902,
       "name": "funnel-8-LINKUSDT-long",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T22:01:39Z",
+      "completed_at": "2026-07-24T01:01:45Z"
     },
     {
       "id": 89150211917,
       "name": "funnel-8-LINKUSDT-short",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T22:10:06Z",
+      "completed_at": "2026-07-24T01:04:59Z"
     },
     {
       "id": 89150212041,
       "name": "funnel-9-LINKUSDT-long",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T22:28:24Z",
+      "completed_at": "2026-07-24T01:36:23Z"
     },
     {
       "id": 89150212053,
       "name": "funnel-9-LINKUSDT-short",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T22:38:28Z",
+      "completed_at": "2026-07-24T01:45:19Z"
     },
     {
       "id": 89150212466,
       "name": "funnel-0-AAVEUSDT-long",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T23:04:16Z",
+      "completed_at": "2026-07-24T00:03:09Z"
     },
     {
       "id": 89150212524,
       "name": "funnel-0-AAVEUSDT-short",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T23:15:08Z",
+      "completed_at": "2026-07-24T00:11:52Z"
     },
     {
       "id": 89150212589,
       "name": "funnel-1-AAVEUSDT-long",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T23:15:11Z",
+      "completed_at": "2026-07-24T00:26:42Z"
     },
     {
       "id": 89150212631,
       "name": "funnel-2-AAVEUSDT-long",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T00:03:11Z",
+      "completed_at": "2026-07-24T01:27:26Z"
     },
     {
       "id": 89150212658,
       "name": "funnel-1-AAVEUSDT-short",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T23:56:29Z",
+      "completed_at": "2026-07-24T00:59:10Z"
     },
     {
       "id": 89150212738,
       "name": "funnel-3-AAVEUSDT-long",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T00:16:35Z",
+      "completed_at": "2026-07-24T01:58:24Z"
     },
     {
       "id": 89150212746,
       "name": "funnel-2-AAVEUSDT-short",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T00:11:54Z",
+      "completed_at": "2026-07-24T01:39:15Z"
     },
     {
       "id": 89150212799,
       "name": "funnel-3-AAVEUSDT-short",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T00:26:44Z",
+      "completed_at": "2026-07-24T01:54:28Z"
     },
     {
       "id": 89150212973,
       "name": "funnel-4-AAVEUSDT-long",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
+      "started_at": "2026-07-24T00:39:40Z",
       "completed_at": null
     },
     {
       "id": 89150212990,
       "name": "funnel-4-AAVEUSDT-short",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
+      "started_at": "2026-07-24T00:59:13Z",
       "completed_at": null
     },
     {
       "id": 89150213416,
       "name": "funnel-5-AAVEUSDT-long",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
+      "started_at": "2026-07-24T01:01:47Z",
       "completed_at": null
     },
     {
       "id": 89150213440,
       "name": "funnel-5-AAVEUSDT-short",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
+      "started_at": "2026-07-24T01:05:01Z",
       "completed_at": null
     },
     {
       "id": 89150213513,
       "name": "funnel-6-AAVEUSDT-long",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
+      "started_at": "2026-07-24T01:27:28Z",
       "completed_at": null
     },
     {
       "id": 89150213517,
       "name": "funnel-6-AAVEUSDT-short",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-23T08:01:03Z",
+      "started_at": "2026-07-24T01:36:25Z",
       "completed_at": null
     },
     {
       "id": 89150213652,
       "name": "funnel-7-AAVEUSDT-long",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-23T08:01:04Z",
+      "started_at": "2026-07-24T01:39:17Z",
       "completed_at": null
     }
   ],
   "artifacts": [
+    {
+      "id": 8584316621,
+      "name": "smoke-mtf-v3-no-pnl-part-3-AAVEUSDT-long",
+      "size_in_bytes": 23142,
+      "expired": false,
+      "digest": "sha256:b74a454fd627ac7e425344ee8f855123ef891cae78b5246eef528182c367baa3"
+    },
+    {
+      "id": 8584256039,
+      "name": "smoke-mtf-v3-no-pnl-part-3-AAVEUSDT-short",
+      "size_in_bytes": 19853,
+      "expired": false,
+      "digest": "sha256:c83c99b17480b958605fe18f27a944c6bfa78cb45327ddacd540b432c073a693"
+    },
+    {
+      "id": 8584114273,
+      "name": "smoke-mtf-v3-no-pnl-part-9-LINKUSDT-short",
+      "size_in_bytes": 20525,
+      "expired": false,
+      "digest": "sha256:fb73707ef9860ed1159f83cd559cb17d316b36a195f6f3cac5150f4bd3093b4b"
+    },
+    {
+      "id": 8584011026,
+      "name": "smoke-mtf-v3-no-pnl-part-2-AAVEUSDT-short",
+      "size_in_bytes": 21173,
+      "expired": false,
+      "digest": "sha256:ef86c0f869c8f528052682e79dc1368f5b56d870f8eb9d10873f64d17631295b"
+    },
+    {
+      "id": 8583960210,
+      "name": "smoke-mtf-v3-no-pnl-part-9-LINKUSDT-long",
+      "size_in_bytes": 20167,
+      "expired": false,
+      "digest": "sha256:4c7d24e5404595d51dba34f655a77228cba46208f3e070fb529976739d51352c"
+    },
+    {
+      "id": 8583823706,
+      "name": "smoke-mtf-v3-no-pnl-part-2-AAVEUSDT-long",
+      "size_in_bytes": 21421,
+      "expired": false,
+      "digest": "sha256:e37b9ff658d52a1b0cbfcd7eab48e18949f83dd39ccc5253ebc65429aacc276a"
+    },
+    {
+      "id": 8583476015,
+      "name": "smoke-mtf-v3-no-pnl-part-8-LINKUSDT-short",
+      "size_in_bytes": 19408,
+      "expired": false,
+      "digest": "sha256:9ce9a28f02091018e9e5d008c2c1e0ddbf271abcfefc521b48fd89a5602256c7"
+    },
+    {
+      "id": 8583423271,
+      "name": "smoke-mtf-v3-no-pnl-part-8-LINKUSDT-long",
+      "size_in_bytes": 18796,
+      "expired": false,
+      "digest": "sha256:ab27ec0b2a63b5d35fe39a4bfdd2a0dde47008a8c0bdc73c542c090acebc0d4f"
+    },
+    {
+      "id": 8583378263,
+      "name": "smoke-mtf-v3-no-pnl-part-1-AAVEUSDT-short",
+      "size_in_bytes": 22883,
+      "expired": false,
+      "digest": "sha256:d3baa004596bb899c2467b54b04ec6ad8f5d73422713845445fc7202a0b9b625"
+    },
+    {
+      "id": 8583054395,
+      "name": "smoke-mtf-v3-no-pnl-part-7-LINKUSDT-short",
+      "size_in_bytes": 20252,
+      "expired": false,
+      "digest": "sha256:057c3364016091cc9cce6d55ebe9e6e16db6c1756a0cbae69ea55493731b6345"
+    },
+    {
+      "id": 8582833208,
+      "name": "smoke-mtf-v3-no-pnl-part-1-AAVEUSDT-long",
+      "size_in_bytes": 19681,
+      "expired": false,
+      "digest": "sha256:925e599741d3e66380939c38dd247bc006274529b7d72f9a8535c91f05048840"
+    },
+    {
+      "id": 8582660104,
+      "name": "smoke-mtf-v3-no-pnl-part-7-LINKUSDT-long",
+      "size_in_bytes": 18429,
+      "expired": false,
+      "digest": "sha256:206be93c24fe22c8e9e24cd9159622a6f09f352088e3b1cb3b775220716b3c8f"
+    },
+    {
+      "id": 8582581462,
+      "name": "smoke-mtf-v3-no-pnl-part-0-AAVEUSDT-short",
+      "size_in_bytes": 22686,
+      "expired": false,
+      "digest": "sha256:48e2b8d3d9f4430ebd77bc8ce0ad245a4500ff00cd4c7a3b45771e57826dc4ca"
+    },
+    {
+      "id": 8582433826,
+      "name": "smoke-mtf-v3-no-pnl-part-0-AAVEUSDT-long",
+      "size_in_bytes": 21562,
+      "expired": false,
+      "digest": "sha256:be1637e80d235992e86657e4915fccdd4a9ed90675f73dfa4103ae20b55a9142"
+    },
+    {
+      "id": 8582318845,
+      "name": "smoke-mtf-v3-no-pnl-part-6-LINKUSDT-short",
+      "size_in_bytes": 19038,
+      "expired": false,
+      "digest": "sha256:16375d6e92b333131f883f3b44d0fb3b10ad5cb02f44e4ad16aefe3e35bd3abe"
+    },
+    {
+      "id": 8581569323,
+      "name": "smoke-mtf-v3-no-pnl-part-5-LINKUSDT-short",
+      "size_in_bytes": 20707,
+      "expired": false,
+      "digest": "sha256:f5fa14a85c805bee55865df0baef1d994b636cd2faae6c88fa311bc61a447189"
+    },
+    {
+      "id": 8581568142,
+      "name": "smoke-mtf-v3-no-pnl-part-6-LINKUSDT-long",
+      "size_in_bytes": 18764,
+      "expired": false,
+      "digest": "sha256:3ff21a5b45c2d451c38c32ed88b41d58f61460ffa0b1a948866e2978deb4cb09"
+    },
+    {
+      "id": 8581364932,
+      "name": "smoke-mtf-v3-no-pnl-part-5-LINKUSDT-long",
+      "size_in_bytes": 20095,
+      "expired": false,
+      "digest": "sha256:cd22cb12ca9229e430da8dd21c2eacdca7906e4264cd4509e4c040f95de7a0a0"
+    },
+    {
+      "id": 8580836816,
+      "name": "smoke-mtf-v3-no-pnl-part-4-LINKUSDT-long",
+      "size_in_bytes": 21395,
+      "expired": false,
+      "digest": "sha256:0d9929d3543bbacf33506611eaa31f034c182508cc398d4b1e4992897857c2eb"
+    },
+    {
+      "id": 8580615865,
+      "name": "smoke-mtf-v3-no-pnl-part-4-LINKUSDT-short",
+      "size_in_bytes": 21127,
+      "expired": false,
+      "digest": "sha256:7593a949939566009cf1a5e8866fc126d61821f0af90f1ffb036d7cf4b2ee40c"
+    },
+    {
+      "id": 8580219264,
+      "name": "smoke-mtf-v3-no-pnl-part-3-LINKUSDT-short",
+      "size_in_bytes": 20316,
+      "expired": false,
+      "digest": "sha256:c31b26140c1ac39172cf2092eecd590a14715ae0a6220a3031c44272dca80d17"
+    },
+    {
+      "id": 8580031975,
+      "name": "smoke-mtf-v3-no-pnl-part-3-LINKUSDT-long",
+      "size_in_bytes": 19439,
+      "expired": false,
+      "digest": "sha256:de277f7be147647ba6db53abd37be343636e4a451081eb29149a5b832c541439"
+    },
+    {
+      "id": 8579600209,
+      "name": "smoke-mtf-v3-no-pnl-part-9-SOLUSDT-long",
+      "size_in_bytes": 19169,
+      "expired": false,
+      "digest": "sha256:9bdb7a501ff9adb9e1598e44325d1e95032e44603a9b4b6162c52dfc9c5e23f8"
+    },
+    {
+      "id": 8579445890,
+      "name": "smoke-mtf-v3-no-pnl-part-2-LINKUSDT-short",
+      "size_in_bytes": 21893,
+      "expired": false,
+      "digest": "sha256:8134d214e5936e338a3bfb3ffa87e7f735b909296318ed16f0d6bb556f4cfc99"
+    },
+    {
+      "id": 8579108196,
+      "name": "smoke-mtf-v3-no-pnl-part-9-SOLUSDT-short",
+      "size_in_bytes": 19984,
+      "expired": false,
+      "digest": "sha256:9c1f958407be3ca6055939f9bd7a1b116eb6d0618f9bdeb8af059b72ec32827d"
+    },
+    {
+      "id": 8578773070,
+      "name": "smoke-mtf-v3-no-pnl-part-2-LINKUSDT-long",
+      "size_in_bytes": 18130,
+      "expired": false,
+      "digest": "sha256:55f8f8d8f9987e4bb66391544b03a498f697ca435c1c69d54162d9bb826e52a7"
+    },
+    {
+      "id": 8578434239,
+      "name": "smoke-mtf-v3-no-pnl-part-8-SOLUSDT-short",
+      "size_in_bytes": 18426,
+      "expired": false,
+      "digest": "sha256:438998e8eb6215419935da1cb4408ced52fb04c3b65ee65bf2f843115cf91f94"
+    },
+    {
+      "id": 8578237366,
+      "name": "smoke-mtf-v3-no-pnl-part-1-LINKUSDT-short",
+      "size_in_bytes": 21518,
+      "expired": false,
+      "digest": "sha256:b780a2b7db40fe90788e76fc10e4a66f158984b448bf89563712bdc3f0c62d9d"
+    },
+    {
+      "id": 8578236933,
+      "name": "smoke-mtf-v3-no-pnl-part-8-SOLUSDT-long",
+      "size_in_bytes": 19219,
+      "expired": false,
+      "digest": "sha256:fcf40f2548299b30a5234db063c762432a7bdd015e0a53ce8d8ada7a008b703d"
+    },
+    {
+      "id": 8577938274,
+      "name": "smoke-mtf-v3-no-pnl-part-1-LINKUSDT-long",
+      "size_in_bytes": 17708,
+      "expired": false,
+      "digest": "sha256:c47dd84d9e4ac3bcc5c213735640aa561491ec575e61a5553f9c7fe6400948fd"
+    },
+    {
+      "id": 8577605808,
+      "name": "smoke-mtf-v3-no-pnl-part-7-SOLUSDT-long",
+      "size_in_bytes": 20098,
+      "expired": false,
+      "digest": "sha256:9f350f94935ec0c16741e65793c22e5da54d05f17d85a5593c90346a84b7cff8"
+    },
+    {
+      "id": 8577461760,
+      "name": "smoke-mtf-v3-no-pnl-part-0-LINKUSDT-long",
+      "size_in_bytes": 20929,
+      "expired": false,
+      "digest": "sha256:be599b02cbbea81a31277fa3918b4fc0414a0b5bbaa42f1a8c46fcd5914e80fc"
+    },
+    {
+      "id": 8577187482,
+      "name": "smoke-mtf-v3-no-pnl-part-0-LINKUSDT-short",
+      "size_in_bytes": 22806,
+      "expired": false,
+      "digest": "sha256:41d92ff05df36e043535d8a12c7aa9c1c5a079af0a6cd19101dc4d1b9a259eda"
+    },
+    {
+      "id": 8576441451,
+      "name": "smoke-mtf-v3-no-pnl-part-6-SOLUSDT-long",
+      "size_in_bytes": 19449,
+      "expired": false,
+      "digest": "sha256:5bc63dfc492b1bd73d915282d1326f6f91db0b210e28dbfbc095c73223ad3e66"
+    },
+    {
+      "id": 8576382634,
+      "name": "smoke-mtf-v3-no-pnl-part-6-SOLUSDT-short",
+      "size_in_bytes": 18999,
+      "expired": false,
+      "digest": "sha256:6189417be617b71bc5ad164c99fdc5b7dda9295c491076c9ea6be7070c744afd"
+    },
+    {
+      "id": 8576054244,
+      "name": "smoke-mtf-v3-no-pnl-part-5-SOLUSDT-long",
+      "size_in_bytes": 20049,
+      "expired": false,
+      "digest": "sha256:ff231f56200a82fe28459d8e702c138598fe7ed617989c9cd64baeba6923cd47"
+    },
+    {
+      "id": 8575983094,
+      "name": "smoke-mtf-v3-no-pnl-part-7-SOLUSDT-short",
+      "size_in_bytes": 20819,
+      "expired": false,
+      "digest": "sha256:90784061ef07a36cd4d9c007d5125816a076bdf1ac9c41c590d8ae472d29c0c8"
+    },
+    {
+      "id": 8575885538,
+      "name": "smoke-mtf-v3-no-pnl-part-5-SOLUSDT-short",
+      "size_in_bytes": 20228,
+      "expired": false,
+      "digest": "sha256:b3e6273ee29cc06d11ce46bcdfca771f292b2774ef3cf051cc0ede249e34a01a"
+    },
     {
       "id": 8574640087,
       "name": "smoke-mtf-v3-no-pnl-part-4-SOLUSDT-long",
