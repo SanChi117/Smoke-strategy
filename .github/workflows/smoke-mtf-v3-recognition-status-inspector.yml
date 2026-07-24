@@ -42,8 +42,21 @@ jobs:
           if runs:
               run=max(runs,key=lambda x:int(x['id']))
               out['run']={k:run.get(k) for k in ('id','name','event','status','conclusion','run_number','html_url','created_at','updated_at','head_sha')}
-              jobs=get(f"/repos/{repo}/actions/runs/{run['id']}/jobs?per_page=100").get('jobs',[])
+              jobs=[]
+              for page in range(1,10):
+                  batch=get(f"/repos/{repo}/actions/runs/{run['id']}/jobs?per_page=100&page={page}").get('jobs',[])
+                  jobs.extend(batch)
+                  if len(batch)<100:
+                      break
               out['jobs']=[{k:j.get(k) for k in ('id','name','status','conclusion','started_at','completed_at')} for j in jobs]
+              out['job_summary']={
+                  'total':len(jobs),
+                  'completed_success':sum(j.get('status')=='completed' and j.get('conclusion')=='success' for j in jobs),
+                  'completed_failure':sum(j.get('status')=='completed' and j.get('conclusion')=='failure' for j in jobs),
+                  'completed_cancelled':sum(j.get('status')=='completed' and j.get('conclusion')=='cancelled' for j in jobs),
+                  'in_progress':sum(j.get('status')=='in_progress' for j in jobs),
+                  'queued':sum(j.get('status')=='queued' for j in jobs),
+              }
               arts=get(f"/repos/{repo}/actions/runs/{run['id']}/artifacts?per_page=100").get('artifacts',[])
               out['artifacts']=[{k:a.get(k) for k in ('id','name','size_in_bytes','expired','digest')} for a in arts]
           path=Path('results/smoke_mtf_v3_recognition_status.json')
