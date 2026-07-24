@@ -1,0 +1,61 @@
+name: SMOKE MTF V3 Recognition Status Inspector
+
+on:
+  push:
+    branches: ['agent/smoke-mtf-fta-first-v3']
+    paths: ['research_triggers/smoke_mtf_v3_recognition_status_inspector.txt']
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/smoke-mtf-fta-first-v3
+          fetch-depth: 0
+      - name: Inspect exact recognition run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          TARGET_SHA: d267de93d8f42b385f3f9dea7a9501e4d588bda3
+        run: |
+          python - <<'PY'
+          import json, os, urllib.parse, urllib.request
+          from pathlib import Path
+          token=os.environ['GH_TOKEN']; repo=os.environ['REPO']; sha=os.environ['TARGET_SHA']
+          def get(path):
+              req=urllib.request.Request(f'https://api.github.com{path}')
+              req.add_header('Authorization',f'Bearer {token}')
+              req.add_header('Accept','application/vnd.github+json')
+              req.add_header('X-GitHub-Api-Version','2022-11-28')
+              with urllib.request.urlopen(req,timeout=60) as r:
+                  return json.loads(r.read().decode())
+          q=urllib.parse.urlencode({'head_sha':sha,'per_page':100})
+          payload=get(f'/repos/{repo}/actions/runs?{q}')
+          runs=[r for r in payload.get('workflow_runs',[]) if r.get('name')=='SMOKE MTF FTA-First V3 Partitioned Recognition' and r.get('head_sha')==sha and r.get('event')=='push']
+          out={'target_sha':sha,'run_found':bool(runs)}
+          if runs:
+              run=max(runs,key=lambda x:int(x['id']))
+              out['run']={k:run.get(k) for k in ('id','name','event','status','conclusion','run_number','html_url','created_at','updated_at','head_sha')}
+              jobs=get(f"/repos/{repo}/actions/runs/{run['id']}/jobs?per_page=100").get('jobs',[])
+              out['jobs']=[{k:j.get(k) for k in ('id','name','status','conclusion','started_at','completed_at')} for j in jobs]
+              arts=get(f"/repos/{repo}/actions/runs/{run['id']}/artifacts?per_page=100").get('artifacts',[])
+              out['artifacts']=[{k:a.get(k) for k in ('id','name','size_in_bytes','expired','digest')} for a in arts]
+          path=Path('results/smoke_mtf_v3_recognition_status.json')
+          path.parent.mkdir(parents=True,exist_ok=True)
+          path.write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps(out,ensure_ascii=False,indent=2))
+          PY
+      - name: Commit status
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/smoke_mtf_v3_recognition_status.json
+          git commit -m 'Record V3 recognition action status' || exit 0
+          git pull --rebase origin agent/smoke-mtf-fta-first-v3
+          git push origin HEAD:agent/smoke-mtf-fta-first-v3
