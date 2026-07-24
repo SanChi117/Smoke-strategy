@@ -1,0 +1,70 @@
+name: SMOKE MTF FTA-First V3 Cancel Invalid Run
+
+on:
+  push:
+    branches: ['agent/smoke-mtf-fta-first-v3']
+    paths: ['research_triggers/smoke_mtf_fta_first_v3_cancel_invalid_run.txt']
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  cancel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/smoke-mtf-fta-first-v3
+          fetch-depth: 0
+      - name: Cancel exact invalid run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          INVALID_SHA: 4e235ef4e25706219742cd361489b4db986858fd
+        run: |
+          python - <<'PY'
+          import json, os, urllib.parse, urllib.request, urllib.error
+          from pathlib import Path
+          token=os.environ['GH_TOKEN']; repo=os.environ['REPO']; sha=os.environ['INVALID_SHA']
+          def request(path, method='GET'):
+              req=urllib.request.Request(f'https://api.github.com{path}', method=method)
+              req.add_header('Authorization',f'Bearer {token}')
+              req.add_header('Accept','application/vnd.github+json')
+              req.add_header('X-GitHub-Api-Version','2022-11-28')
+              try:
+                  with urllib.request.urlopen(req,timeout=60) as response:
+                      raw=response.read().decode()
+                      return response.status, json.loads(raw) if raw else None
+              except urllib.error.HTTPError as exc:
+                  raw=exc.read().decode()
+                  return exc.code, json.loads(raw) if raw else None
+          q=urllib.parse.urlencode({'head_sha':sha,'per_page':100})
+          _, payload=request(f'/repos/{repo}/actions/runs?{q}')
+          runs=[r for r in payload.get('workflow_runs',[]) if r.get('name')=='SMOKE MTF FTA-First V3 Partitioned Recognition' and r.get('head_sha')==sha]
+          out={'invalid_sha':sha,'run_found':bool(runs),'reason':'incorrect preregistered fold boundaries'}
+          if runs:
+              run=max(runs,key=lambda row:int(row['id']))
+              out['run_id']=run['id']; out['status_before']=run.get('status'); out['conclusion_before']=run.get('conclusion')
+              if run.get('status') in {'queued','in_progress','waiting','requested','pending'}:
+                  status, body=request(f"/repos/{repo}/actions/runs/{run['id']}/cancel", method='POST')
+                  out['cancel_http_status']=status
+                  out['cancel_requested']=status in {202,204}
+                  out['cancel_response']=body
+              else:
+                  out['cancel_requested']=False
+                  out['ignored_as_invalid_even_if_completed']=True
+          path=Path('results/smoke_mtf_fta_first_v3_invalid_run_cancellation.json')
+          path.parent.mkdir(parents=True,exist_ok=True)
+          path.write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps(out,ensure_ascii=False,indent=2))
+          PY
+      - name: Commit cancellation record
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/smoke_mtf_fta_first_v3_invalid_run_cancellation.json
+          git commit -m 'Record invalid V3 recognition run cancellation' || exit 0
+          git pull --rebase origin agent/smoke-mtf-fta-first-v3
+          git push origin HEAD:agent/smoke-mtf-fta-first-v3
