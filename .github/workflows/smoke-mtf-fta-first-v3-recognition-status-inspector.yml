@@ -3,7 +3,7 @@ name: SMOKE MTF FTA-First V3 Recognition Status Inspector
 on:
   push:
     branches: ['agent/smoke-mtf-fta-first-v3']
-    paths: ['research_triggers/smoke_mtf_fta_first_v3_recognition_status_inspector.txt']
+    paths: ['research_triggers/v3_recognition_status_check.txt']
 
 permissions:
   contents: write
