@@ -36,6 +36,7 @@ def scan(
     engine = MtfDealingRangeEngine(candles)
     runtime = install_fast_runtime(engine)
     model = MtfFtaFirstEntryModelV3(engine)
+    partition_key = f"{fold if fold is not None else 'benchmark'}:{normalized}:{side}"
 
     state_counts: Counter[str] = Counter()
     reason_counts: Counter[str] = Counter()
@@ -62,6 +63,8 @@ def scan(
             stop_source_counts[f"{plan.stop_selection.timeframe}:{plan.stop_selection.source}"] += 1
 
         record = export_plan(plan)
+        record["fold"] = fold
+        record["partition_key"] = partition_key
         if len(samples[plan.state.value]) < sample_limit_per_state:
             samples[plan.state.value].append(record)
 
@@ -85,7 +88,7 @@ def scan(
         "mode": "OUTCOME_BLIND_RECOGNITION",
         "candidate_id": "SMOKE_MTF_FTA_FIRST_V3_FROZEN_CANDIDATE_1",
         "partition": partition,
-        "partition_key": f"{fold if fold is not None else 'benchmark'}:{normalized}:{side}",
+        "partition_key": partition_key,
         "symbol": normalized,
         "side": side,
         "fold": fold,
