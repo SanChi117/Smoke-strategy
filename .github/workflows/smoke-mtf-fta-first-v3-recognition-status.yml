@@ -1,0 +1,69 @@
+name: SMOKE MTF FTA-First V3 Recognition Status
+
+on:
+  push:
+    branches: ['agent/smoke-mtf-fta-first-v3']
+    paths: ['research_triggers/smoke_mtf_fta_first_v3_recognition_status.txt']
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/smoke-mtf-fta-first-v3
+          fetch-depth: 0
+      - name: Inspect exact corrected recognition run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          TARGET_SHA: d267de93d8f42b385f3f9dea7a9501e4d588bda3
+        run: |
+          python - <<'PY'
+          import json, os, urllib.parse, urllib.request
+          from collections import Counter
+          from pathlib import Path
+          token=os.environ['GH_TOKEN']; repo=os.environ['REPO']; sha=os.environ['TARGET_SHA']
+          def get(path):
+              req=urllib.request.Request(f'https://api.github.com{path}')
+              req.add_header('Authorization',f'Bearer {token}')
+              req.add_header('Accept','application/vnd.github+json')
+              req.add_header('X-GitHub-Api-Version','2022-11-28')
+              with urllib.request.urlopen(req,timeout=60) as response:
+                  return json.loads(response.read().decode())
+          q=urllib.parse.urlencode({'head_sha':sha,'per_page':100})
+          runs=get(f'/repos/{repo}/actions/runs?{q}').get('workflow_runs',[])
+          runs=[r for r in runs if r.get('name')=='SMOKE MTF FTA-First V3 Partitioned Recognition' and r.get('head_sha')==sha]
+          out={'target_sha':sha,'run_found':bool(runs)}
+          if runs:
+              run=max(runs,key=lambda row:int(row['id']))
+              out['run']={key:run.get(key) for key in ('id','status','conclusion','run_number','head_sha','html_url','created_at','updated_at')}
+              jobs=[]; page=1
+              while True:
+                  payload=get(f"/repos/{repo}/actions/runs/{run['id']}/jobs?per_page=100&page={page}")
+                  batch=payload.get('jobs',[]); jobs.extend(batch)
+                  if len(batch)<100: break
+                  page+=1
+              out['job_summary']=dict(Counter(f"{job.get('status')}:{job.get('conclusion')}" for job in jobs))
+              out['jobs']=[{key:job.get(key) for key in ('id','name','status','conclusion','started_at','completed_at')} for job in jobs]
+              arts=get(f"/repos/{repo}/actions/runs/{run['id']}/artifacts?per_page=100").get('artifacts',[])
+              out['artifact_count']=len(arts)
+              out['final_artifact']=[{key:a.get(key) for key in ('id','name','size_in_bytes','expired','digest')} for a in arts if a.get('name')=='smoke-mtf-fta-first-v3-partitioned-recognition-result']
+          path=Path('results/smoke_mtf_fta_first_v3_recognition_status.json')
+          path.parent.mkdir(parents=True,exist_ok=True)
+          path.write_text(json.dumps(out,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps(out,ensure_ascii=False,indent=2))
+          PY
+      - name: Commit status
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/smoke_mtf_fta_first_v3_recognition_status.json
+          git commit -m 'Record corrected V3 recognition status' || exit 0
+          git pull --rebase origin agent/smoke-mtf-fta-first-v3
+          git push origin HEAD:agent/smoke-mtf-fta-first-v3
