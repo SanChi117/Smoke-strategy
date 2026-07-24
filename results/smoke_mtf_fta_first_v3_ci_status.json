@@ -1,17 +1,17 @@
 {
   "run_found": true,
   "run": {
-    "id": 30077553483,
+    "id": 30078912189,
     "status": "completed",
     "conclusion": "success",
-    "head_sha": "ddbaa6201f045f362254adaa3b2cb381ee882203",
-    "html_url": "https://github.com/SanChi117/Smoke-strategy/actions/runs/30077553483",
-    "created_at": "2026-07-24T08:03:10Z",
-    "updated_at": "2026-07-24T08:03:23Z"
+    "head_sha": "53a3b9f38e9bbe625af8e91f21c84bdbd5b195b0",
+    "html_url": "https://github.com/SanChi117/Smoke-strategy/actions/runs/30078912189",
+    "created_at": "2026-07-24T08:26:07Z",
+    "updated_at": "2026-07-24T08:26:25Z"
   },
   "jobs": [
     {
-      "id": 89431557312,
+      "id": 89435779065,
       "name": "recognition-core",
       "status": "completed",
       "conclusion": "success"
