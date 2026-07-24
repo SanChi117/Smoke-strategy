@@ -1,0 +1,137 @@
+name: SMOKE MTF FTA-First V3 Partitioned Recognition
+
+on:
+  push:
+    branches: ['agent/smoke-mtf-fta-first-v3']
+    paths: ['research_triggers/smoke_mtf_fta_first_v3_partitioned_recognition.txt']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.value }}
+    steps:
+      - id: matrix
+        shell: python
+        run: |
+          import json, os
+          symbols=['BTCUSDT','ETHUSDT','SOLUSDT','LINKUSDT','AAVEUSDT']
+          sides=['long','short']
+          bounds=['2025-01-01','2025-02-24','2025-04-20','2025-06-13','2025-08-07','2025-10-01','2025-11-24','2026-01-18','2026-03-13','2026-05-07','2026-07-01']
+          include=[]
+          for fold in range(10):
+              for symbol in symbols:
+                  for side in sides:
+                      include.append({'fold':fold,'symbol':symbol,'side':side,'scan_start':bounds[fold],'scan_end':bounds[fold+1]})
+          with open(os.environ['GITHUB_OUTPUT'],'a') as f: f.write('value='+json.dumps({'include':include},separators=(',',':'))+'\n')
+          print(len(include))
+
+  prepare:
+    needs: plan
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+      - name: Download closed Binance Vision history
+        run: |
+          printf '%s\n' '${{ matrix.symbol }}' > "$RUNNER_TEMP/symbols.txt"
+          python scripts/download_binance_vision_futures_archives.py \
+            --symbols-file "$RUNNER_TEMP/symbols.txt" --interval 5m \
+            --start-date '2024-07-01' --end-date '2026-06-30' \
+            --out-dir "$RUNNER_TEMP/klines" --summary-json "$RUNNER_TEMP/download_summary.json" \
+            --workers 8 --retries 3 --timeout 30
+      - name: Merge and verify
+        run: |
+          mkdir -p "$RUNNER_TEMP/data"
+          python scripts/merge_binance_vision_futures_klines.py \
+            --input-dir "$RUNNER_TEMP/klines" --out "$RUNNER_TEMP/data/${{ matrix.symbol }}-5m.csv" \
+            --symbols-file "$RUNNER_TEMP/symbols.txt" --interval 5m \
+            --start-date '2024-07-01' --end-date '2026-06-30' \
+            --summary-json "$RUNNER_TEMP/data/merge_summary.json" --min-coverage 0.95
+          cp "$RUNNER_TEMP/download_summary.json" "$RUNNER_TEMP/data/"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v3-data-${{ matrix.symbol }}
+          path: ${{ runner.temp }}/data/**
+          if-no-files-found: error
+          retention-days: 7
+
+  partition:
+    needs: [plan, prepare]
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          python -m strategy_lab.mtf_fta_first_entry_v3_smoke_test
+      - uses: actions/download-artifact@v4
+        with:
+          name: v3-data-${{ matrix.symbol }}
+          path: ${{ runner.temp }}/data
+      - name: Run outcome-blind partition
+        run: |
+          mkdir -p "$RUNNER_TEMP/result"
+          python scripts/run_smoke_mtf_fta_first_v3_recognition.py \
+            --candles "$RUNNER_TEMP/data/${{ matrix.symbol }}-5m.csv" \
+            --symbol '${{ matrix.symbol }}' --side '${{ matrix.side }}' --fold '${{ matrix.fold }}' \
+            --scan-start '${{ matrix.scan_start }}T00:00:00' --scan-end '${{ matrix.scan_end }}T00:00:00' \
+            --out "$RUNNER_TEMP/result/part-${{ matrix.fold }}-${{ matrix.symbol }}-${{ matrix.side }}.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v3-part-${{ matrix.fold }}-${{ matrix.symbol }}-${{ matrix.side }}
+          path: ${{ runner.temp }}/result/*.json
+          if-no-files-found: error
+          retention-days: 30
+
+  aggregate:
+    needs: partition
+    if: ${{ always() && needs.partition.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: v3-part-*
+          path: ${{ runner.temp }}/parts
+          merge-multiple: true
+      - name: Aggregate and enforce no-outcome contract
+        run: |
+          mkdir -p "$RUNNER_TEMP/result"
+          python scripts/aggregate_smoke_mtf_fta_first_v3_recognition.py \
+            --input-dir "$RUNNER_TEMP/parts" \
+            --out "$RUNNER_TEMP/result/recognition_result.json"
+          cp research/smoke_mtf_fta_first_v3_prereg_v1.json "$RUNNER_TEMP/result/"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smoke-mtf-fta-first-v3-partitioned-recognition-result
+          path: ${{ runner.temp }}/result/**
+          if-no-files-found: error
+          retention-days: 90
