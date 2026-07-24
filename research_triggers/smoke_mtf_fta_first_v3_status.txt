@@ -1,2 +1,3 @@
 SMOKE_MTF_FTA_FIRST_V3_STATUS
-refresh=2026-07-24T08:25:00Z
+refresh=2026-07-24T08:34:00Z
+expected_tests=entry_core,no_pnl_export,aggregation,reused_v2_causal
