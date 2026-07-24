@@ -1,0 +1,8 @@
+SMOKE_MTF_FTA_FIRST_V3_PARTITIONED_RECOGNITION
+benchmark_run_id=30078049597
+benchmark_artifact_digest=sha256:a84990120d5b69d5e8c1bff6cfbc98b42dc9f0e95a9886ae5755f7c6d6a63b51
+benchmark_decision=READY_FOR_PARTITIONED_RECOGNITION
+recognition_start=2025-01-01
+recognition_end_exclusive=2026-07-01
+partitions=100
+trigger=2026-07-24T08:19:00Z
