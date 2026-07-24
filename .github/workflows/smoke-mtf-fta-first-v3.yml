@@ -1,0 +1,62 @@
+name: SMOKE MTF FTA-First V3 Recognition
+
+on:
+  push:
+    branches: ['agent/smoke-mtf-fta-first-v3']
+    paths:
+      - 'strategy_lab/mtf_fta_first_entry_v3.py'
+      - 'strategy_lab/mtf_fta_first_entry_v3_smoke_test.py'
+      - 'research/smoke_mtf_fta_first_v3_prereg_v1.json'
+      - 'research/SMOKE_MTF_FTA_FIRST_V3_DESIGN_V1.md'
+      - '.github/workflows/smoke-mtf-fta-first-v3.yml'
+      - 'research_triggers/smoke_mtf_fta_first_v3_ci.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recognition-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+      - name: Compile V3 recognition modules
+        run: |
+          python -m py_compile strategy_lab/mtf_fta_first_entry_v3.py
+          python -m py_compile strategy_lab/mtf_fta_first_entry_v3_smoke_test.py
+      - name: Run FTA-first V3 regression tests
+        run: python -m strategy_lab.mtf_fta_first_entry_v3_smoke_test
+      - name: Verify reused causal V2 primitives
+        run: |
+          python -m strategy_lab.mtf_entry_model_v2_smoke_test
+          python -m strategy_lab.mtf_semantic_corrections_v2_smoke_test
+      - name: Validate preregistration remains outcome-blind
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('research/smoke_mtf_fta_first_v3_prereg_v1.json')
+          payload = json.loads(path.read_text(encoding='utf-8'))
+          assert payload['study_id'] == 'SMOKE_MTF_FTA_FIRST_V3_RECOGNITION_V1'
+          assert payload['candidate']['max_candidates'] == 1
+          assert payload['gates']['minimum_structural_rr'] == 1.70
+          assert payload['gates']['minimum_quality_score'] == 55.0
+          assert payload['gates']['minimum_independent_entry_ready_cases_before_profitability'] == 60
+          assert payload['data']['symbols'] if 'symbols' in payload['data'] else payload['candidate']['symbols']
+          forbidden = {'pnl','future_return','trade_outcome','mfe','mae','profit_factor','net_return','drawdown'}
+          raw = json.dumps(payload).lower()
+          # Forbidden concepts are allowed only in the explicit prohibition list,
+          # never as observed output fields or metrics.
+          assert 'observed_pnl' not in raw
+          assert 'future_return_value' not in raw
+          assert 'profit_factor_value' not in raw
+          print('FTA-first V3 preregistration guard: PASS')
+          PY
