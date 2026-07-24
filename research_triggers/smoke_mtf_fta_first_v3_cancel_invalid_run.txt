@@ -1,0 +1,5 @@
+SMOKE_MTF_FTA_FIRST_V3_CANCEL_INVALID_RUN
+invalid_head_sha=4e235ef4e25706219742cd361489b4db986858fd
+reason=incorrect_contiguous_fold_boundaries
+replacement_workflow_commit=44e91effa8124fd72a3d1ea0f89cbf7cdb287878
+triggered_at=2026-07-24T08:32:00Z
