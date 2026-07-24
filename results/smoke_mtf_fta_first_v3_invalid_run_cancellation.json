@@ -1,0 +1,11 @@
+{
+  "invalid_sha": "4e235ef4e25706219742cd361489b4db986858fd",
+  "run_found": true,
+  "reason": "incorrect preregistered fold boundaries",
+  "run_id": 30078535250,
+  "status_before": "queued",
+  "conclusion_before": null,
+  "cancel_http_status": 202,
+  "cancel_requested": true,
+  "cancel_response": {}
+}
