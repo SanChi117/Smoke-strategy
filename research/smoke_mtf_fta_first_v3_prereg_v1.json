@@ -1,0 +1,129 @@
+{
+  "study_id": "SMOKE_MTF_FTA_FIRST_V3_RECOGNITION_V1",
+  "status": "PREREGISTERED_NOT_STARTED",
+  "created_from": {
+    "v2_recognition_freeze_sha": "492eee9fdba5993b7f518e9a1ff38576e8b14285",
+    "v2_development_run_id": 29906237656,
+    "v2_development_verdict": "FAIL",
+    "no_pnl_funnel_run_id": 29989901783,
+    "no_pnl_funnel_artifact": "smoke-mtf-v3-no-pnl-funnel-v1-result",
+    "no_pnl_funnel_digest": "sha256:e0261b1718dafda8f5b22de1f455462272a7487a771752120fa1f1b90b68db7a"
+  },
+  "candidate": {
+    "candidate_id": "SMOKE_MTF_FTA_FIRST_V3_FROZEN_CANDIDATE_1",
+    "material_change": "Target-first scenario selection followed by raid or VC, 5m BOS, closed 15m pullback, and post-BOS protected-swing stop.",
+    "max_candidates": 1,
+    "directions": ["long", "short"],
+    "symbols": ["BTCUSDT", "ETHUSDT", "SOLUSDT", "LINKUSDT", "AAVEUSDT"]
+  },
+  "data": {
+    "venue": "Binance USD-M Futures",
+    "source_interval": "5m",
+    "history_start": "2024-07-01",
+    "recognition_start": "2025-01-01",
+    "recognition_end_exclusive": "2026-07-01",
+    "closed_candles_only": true,
+    "timeframes": ["5m", "15m", "1h", "4h", "1d", "1w", "1M"]
+  },
+  "hard_sequence": [
+    "CONTEXT_ALIGNED",
+    "EXTERNAL_FTA_SELECTED",
+    "ACTIVE_HTF_POI",
+    "H1_RAID_OR_VC_ROUTE",
+    "M5_BOS_CONFIRMED",
+    "CLOSED_M15_PULLBACK_CONFIRMED",
+    "POST_BOS_PROTECTED_SWING_STOP",
+    "RR_AT_LEAST_1_70",
+    "QUALITY_AT_LEAST_55",
+    "ENTRY_READY_NEXT_M15_OPEN"
+  ],
+  "external_fta": {
+    "eligible_timeframes": ["4h", "1d", "1w", "1M"],
+    "must_be_confirmed_by_evaluation_time": true,
+    "must_be_directionally_ahead_of_reference_price": true,
+    "must_not_be_fully_mitigated": true,
+    "selection": "nearest valid external liquidity level in the trade direction, chosen before route and BOS evaluation"
+  },
+  "route": {
+    "allowed": [
+      "fresh H1 liquidity raid at active HTF POI",
+      "H1 volume confirmation at active HTF POI followed by later closed 15m zone test"
+    ],
+    "simple H1 reaction_only": false
+  },
+  "bos": {
+    "timeframe": "5m",
+    "must_close_body_beyond_previously_confirmed_pivot": true,
+    "minimum_body_atr": 0.50,
+    "minimum_close_location": 0.70,
+    "maximum_age_minutes_at_detection": 15,
+    "must_occur_after_route_confirmation": true
+  },
+  "pullback": {
+    "timeframe": "15m",
+    "must_be_closed": true,
+    "maximum_bars_after_bos": 8,
+    "test_reference": "broken 5m BOS pivot with fixed 0.10 H1 ATR tolerance",
+    "directional_close_required": true,
+    "entry": "next aligned 15m open after the qualifying closed pullback"
+  },
+  "stop": {
+    "priority": [
+      "latest confirmed 5m protected swing formed after BOS and before pullback close",
+      "latest confirmed 15m protected swing formed after BOS and before pullback close",
+      "qualifying pullback wick"
+    ],
+    "buffer": "0.10 H1 ATR beyond the selected structural anchor",
+    "must_be_directionally_valid": true
+  },
+  "target": {
+    "price": "preselected external FTA",
+    "no_rr_target_substitution": true,
+    "no_target_extension_for_rr": true
+  },
+  "gates": {
+    "minimum_structural_rr": 1.70,
+    "minimum_quality_score": 55.0,
+    "minimum_independent_entry_ready_cases_before_profitability": 60,
+    "duplicate_definition": "same symbol side external FTA route BOS pivot pullback bar and stop anchor counts once"
+  },
+  "quality_score": {
+    "context_strength_weight": 0.30,
+    "poi_strength_weight": 0.20,
+    "route_component": 15.0,
+    "bos_strength_weight": 0.20,
+    "pullback_component": 10.0,
+    "rr_component": 10.0,
+    "event_component_max": 5.0,
+    "threshold": 55.0
+  },
+  "validation": {
+    "semantic_replay_required": true,
+    "causal_equivalence_required": true,
+    "no_pnl_outputs_only": true,
+    "minimum_entry_ready_cases": 60,
+    "freeze_required_before_profitability": true
+  },
+  "forbidden_before_freeze": [
+    "PnL",
+    "future return",
+    "trade outcome",
+    "TP or SL result",
+    "MFE",
+    "MAE",
+    "win rate",
+    "profit factor",
+    "net return",
+    "drawdown",
+    "threshold tuning",
+    "symbol substitution",
+    "holdout",
+    "paper",
+    "VPS",
+    "live"
+  ],
+  "decision_rule": {
+    "if_less_than_60_independent_entry_ready": "close V3 recognition candidate without profitability test",
+    "if_at_least_60_and_semantics_exact": "freeze exactly this one candidate and preregister one development profitability screen"
+  }
+}
