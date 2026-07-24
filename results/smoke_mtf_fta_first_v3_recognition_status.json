@@ -1,0 +1,902 @@
+{
+  "target_sha": "4e235ef4e25706219742cd361489b4db986858fd",
+  "run_found": true,
+  "run": {
+    "id": 30078535250,
+    "name": "SMOKE MTF FTA-First V3 Partitioned Recognition",
+    "status": "queued",
+    "conclusion": null,
+    "run_number": 1,
+    "html_url": "https://github.com/SanChi117/Smoke-strategy/actions/runs/30078535250",
+    "created_at": "2026-07-24T08:19:38Z",
+    "updated_at": "2026-07-24T08:20:12Z",
+    "head_sha": "4e235ef4e25706219742cd361489b4db986858fd"
+  },
+  "jobs": [
+    {
+      "id": 89434585281,
+      "name": "plan",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T08:19:40Z",
+      "completed_at": "2026-07-24T08:19:42Z"
+    },
+    {
+      "id": 89434597615,
+      "name": "prepare (SOLUSDT)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T08:19:45Z",
+      "completed_at": "2026-07-24T08:20:06Z"
+    },
+    {
+      "id": 89434597627,
+      "name": "prepare (LINKUSDT)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T08:19:44Z",
+      "completed_at": "2026-07-24T08:20:06Z"
+    },
+    {
+      "id": 89434597639,
+      "name": "prepare (BTCUSDT)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T08:19:44Z",
+      "completed_at": "2026-07-24T08:20:06Z"
+    },
+    {
+      "id": 89434597641,
+      "name": "prepare (AAVEUSDT)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T08:19:44Z",
+      "completed_at": "2026-07-24T08:20:11Z"
+    },
+    {
+      "id": 89434597654,
+      "name": "prepare (ETHUSDT)",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T08:19:44Z",
+      "completed_at": "2026-07-24T08:20:09Z"
+    },
+    {
+      "id": 89434686060,
+      "name": "partition (0, BTCUSDT, long, 2025-01-01, 2025-02-24)",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434686077,
+      "name": "partition (0, ETHUSDT, short, 2025-01-01, 2025-02-24)",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434686101,
+      "name": "partition (0, AAVEUSDT, long, 2025-01-01, 2025-02-24)",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434686107,
+      "name": "partition (0, SOLUSDT, long, 2025-01-01, 2025-02-24)",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434686126,
+      "name": "partition (0, SOLUSDT, short, 2025-01-01, 2025-02-24)",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434686134,
+      "name": "partition (1, BTCUSDT, long, 2025-02-24, 2025-04-20)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434686138,
+      "name": "partition (0, LINKUSDT, short, 2025-01-01, 2025-02-24)",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434686143,
+      "name": "partition (1, BTCUSDT, short, 2025-02-24, 2025-04-20)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434686151,
+      "name": "partition (1, ETHUSDT, long, 2025-02-24, 2025-04-20)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434686161,
+      "name": "partition (1, SOLUSDT, long, 2025-02-24, 2025-04-20)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434686170,
+      "name": "partition (0, AAVEUSDT, short, 2025-01-01, 2025-02-24)",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434686206,
+      "name": "partition (1, AAVEUSDT, long, 2025-02-24, 2025-04-20)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434686215,
+      "name": "partition (0, ETHUSDT, long, 2025-01-01, 2025-02-24)",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434686217,
+      "name": "partition (0, BTCUSDT, short, 2025-01-01, 2025-02-24)",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434686232,
+      "name": "partition (1, ETHUSDT, short, 2025-02-24, 2025-04-20)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434686259,
+      "name": "partition (1, LINKUSDT, short, 2025-02-24, 2025-04-20)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434686274,
+      "name": "partition (1, LINKUSDT, long, 2025-02-24, 2025-04-20)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434686285,
+      "name": "partition (1, SOLUSDT, short, 2025-02-24, 2025-04-20)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434686292,
+      "name": "partition (0, LINKUSDT, long, 2025-01-01, 2025-02-24)",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434686319,
+      "name": "partition (1, AAVEUSDT, short, 2025-02-24, 2025-04-20)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434687314,
+      "name": "partition (2, BTCUSDT, long, 2025-04-20, 2025-06-13)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434687339,
+      "name": "partition (2, BTCUSDT, short, 2025-04-20, 2025-06-13)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434687381,
+      "name": "partition (2, SOLUSDT, long, 2025-04-20, 2025-06-13)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434687407,
+      "name": "partition (2, AAVEUSDT, long, 2025-04-20, 2025-06-13)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434687413,
+      "name": "partition (2, LINKUSDT, short, 2025-04-20, 2025-06-13)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434687415,
+      "name": "partition (2, AAVEUSDT, short, 2025-04-20, 2025-06-13)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434687426,
+      "name": "partition (2, ETHUSDT, long, 2025-04-20, 2025-06-13)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434687437,
+      "name": "partition (2, LINKUSDT, long, 2025-04-20, 2025-06-13)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434687473,
+      "name": "partition (2, SOLUSDT, short, 2025-04-20, 2025-06-13)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434687502,
+      "name": "partition (2, ETHUSDT, short, 2025-04-20, 2025-06-13)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434688417,
+      "name": "partition (3, BTCUSDT, long, 2025-06-13, 2025-08-07)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434688422,
+      "name": "partition (3, ETHUSDT, short, 2025-06-13, 2025-08-07)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434688441,
+      "name": "partition (3, BTCUSDT, short, 2025-06-13, 2025-08-07)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434688450,
+      "name": "partition (3, ETHUSDT, long, 2025-06-13, 2025-08-07)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434688485,
+      "name": "partition (3, SOLUSDT, long, 2025-06-13, 2025-08-07)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434688520,
+      "name": "partition (3, LINKUSDT, short, 2025-06-13, 2025-08-07)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434688528,
+      "name": "partition (3, SOLUSDT, short, 2025-06-13, 2025-08-07)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434688640,
+      "name": "partition (3, AAVEUSDT, long, 2025-06-13, 2025-08-07)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434688691,
+      "name": "partition (3, AAVEUSDT, short, 2025-06-13, 2025-08-07)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434688959,
+      "name": "partition (3, LINKUSDT, long, 2025-06-13, 2025-08-07)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434689587,
+      "name": "partition (4, ETHUSDT, long, 2025-08-07, 2025-10-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434689599,
+      "name": "partition (4, BTCUSDT, short, 2025-08-07, 2025-10-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434689601,
+      "name": "partition (4, BTCUSDT, long, 2025-08-07, 2025-10-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434689694,
+      "name": "partition (4, ETHUSDT, short, 2025-08-07, 2025-10-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434689715,
+      "name": "partition (4, SOLUSDT, long, 2025-08-07, 2025-10-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434689733,
+      "name": "partition (4, LINKUSDT, short, 2025-08-07, 2025-10-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434689766,
+      "name": "partition (4, LINKUSDT, long, 2025-08-07, 2025-10-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434689769,
+      "name": "partition (4, SOLUSDT, short, 2025-08-07, 2025-10-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434689788,
+      "name": "partition (4, AAVEUSDT, long, 2025-08-07, 2025-10-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434690184,
+      "name": "partition (4, AAVEUSDT, short, 2025-08-07, 2025-10-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434690674,
+      "name": "partition (5, BTCUSDT, long, 2025-10-01, 2025-11-24)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434690729,
+      "name": "partition (5, BTCUSDT, short, 2025-10-01, 2025-11-24)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434690779,
+      "name": "partition (5, ETHUSDT, long, 2025-10-01, 2025-11-24)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434690831,
+      "name": "partition (5, SOLUSDT, long, 2025-10-01, 2025-11-24)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434690842,
+      "name": "partition (5, ETHUSDT, short, 2025-10-01, 2025-11-24)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434690866,
+      "name": "partition (5, LINKUSDT, long, 2025-10-01, 2025-11-24)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434690884,
+      "name": "partition (5, LINKUSDT, short, 2025-10-01, 2025-11-24)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434690955,
+      "name": "partition (5, AAVEUSDT, long, 2025-10-01, 2025-11-24)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434691074,
+      "name": "partition (5, SOLUSDT, short, 2025-10-01, 2025-11-24)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434691358,
+      "name": "partition (5, AAVEUSDT, short, 2025-10-01, 2025-11-24)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434691692,
+      "name": "partition (6, BTCUSDT, long, 2025-11-24, 2026-01-18)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434691774,
+      "name": "partition (6, ETHUSDT, short, 2025-11-24, 2026-01-18)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434691821,
+      "name": "partition (6, BTCUSDT, short, 2025-11-24, 2026-01-18)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434691842,
+      "name": "partition (6, SOLUSDT, long, 2025-11-24, 2026-01-18)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434691931,
+      "name": "partition (6, ETHUSDT, long, 2025-11-24, 2026-01-18)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434691937,
+      "name": "partition (6, SOLUSDT, short, 2025-11-24, 2026-01-18)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434691955,
+      "name": "partition (6, LINKUSDT, short, 2025-11-24, 2026-01-18)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434691975,
+      "name": "partition (6, LINKUSDT, long, 2025-11-24, 2026-01-18)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434692172,
+      "name": "partition (6, AAVEUSDT, long, 2025-11-24, 2026-01-18)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434692358,
+      "name": "partition (6, AAVEUSDT, short, 2025-11-24, 2026-01-18)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434692701,
+      "name": "partition (7, BTCUSDT, long, 2026-01-18, 2026-03-13)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434692747,
+      "name": "partition (7, BTCUSDT, short, 2026-01-18, 2026-03-13)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434692811,
+      "name": "partition (7, ETHUSDT, short, 2026-01-18, 2026-03-13)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434692848,
+      "name": "partition (7, ETHUSDT, long, 2026-01-18, 2026-03-13)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434692878,
+      "name": "partition (7, SOLUSDT, long, 2026-01-18, 2026-03-13)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434692914,
+      "name": "partition (7, SOLUSDT, short, 2026-01-18, 2026-03-13)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434693200,
+      "name": "partition (7, LINKUSDT, short, 2026-01-18, 2026-03-13)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434693239,
+      "name": "partition (7, AAVEUSDT, long, 2026-01-18, 2026-03-13)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434693292,
+      "name": "partition (7, AAVEUSDT, short, 2026-01-18, 2026-03-13)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434693463,
+      "name": "partition (7, LINKUSDT, long, 2026-01-18, 2026-03-13)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434693564,
+      "name": "partition (8, BTCUSDT, long, 2026-03-13, 2026-05-07)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434693665,
+      "name": "partition (8, BTCUSDT, short, 2026-03-13, 2026-05-07)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434693748,
+      "name": "partition (8, ETHUSDT, long, 2026-03-13, 2026-05-07)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434693783,
+      "name": "partition (8, ETHUSDT, short, 2026-03-13, 2026-05-07)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434693839,
+      "name": "partition (8, SOLUSDT, long, 2026-03-13, 2026-05-07)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434693849,
+      "name": "partition (8, SOLUSDT, short, 2026-03-13, 2026-05-07)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434694152,
+      "name": "partition (8, LINKUSDT, short, 2026-03-13, 2026-05-07)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434694174,
+      "name": "partition (8, LINKUSDT, long, 2026-03-13, 2026-05-07)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434694230,
+      "name": "partition (8, AAVEUSDT, long, 2026-03-13, 2026-05-07)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434694460,
+      "name": "partition (8, AAVEUSDT, short, 2026-03-13, 2026-05-07)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434694672,
+      "name": "partition (9, BTCUSDT, long, 2026-05-07, 2026-07-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434694775,
+      "name": "partition (9, BTCUSDT, short, 2026-05-07, 2026-07-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434694779,
+      "name": "partition (9, ETHUSDT, long, 2026-05-07, 2026-07-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434694796,
+      "name": "partition (9, SOLUSDT, long, 2026-05-07, 2026-07-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434694799,
+      "name": "partition (9, ETHUSDT, short, 2026-05-07, 2026-07-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434695173,
+      "name": "partition (9, SOLUSDT, short, 2026-05-07, 2026-07-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434695194,
+      "name": "partition (9, LINKUSDT, short, 2026-05-07, 2026-07-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434695258,
+      "name": "partition (9, LINKUSDT, long, 2026-05-07, 2026-07-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434695404,
+      "name": "partition (9, AAVEUSDT, long, 2026-05-07, 2026-07-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    },
+    {
+      "id": 89434695569,
+      "name": "partition (9, AAVEUSDT, short, 2026-05-07, 2026-07-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:20:14Z",
+      "completed_at": null
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 8590835455,
+      "name": "v3-data-AAVEUSDT",
+      "size_in_bytes": 3170076,
+      "expired": false,
+      "digest": "sha256:9210a9d6af93ea09dc0361ba435bb8ddd063e06adc23b601e48219f76ce776d5"
+    },
+    {
+      "id": 8590834431,
+      "name": "v3-data-ETHUSDT",
+      "size_in_bytes": 4056321,
+      "expired": false,
+      "digest": "sha256:c8a9e4609bac8140b05bf175b53b8bd19042e946796a25cffc6b0ca09e2fd355"
+    },
+    {
+      "id": 8590833505,
+      "name": "v3-data-LINKUSDT",
+      "size_in_bytes": 3413259,
+      "expired": false,
+      "digest": "sha256:ed194d589d8112b236c6b7316f4637d5ed9d342c17ae1e2d45794245b9b6f018"
+    },
+    {
+      "id": 8590833406,
+      "name": "v3-data-BTCUSDT",
+      "size_in_bytes": 4024186,
+      "expired": false,
+      "digest": "sha256:4fb972c8be772d6941819472020f00d2edde79e573633790892632223a63ff95"
+    },
+    {
+      "id": 8590833396,
+      "name": "v3-data-SOLUSDT",
+      "size_in_bytes": 3366597,
+      "expired": false,
+      "digest": "sha256:2492105b8d70883ec770ff602bc08fa2e9827f63bd759509c913a3f1dca58c90"
+    }
+  ]
+}
