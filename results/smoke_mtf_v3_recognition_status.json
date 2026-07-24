@@ -813,8 +813,64 @@
       "conclusion": null,
       "started_at": "2026-07-24T08:30:41Z",
       "completed_at": null
+    },
+    {
+      "id": 89436621191,
+      "name": "partition (9, SOLUSDT, long, 2026-05-08, 2026-07-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:30:41Z",
+      "completed_at": null
+    },
+    {
+      "id": 89436621242,
+      "name": "partition (9, SOLUSDT, short, 2026-05-08, 2026-07-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:30:41Z",
+      "completed_at": null
+    },
+    {
+      "id": 89436621276,
+      "name": "partition (9, LINKUSDT, long, 2026-05-08, 2026-07-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:30:41Z",
+      "completed_at": null
+    },
+    {
+      "id": 89436621321,
+      "name": "partition (9, LINKUSDT, short, 2026-05-08, 2026-07-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:30:41Z",
+      "completed_at": null
+    },
+    {
+      "id": 89436621508,
+      "name": "partition (9, AAVEUSDT, short, 2026-05-08, 2026-07-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:30:41Z",
+      "completed_at": null
+    },
+    {
+      "id": 89436621515,
+      "name": "partition (9, AAVEUSDT, long, 2026-05-08, 2026-07-01)",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-24T08:30:41Z",
+      "completed_at": null
     }
   ],
+  "job_summary": {
+    "total": 106,
+    "completed_success": 66,
+    "completed_failure": 0,
+    "completed_cancelled": 0,
+    "in_progress": 10,
+    "queued": 30
+  },
   "artifacts": [
     {
       "id": 8606941939,
