@@ -55,8 +55,15 @@ jobs:
           grep -q '^class InteractionEngineV1:' strategy_lab/interaction_engine_v1.py
           grep -q '^def snapshot_to_no_pnl_dict' strategy_lab/interaction_engine_v1.py
           python - <<'PY'
-          from dataclasses import asdict
-          from strategy_lab.interaction_engine_v1 import InteractionConfig, FORBIDDEN_KEY_FRAGMENTS
+          from dataclasses import asdict, fields, is_dataclass
+          from strategy_lab.interaction_engine_v1 import (
+              AnchorEventV1,
+              FORBIDDEN_KEY_FRAGMENTS,
+              InteractionConfig,
+              InteractionEventV1,
+              InteractionRelationV1,
+              InteractionSnapshotV1,
+          )
 
           cfg = asdict(InteractionConfig())
           expected = {
@@ -75,8 +82,17 @@ jobs:
               'inducement_spatial_atr': 1.00,
           }
           assert cfg == expected, (cfg, expected)
-          source = open('strategy_lab/interaction_engine_v1.py', encoding='utf-8').read().lower()
-          for fragment in FORBIDDEN_KEY_FRAGMENTS:
-              assert f'"{fragment}"' not in source and f"'{fragment}'" not in source, fragment
+
+          schemas = (
+              InteractionEventV1,
+              InteractionRelationV1,
+              AnchorEventV1,
+              InteractionSnapshotV1,
+          )
+          for schema in schemas:
+              assert is_dataclass(schema), schema
+              for field in fields(schema):
+                  key = field.name.lower()
+                  assert not any(fragment in key for fragment in FORBIDDEN_KEY_FRAGMENTS), (schema.__name__, key)
           print('P3 frozen contract guard: PASS')
           PY
