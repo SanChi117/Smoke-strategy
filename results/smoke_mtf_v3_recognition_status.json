@@ -545,249 +545,249 @@
     {
       "id": 89436618220,
       "name": "partition (6, BTCUSDT, long, 2025-11-27, 2026-01-20)",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-24T18:09:49Z",
-      "completed_at": null
+      "completed_at": "2026-07-24T21:02:49Z"
     },
     {
       "id": 89436618354,
       "name": "partition (6, ETHUSDT, long, 2025-11-27, 2026-01-20)",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-24T18:24:13Z",
-      "completed_at": null
+      "completed_at": "2026-07-24T21:00:06Z"
     },
     {
       "id": 89436618391,
       "name": "partition (6, BTCUSDT, short, 2025-11-27, 2026-01-20)",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-24T18:23:32Z",
-      "completed_at": null
+      "completed_at": "2026-07-24T21:09:15Z"
     },
     {
       "id": 89436618446,
       "name": "partition (6, ETHUSDT, short, 2025-11-27, 2026-01-20)",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-24T18:27:13Z",
-      "completed_at": null
+      "completed_at": "2026-07-24T21:04:40Z"
     },
     {
       "id": 89436618528,
       "name": "partition (6, SOLUSDT, long, 2025-11-27, 2026-01-20)",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-24T18:35:28Z",
-      "completed_at": null
+      "completed_at": "2026-07-24T21:18:27Z"
     },
     {
       "id": 89436618599,
       "name": "partition (6, SOLUSDT, short, 2025-11-27, 2026-01-20)",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-24T18:49:23Z",
-      "completed_at": null
+      "completed_at": "2026-07-24T21:26:01Z"
     },
     {
       "id": 89436618684,
       "name": "partition (6, LINKUSDT, long, 2025-11-27, 2026-01-20)",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-24T18:59:06Z",
-      "completed_at": null
+      "completed_at": "2026-07-24T21:39:39Z"
     },
     {
       "id": 89436618728,
       "name": "partition (6, LINKUSDT, short, 2025-11-27, 2026-01-20)",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-24T19:01:00Z",
-      "completed_at": null
+      "completed_at": "2026-07-24T21:36:28Z"
     },
     {
       "id": 89436618797,
       "name": "partition (6, AAVEUSDT, long, 2025-11-27, 2026-01-20)",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-24T19:11:09Z",
-      "completed_at": null
+      "completed_at": "2026-07-24T21:52:58Z"
     },
     {
       "id": 89436618848,
       "name": "partition (6, AAVEUSDT, short, 2025-11-27, 2026-01-20)",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "started_at": "2026-07-24T19:13:24Z",
-      "completed_at": null
+      "completed_at": "2026-07-24T21:55:04Z"
     },
     {
       "id": 89436619173,
       "name": "partition (7, BTCUSDT, long, 2026-01-20, 2026-03-15)",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-24T08:30:40Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T21:00:08Z",
+      "completed_at": "2026-07-24T23:11:31Z"
     },
     {
       "id": 89436619270,
       "name": "partition (7, ETHUSDT, long, 2026-01-20, 2026-03-15)",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-24T08:30:40Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T21:04:42Z",
+      "completed_at": "2026-07-25T00:00:01Z"
     },
     {
       "id": 89436619315,
       "name": "partition (7, ETHUSDT, short, 2026-01-20, 2026-03-15)",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-24T08:30:40Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T21:09:17Z",
+      "completed_at": "2026-07-24T23:40:29Z"
     },
     {
       "id": 89436619334,
       "name": "partition (7, SOLUSDT, long, 2026-01-20, 2026-03-15)",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-24T08:30:40Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T21:18:31Z",
+      "completed_at": "2026-07-25T00:08:07Z"
     },
     {
       "id": 89436619435,
       "name": "partition (7, SOLUSDT, short, 2026-01-20, 2026-03-15)",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-24T08:30:40Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T21:26:03Z",
+      "completed_at": "2026-07-25T00:23:41Z"
     },
     {
       "id": 89436619511,
       "name": "partition (7, LINKUSDT, long, 2026-01-20, 2026-03-15)",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-24T08:30:40Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T21:36:31Z",
+      "completed_at": "2026-07-25T00:23:02Z"
     },
     {
       "id": 89436619606,
       "name": "partition (7, BTCUSDT, short, 2026-01-20, 2026-03-15)",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-24T08:30:40Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T21:02:51Z",
+      "completed_at": "2026-07-25T00:05:37Z"
     },
     {
       "id": 89436619612,
       "name": "partition (7, LINKUSDT, short, 2026-01-20, 2026-03-15)",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-24T08:30:40Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T21:39:41Z",
+      "completed_at": "2026-07-24T23:56:43Z"
     },
     {
       "id": 89436619697,
       "name": "partition (7, AAVEUSDT, long, 2026-01-20, 2026-03-15)",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-24T08:30:40Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T21:53:00Z",
+      "completed_at": "2026-07-25T00:43:23Z"
     },
     {
       "id": 89436619759,
       "name": "partition (7, AAVEUSDT, short, 2026-01-20, 2026-03-15)",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-24T08:30:40Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T21:55:06Z",
+      "completed_at": "2026-07-25T00:50:47Z"
     },
     {
       "id": 89436620183,
       "name": "partition (8, BTCUSDT, short, 2026-03-15, 2026-05-08)",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-24T08:30:41Z",
+      "started_at": "2026-07-24T23:40:32Z",
       "completed_at": null
     },
     {
       "id": 89436620186,
       "name": "partition (8, BTCUSDT, long, 2026-03-15, 2026-05-08)",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-24T08:30:41Z",
+      "started_at": "2026-07-24T23:11:33Z",
       "completed_at": null
     },
     {
       "id": 89436620205,
       "name": "partition (8, ETHUSDT, long, 2026-03-15, 2026-05-08)",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-24T08:30:41Z",
+      "started_at": "2026-07-24T23:56:46Z",
       "completed_at": null
     },
     {
       "id": 89436620219,
       "name": "partition (8, ETHUSDT, short, 2026-03-15, 2026-05-08)",
-      "status": "queued",
-      "conclusion": null,
-      "started_at": "2026-07-24T08:30:41Z",
-      "completed_at": null
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-25T00:00:03Z",
+      "completed_at": "2026-07-25T02:23:16Z"
     },
     {
       "id": 89436620288,
       "name": "partition (8, SOLUSDT, long, 2026-03-15, 2026-05-08)",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-24T08:30:41Z",
+      "started_at": "2026-07-25T00:05:40Z",
       "completed_at": null
     },
     {
       "id": 89436620328,
       "name": "partition (8, SOLUSDT, short, 2026-03-15, 2026-05-08)",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-24T08:30:41Z",
+      "started_at": "2026-07-25T00:08:09Z",
       "completed_at": null
     },
     {
       "id": 89436620399,
       "name": "partition (8, LINKUSDT, short, 2026-03-15, 2026-05-08)",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-24T08:30:41Z",
+      "started_at": "2026-07-25T00:23:43Z",
       "completed_at": null
     },
     {
       "id": 89436620406,
       "name": "partition (8, LINKUSDT, long, 2026-03-15, 2026-05-08)",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-24T08:30:41Z",
+      "started_at": "2026-07-25T00:23:04Z",
       "completed_at": null
     },
     {
       "id": 89436620542,
       "name": "partition (8, AAVEUSDT, long, 2026-03-15, 2026-05-08)",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-24T08:30:41Z",
+      "started_at": "2026-07-25T00:43:26Z",
       "completed_at": null
     },
     {
       "id": 89436620596,
       "name": "partition (8, AAVEUSDT, short, 2026-03-15, 2026-05-08)",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-24T08:30:41Z",
+      "started_at": "2026-07-25T00:50:50Z",
       "completed_at": null
     },
     {
       "id": 89436620912,
       "name": "partition (9, BTCUSDT, long, 2026-05-08, 2026-07-01)",
-      "status": "queued",
+      "status": "in_progress",
       "conclusion": null,
-      "started_at": "2026-07-24T08:30:41Z",
+      "started_at": "2026-07-25T02:23:19Z",
       "completed_at": null
     },
     {
@@ -865,13 +865,160 @@
   ],
   "job_summary": {
     "total": 106,
-    "completed_success": 66,
+    "completed_success": 87,
     "completed_failure": 0,
     "completed_cancelled": 0,
     "in_progress": 10,
-    "queued": 30
+    "queued": 9
   },
   "artifacts": [
+    {
+      "id": 8614232602,
+      "name": "v3-part-8-ETHUSDT-short",
+      "size_in_bytes": 8816,
+      "expired": false,
+      "digest": "sha256:79bf61868a5c463f4c978b4ea07c7346b50b0ade03b35ea2544038eadd6b31fa"
+    },
+    {
+      "id": 8613209087,
+      "name": "v3-part-7-AAVEUSDT-short",
+      "size_in_bytes": 11659,
+      "expired": false,
+      "digest": "sha256:e3a567d636dc59460c7a8302adcdfda51d3c31322ceac187ac99a33c2ff648c7"
+    },
+    {
+      "id": 8613111391,
+      "name": "v3-part-7-AAVEUSDT-long",
+      "size_in_bytes": 10324,
+      "expired": false,
+      "digest": "sha256:a3ec5f4fe7238995bcaa5bb16a569bc2410e3b70fffca00d5b50858e15b59713"
+    },
+    {
+      "id": 8612845759,
+      "name": "v3-part-7-SOLUSDT-short",
+      "size_in_bytes": 12207,
+      "expired": false,
+      "digest": "sha256:5e7503a40ec55fb3c2443e518d41adf641049a0b8534329d7e586e2220e83dd2"
+    },
+    {
+      "id": 8612836484,
+      "name": "v3-part-7-LINKUSDT-long",
+      "size_in_bytes": 11109,
+      "expired": false,
+      "digest": "sha256:5437b64413d5dc8fab2a718f3a08450ed0950d08cc448a8b98ad2ff042ec4b69"
+    },
+    {
+      "id": 8612640711,
+      "name": "v3-part-7-SOLUSDT-long",
+      "size_in_bytes": 11408,
+      "expired": false,
+      "digest": "sha256:b50368a3c22cd0832e6bf6c88de2f5ebb22ff5d24ae3cf46b0da20db5643e3d3"
+    },
+    {
+      "id": 8612606280,
+      "name": "v3-part-7-BTCUSDT-short",
+      "size_in_bytes": 12765,
+      "expired": false,
+      "digest": "sha256:fb92a8e609481ffbc846f24d9f55dea8fc870a3485d24b3cc3014230118f2ec9"
+    },
+    {
+      "id": 8612526039,
+      "name": "v3-part-7-ETHUSDT-long",
+      "size_in_bytes": 9399,
+      "expired": false,
+      "digest": "sha256:833a2d7d489740c71106abe4f091d13a5b17dfafc0e462eb8ab63e21cf0ac469"
+    },
+    {
+      "id": 8612481111,
+      "name": "v3-part-7-LINKUSDT-short",
+      "size_in_bytes": 14043,
+      "expired": false,
+      "digest": "sha256:7ab37d2beedc3a087e6acf26d55de178f68b1d0a87ede99ad272a5e143f27a1e"
+    },
+    {
+      "id": 8612256795,
+      "name": "v3-part-7-ETHUSDT-short",
+      "size_in_bytes": 10128,
+      "expired": false,
+      "digest": "sha256:f0b05e5da9e2fbbed94adfcadf98dd13d8e2bcd8449c3bb968ab805c361c844b"
+    },
+    {
+      "id": 8611819386,
+      "name": "v3-part-7-BTCUSDT-long",
+      "size_in_bytes": 9200,
+      "expired": false,
+      "digest": "sha256:525a4a814031568085f6e7ec52cb77521c5699c70a38628ec36dd12c25e36de2"
+    },
+    {
+      "id": 8610462479,
+      "name": "v3-part-6-AAVEUSDT-short",
+      "size_in_bytes": 9758,
+      "expired": false,
+      "digest": "sha256:a1d48d80297431ff27799c9abe9066c422444de0342725262427aae8980cacd6"
+    },
+    {
+      "id": 8610421872,
+      "name": "v3-part-6-AAVEUSDT-long",
+      "size_in_bytes": 8846,
+      "expired": false,
+      "digest": "sha256:7a0f4dfbee02fcc17150a40095b42d4a6e258ab1b8708243f6f5c9d4f4f132dc"
+    },
+    {
+      "id": 8610156566,
+      "name": "v3-part-6-LINKUSDT-long",
+      "size_in_bytes": 8567,
+      "expired": false,
+      "digest": "sha256:b3a794af2cb6c58f51ed565f5dc50029ffb70b12b7a30d4e86bf539e3cc9feb9"
+    },
+    {
+      "id": 8610092019,
+      "name": "v3-part-6-LINKUSDT-short",
+      "size_in_bytes": 9579,
+      "expired": false,
+      "digest": "sha256:0f32080ec9bb3a2dc07133989cbbef94172d94e8d88adb3b31f80fd9ccef8169"
+    },
+    {
+      "id": 8609864781,
+      "name": "v3-part-6-SOLUSDT-short",
+      "size_in_bytes": 8652,
+      "expired": false,
+      "digest": "sha256:9fc2949f8b4bac10939c98b3a631446142c74f5961e51548de72979e64abc647"
+    },
+    {
+      "id": 8609699513,
+      "name": "v3-part-6-SOLUSDT-long",
+      "size_in_bytes": 10668,
+      "expired": false,
+      "digest": "sha256:94c7ab5bce6d98c2873c52048745e9d3dfc6485037cc1519d39f396a91cc9a31"
+    },
+    {
+      "id": 8609499778,
+      "name": "v3-part-6-BTCUSDT-short",
+      "size_in_bytes": 8589,
+      "expired": false,
+      "digest": "sha256:75273db0e96c9432f388381e70e18dbea6c35d701d2a0f5161a9c38a8d950df2"
+    },
+    {
+      "id": 8609397941,
+      "name": "v3-part-6-ETHUSDT-short",
+      "size_in_bytes": 11672,
+      "expired": false,
+      "digest": "sha256:9106ba743ad3d464f43a18c31eb726b98dd8f9212ab4e2bb8ed6a093c5ae1624"
+    },
+    {
+      "id": 8609356841,
+      "name": "v3-part-6-BTCUSDT-long",
+      "size_in_bytes": 8961,
+      "expired": false,
+      "digest": "sha256:7bb914aec9763912cf00a7c63079fa6e7836186d4d05486f3dd8cef71860d063"
+    },
+    {
+      "id": 8609296507,
+      "name": "v3-part-6-ETHUSDT-long",
+      "size_in_bytes": 8621,
+      "expired": false,
+      "digest": "sha256:b36a05965d5182bf6098d0b8e1608f912234acab0fc6d3a5fc56b318e37b2a52"
+    },
     {
       "id": 8606941939,
       "name": "v3-part-5-LINKUSDT-short",
