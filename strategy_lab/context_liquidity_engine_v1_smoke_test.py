@@ -114,7 +114,20 @@ class ContextLiquidityEngineV1SmokeTest(unittest.TestCase):
 
     def test_build_timeframe_state_uses_closed_context(self) -> None:
         dealing = DealingRange("BTCUSDT", "4h", MarketState.BULLISH, 90, 110, 100, 95, 110, 70, BASE, "fixture")
-        context = TimeframeContext("BTCUSDT", "4h", BASE, MarketState.BULLISH, 70, dealing, 102, 0.6, 5, 8)
+        context = TimeframeContext(
+            symbol="BTCUSDT",
+            timeframe="4h",
+            timestamp=BASE,
+            state=MarketState.BULLISH,
+            trend_strength=70,
+            dealing_range=dealing,
+            last_close=102,
+            premium_discount=0.6,
+            pivot_count=5,
+            level_count=8,
+            nearest_support=None,
+            nearest_resistance=None,
+        )
         rows = [bar(i, 100 + i, 101 + i, 99 + i, 100.5 + i, "1h") for i in range(25)]
         result = build_timeframe_state("BTCUSDT", "4h", context, rows, rows[-1].close_time)
         self.assertEqual(result.direction, Direction.LONG)
