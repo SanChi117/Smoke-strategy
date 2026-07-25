@@ -1,0 +1,98 @@
+name: SMOKE CORE P3 Interaction
+
+on:
+  push:
+    branches:
+      - agent/smoke-core-1-p3-interaction
+    paths:
+      - 'strategy_lab/interaction_engine_v1.py'
+      - 'strategy_lab/interaction_engine_v1_smoke_test.py'
+      - 'strategy_lab/context_liquidity_engine_v1.py'
+      - 'strategy_lab/context_liquidity_engine_v1_smoke_test.py'
+      - 'strategy_lab/poi_imbalance_engine_v1.py'
+      - 'strategy_lab/poi_imbalance_engine_v1_smoke_test.py'
+      - 'research/SMOKE_CORE_P3_INTERACTION_CONTRACT_V1.md'
+      - '.github/workflows/smoke-core-p3-interaction.yml'
+  pull_request:
+    branches:
+      - agent/smoke-core-1-p2-context-liquidity
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  semantic-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install package
+        run: python -m pip install -e .
+      - name: Compile P1 P2 and P3
+        run: |
+          python -m py_compile strategy_lab/poi_imbalance_engine_v1.py
+          python -m py_compile strategy_lab/context_liquidity_engine_v1.py
+          python -m py_compile strategy_lab/interaction_engine_v1.py
+          python -m py_compile strategy_lab/interaction_engine_v1_smoke_test.py
+      - name: P3 semantic tests
+        run: python -m unittest strategy_lab.interaction_engine_v1_smoke_test -v
+      - name: P2 regression tests
+        run: python -m unittest strategy_lab.context_liquidity_engine_v1_smoke_test -v
+      - name: P1 regression tests
+        run: python -m unittest strategy_lab.poi_imbalance_engine_v1_smoke_test -v
+      - name: Reused causal primitive tests
+        run: |
+          python -m unittest strategy_lab.mtf_dealing_range_v2_smoke_test -v
+          python -m unittest strategy_lab.period_liquidity_levels_smoke_test -v
+      - name: P3 completeness frozen defaults and no-outcome guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(wc -l < strategy_lab/interaction_engine_v1.py)" -ge 700
+          grep -q '^class InteractionEngineV1:' strategy_lab/interaction_engine_v1.py
+          grep -q '^def snapshot_to_no_pnl_dict' strategy_lab/interaction_engine_v1.py
+          python - <<'PY'
+          from dataclasses import asdict, fields, is_dataclass
+          from strategy_lab.interaction_engine_v1 import (
+              AnchorEventV1,
+              FORBIDDEN_KEY_FRAGMENTS,
+              InteractionConfig,
+              InteractionEventV1,
+              InteractionRelationV1,
+              InteractionSnapshotV1,
+          )
+
+          cfg = asdict(InteractionConfig())
+          expected = {
+              'atr_length': 14,
+              'zone_touch_buffer_atr': 0.03,
+              'raid_min_excursion_atr': 0.03,
+              'return_close_buffer_atr': 0.02,
+              'acceptance_buffer_atr': 0.05,
+              'acceptance_closes': 2,
+              'rejection_wick_body_ratio': 1.50,
+              'rejection_close_location': 0.60,
+              'invalidation_buffer_atr': 0.05,
+              'invalidation_closes': 2,
+              'anchor_expiry_bars': 6,
+              'inducement_max_age_bars': 12,
+              'inducement_spatial_atr': 1.00,
+          }
+          assert cfg == expected, (cfg, expected)
+
+          schemas = (
+              InteractionEventV1,
+              InteractionRelationV1,
+              AnchorEventV1,
+              InteractionSnapshotV1,
+          )
+          for schema in schemas:
+              assert is_dataclass(schema), schema
+              for field in fields(schema):
+                  key = field.name.lower()
+                  assert not any(fragment in key for fragment in FORBIDDEN_KEY_FRAGMENTS), (schema.__name__, key)
+          print('P3 frozen contract guard: PASS')
+          PY
