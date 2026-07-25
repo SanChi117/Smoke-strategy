@@ -1,12 +1,24 @@
 name: SMOKE CORE P4 Execution Structure
 
 on:
+  push:
+    branches:
+      - agent/smoke-core-1-p4-execution-structure
+    paths:
+      - 'strategy_lab/execution_structure_v1.py'
+      - 'strategy_lab/execution_structure_v1_smoke_test.py'
+      - 'strategy_lab/execution_family_policy_v1.py'
+      - 'strategy_lab/execution_family_policy_v1_smoke_test.py'
+      - 'research/SMOKE_CORE_P4_EXECUTION_STRUCTURE_CONTRACT_V1.md'
+      - '.github/workflows/smoke-core-p4-execution-structure.yml'
   pull_request:
     branches:
       - agent/smoke-core-1-p3-interaction
     paths:
       - 'strategy_lab/execution_structure_v1.py'
       - 'strategy_lab/execution_structure_v1_smoke_test.py'
+      - 'strategy_lab/execution_family_policy_v1.py'
+      - 'strategy_lab/execution_family_policy_v1_smoke_test.py'
       - 'research/SMOKE_CORE_P4_EXECUTION_STRUCTURE_CONTRACT_V1.md'
       - '.github/workflows/smoke-core-p4-execution-structure.yml'
   workflow_dispatch:
@@ -30,8 +42,11 @@ jobs:
           python -m py_compile strategy_lab/context_liquidity_engine_v1.py
           python -m py_compile strategy_lab/interaction_engine_v1.py
           python -m py_compile strategy_lab/execution_structure_v1.py
-      - name: P4 semantic tests
+          python -m py_compile strategy_lab/execution_family_policy_v1.py
+      - name: P4 execution semantic tests
         run: python -m strategy_lab.execution_structure_v1_smoke_test
+      - name: P4 family policy semantic tests
+        run: python -m strategy_lab.execution_family_policy_v1_smoke_test
       - name: P3 regression tests
         run: python -m strategy_lab.interaction_engine_v1_smoke_test
       - name: P2 regression tests
@@ -47,10 +62,16 @@ jobs:
           grep -q '^class ExecutionConfig' strategy_lab/execution_structure_v1.py
           grep -q '^def evaluate_execution_structure' strategy_lab/execution_structure_v1.py
           grep -q '^def structure_to_no_pnl_dict' strategy_lab/execution_structure_v1.py
+          grep -q '^class ScenarioFamily' strategy_lab/execution_family_policy_v1.py
+          grep -q '^def apply_family_policy' strategy_lab/execution_family_policy_v1.py
           python - <<'PY'
           from strategy_lab.execution_structure_v1 import ExecutionConfig
-          c=ExecutionConfig()
+          from strategy_lab.execution_family_policy_v1 import FAMILY_ENTRY_POLICIES, ScenarioFamily
+          c = ExecutionConfig()
           assert c.acceptance_closes == 2
           assert c.invalidation_closes == 2
           assert c.soft_unclean_penalty == 12.0
+          assert FAMILY_ENTRY_POLICIES[ScenarioFamily.RAID_REVERSAL].expiry_5m_bars == 18
+          assert FAMILY_ENTRY_POLICIES[ScenarioFamily.TREND_CONTINUATION].expiry_5m_bars == 24
+          assert FAMILY_ENTRY_POLICIES[ScenarioFamily.RANGE_ROTATION].expiry_5m_bars == 16
           PY
