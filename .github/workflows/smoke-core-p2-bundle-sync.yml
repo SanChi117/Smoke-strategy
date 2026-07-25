@@ -1,0 +1,50 @@
+name: SMOKE CORE P2 Bundle Sync
+
+on:
+  push:
+    branches:
+      - agent/smoke-core-1-p2-context-liquidity
+    paths:
+      - 'research_triggers/p2_context_liquidity_chunks/**'
+      - '.github/workflows/smoke-core-p2-bundle-sync.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  reconstruct:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/smoke-core-1-p2-context-liquidity
+          fetch-depth: 0
+      - name: Reconstruct and validate complete P2 engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t chunks < <(find research_triggers/p2_context_liquidity_chunks -maxdepth 1 -type f -name 'chunk_*.b64' | sort)
+          if [ "${#chunks[@]}" -ne 8 ]; then
+            echo "Expected exactly 8 ordered chunks, found ${#chunks[@]}. Refusing partial reconstruction."
+            exit 1
+          fi
+          mkdir -p strategy_lab
+          cat "${chunks[@]}" | tr -d '\n\r ' | base64 --decode > strategy_lab/context_liquidity_engine_v1.py
+          python -m py_compile strategy_lab/context_liquidity_engine_v1.py
+          grep -q '^class ContextLiquidityEngineV1:' strategy_lab/context_liquidity_engine_v1.py
+          grep -q '^def snapshot_to_no_pnl_dict' strategy_lab/context_liquidity_engine_v1.py
+          test "$(wc -l < strategy_lab/context_liquidity_engine_v1.py)" -ge 500
+      - name: Commit reconstructed source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add strategy_lab/context_liquidity_engine_v1.py
+          if git diff --cached --quiet; then
+            echo 'P2 engine already synchronized.'
+            exit 0
+          fi
+          git commit -m 'Synchronize complete P2 context liquidity engine source'
+          git push origin HEAD:agent/smoke-core-1-p2-context-liquidity

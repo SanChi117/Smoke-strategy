@@ -1,0 +1,1 @@
+These base64 chunks are a temporary transport mechanism for the preregistered P2 engine source. They are not an independent specification and must be isolated after the authoritative source file is reconstructed and CI is green.
