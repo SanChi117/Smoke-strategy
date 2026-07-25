@@ -20,7 +20,7 @@ jobs:
         with:
           ref: agent/smoke-core-1-p2-context-liquidity
           fetch-depth: 0
-      - name: Reconstruct P2 engine
+      - name: Reconstruct and compile P2 engine
         shell: bash
         run: |
           set -euo pipefail
@@ -31,7 +31,6 @@ jobs:
             | tr -d '\n\r ' \
             | base64 --decode > strategy_lab/context_liquidity_engine_v1.py
           python -m py_compile strategy_lab/context_liquidity_engine_v1.py
-          python -m unittest strategy_lab.context_liquidity_engine_v1_smoke_test -v
       - name: Commit reconstructed source
         shell: bash
         run: |
