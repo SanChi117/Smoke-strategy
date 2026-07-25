@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """SMOKE CORE 1.0 P1: causal POI / imbalance engine.
 
-Recognition-only module. It uses closed bars, preserves evidence provenance,
-prevents derived features from being counted as independent confirmations,
+The module is recognition-only. It operates on closed bars, preserves evidence
+provenance, prevents derived features from being counted as independent facts,
 merges overlapping zones into deterministic composite POIs, and evaluates the
-POI lifecycle without future trade outcomes.
+POI lifecycle without future outcomes.
 """
 from __future__ import annotations
 
@@ -202,7 +202,8 @@ def _atr_series(rows: Sequence[ClosedBar], length: int) -> list[float | None]:
         if len(tr_values) < length:
             output.append(None)
         else:
-            output.append(sum(tr_values[-length:]) / length)
+            window = tr_values[-length:]
+            output.append(sum(window) / length)
     return output
 
 
@@ -244,7 +245,9 @@ def _opposite(bar: ClosedBar, direction: Direction) -> bool:
 def _overlap_ratio(left: POIZone, right: POIZone) -> float:
     overlap = max(0.0, min(left.high, right.high) - max(left.low, right.low))
     smaller = min(left.width, right.width)
-    return 0.0 if smaller <= 0 else overlap / smaller
+    if smaller <= 0:
+        return 0.0
+    return overlap / smaller
 
 
 def _structural_consequence(
@@ -254,11 +257,11 @@ def _structural_consequence(
 ) -> tuple[bool, Pivot | None]:
     available = [pivot for pivot in pivots if pivot.confirmed_at <= impulse.open_time]
     if direction == Direction.LONG:
-        pivots_for_side = [pivot for pivot in available if pivot.kind == "high"]
-        pivot = max(pivots_for_side, key=lambda item: item.confirmed_at, default=None)
+        highs = [pivot for pivot in available if pivot.kind == "high"]
+        pivot = max(highs, key=lambda item: item.confirmed_at, default=None)
         return (pivot is not None and impulse.close > pivot.price), pivot
-    pivots_for_side = [pivot for pivot in available if pivot.kind == "low"]
-    pivot = max(pivots_for_side, key=lambda item: item.confirmed_at, default=None)
+    lows = [pivot for pivot in available if pivot.kind == "low"]
+    pivot = max(lows, key=lambda item: item.confirmed_at, default=None)
     return (pivot is not None and impulse.close < pivot.price), pivot
 
 
@@ -270,12 +273,12 @@ def _origin_cluster(
 ) -> list[ClosedBar]:
     output: list[ClosedBar] = []
     for index in range(impulse_index - 1, max(-1, impulse_index - lookback - 1), -1):
-        current = rows[index]
-        if not _opposite(current, direction):
+        bar = rows[index]
+        if not _opposite(bar, direction):
             if output:
                 break
             continue
-        output.append(current)
+        output.append(bar)
     return sorted(output, key=lambda item: item.open_time)
 
 
@@ -350,15 +353,16 @@ def cluster_evidence(
         primaries = [item for item in ordered if item.relation == EvidenceRelation.PRIMARY]
         primary = max(primaries or ordered, key=lambda item: item.strength_0_100)
         secondary = [item for item in ordered if item.evidence_id != primary.evidence_id]
-        secondary_sum = sum(item.strength_0_100 for item in secondary)
-        score = min(cfg.cluster_total_cap, primary.strength_0_100 + 0.35 * secondary_sum)
+        raw_secondary = sum(item.strength_0_100 for item in secondary)
+        score = primary.strength_0_100 + 0.35 * raw_secondary
+        score = min(cfg.cluster_total_cap, score)
         output.append(
             EvidenceCluster(
                 cluster_id=cluster_id,
                 primary_evidence_id=primary.evidence_id,
                 evidence_ids=tuple(item.evidence_id for item in ordered),
                 raw_primary_score=round(primary.strength_0_100, 4),
-                raw_secondary_sum=round(secondary_sum, 4),
+                raw_secondary_sum=round(raw_secondary, 4),
                 cluster_score_0_100=round(score, 4),
             )
         )
@@ -378,11 +382,10 @@ def _score_components(
 ) -> POIScoreComponents:
     displacement = _clamp(body_atr * 45.0 + range_atr * 20.0 + max(0.0, volume_ratio - 1.0) * 15.0)
     structural = 90.0 if structure_broken else 45.0
-    imbalance = (
-        _clamp(gap_atr * 180.0 + body_atr * 20.0)
-        if source == POISourceType.FVG_IMBALANCE
-        else _clamp(gap_atr * 70.0 + body_atr * 10.0)
-    )
+    if source == POISourceType.FVG_IMBALANCE:
+        imbalance = _clamp(gap_atr * 180.0 + body_atr * 20.0)
+    else:
+        imbalance = _clamp(gap_atr * 70.0 + body_atr * 10.0)
     return POIScoreComponents(
         displacement_strength=round(displacement, 4),
         structural_consequence=round(structural, 4),
@@ -499,9 +502,17 @@ def merge_composite_zones(
         )
         quality = min(100.0, max(item.quality_0_100 for item in group) + cfg.composite_bonus_per_source * (len(group) - 1))
         origin_ids = sorted({item.origin_event_id for item in group})
+        composite_id = _stable_id(
+            "poi",
+            zone.symbol,
+            zone.timeframe,
+            POISourceType.COMPOSITE.value,
+            zone.direction.value,
+            *(sorted(item.poi_id for item in group)),
+        )
         output.append(
             POIZone(
-                poi_id=_stable_id("poi", zone.symbol, zone.timeframe, POISourceType.COMPOSITE.value, zone.direction.value, *(sorted(item.poi_id for item in group))),
+                poi_id=composite_id,
                 symbol=zone.symbol,
                 timeframe=zone.timeframe,
                 source_type=POISourceType.COMPOSITE,
@@ -565,16 +576,16 @@ def evaluate_zone_lifecycle(
     outside_run = 0
     invalidated = False
     buffer = zone.atr_at_formation * cfg.invalidation_buffer_atr
-    for current in rows:
-        fraction = _mitigation_fraction(zone, current)
+    for bar in rows:
+        fraction = _mitigation_fraction(zone, bar)
         if fraction > 0.0:
             touches += 1
             max_mitigation = max(max_mitigation, fraction)
-            last_test = current.close_time
+            last_test = bar.close_time
         outside = (
-            current.close < zone.low - buffer
+            bar.close < zone.low - buffer
             if zone.direction == Direction.LONG
-            else current.close > zone.high + buffer
+            else bar.close > zone.high + buffer
         )
         outside_run = outside_run + 1 if outside else 0
         if outside_run >= cfg.invalidation_closes:
@@ -588,16 +599,22 @@ def evaluate_zone_lifecycle(
         state = POIState.PARTIALLY_MITIGATED
     else:
         state = POIState.TESTED
-    freshness = _clamp(100.0 - touches * cfg.touch_freshness_penalty - max_mitigation * cfg.mitigation_freshness_penalty)
-    age_score = _clamp(100.0 - (len(rows) / 30.0) * cfg.age_penalty_per_30_bars)
+    age_bars = len(rows)
+    freshness = _clamp(
+        100.0
+        - touches * cfg.touch_freshness_penalty
+        - max_mitigation * cfg.mitigation_freshness_penalty
+    )
+    age_score = _clamp(100.0 - (age_bars / 30.0) * cfg.age_penalty_per_30_bars)
     components = replace(zone.score_components, freshness=round(freshness, 4), age=round(age_score, 4))
+    quality = 0.0 if invalidated else components.total
     return replace(
         zone,
         state=state,
         last_test_at=last_test,
         mitigation_fraction=round(max_mitigation, 6),
         test_count=touches,
-        quality_0_100=0.0 if invalidated else components.total,
+        quality_0_100=round(quality, 4),
         score_components=components,
     )
 
@@ -626,7 +643,11 @@ class POIImbalanceEngine:
     def __init__(self, config: POIConfig | None = None):
         self.config = config or POIConfig()
 
-    def detect(self, bars: Sequence[ClosedBar], asof: datetime) -> POISnapshot:
+    def detect(
+        self,
+        bars: Sequence[ClosedBar],
+        asof: datetime,
+    ) -> POISnapshot:
         rows = sorted((bar for bar in bars if bar.close_time <= asof), key=lambda item: item.close_time)
         if not rows:
             return POISnapshot("", "", asof, (), (), (), ("NO_CLOSED_BARS",))
@@ -642,10 +663,9 @@ class POIImbalanceEngine:
         raw_zones: list[POIZone] = []
         reasons: list[str] = []
 
-        for index in range(2, len(rows)):
-            impulse = rows[index - 1]
-            right = rows[index]
-            atr = atr_values[index - 1]
+        for impulse_index in range(1, len(rows)):
+            impulse = rows[impulse_index]
+            atr = atr_values[impulse_index]
             if atr is None or atr <= 0.0:
                 continue
             direction = _bar_direction(impulse)
@@ -656,24 +676,42 @@ class POIImbalanceEngine:
             body_atr = body / atr
             range_atr = span / atr
             close_location = _close_location(impulse, direction)
-            if body_atr < self.config.min_body_atr or range_atr < self.config.min_range_atr or close_location < self.config.min_close_location:
+            if (
+                body_atr < self.config.min_body_atr
+                or range_atr < self.config.min_range_atr
+                or close_location < self.config.min_close_location
+            ):
                 continue
-            left = rows[index - 2]
-            gap_low: float | None = None
-            gap_high: float | None = None
-            if direction == Direction.LONG and right.low > left.high:
-                gap_low, gap_high = left.high, right.low
-            elif direction == Direction.SHORT and right.high < left.low:
-                gap_low, gap_high = right.high, left.low
-            gap_atr = 0.0 if gap_low is None else (gap_high - gap_low) / atr
+
             structure_broken, broken_pivot = _structural_consequence(pivots, impulse, direction)
-            volume_ratio = _volume_ratio(rows, index - 1, self.config.volume_lookback)
-            origin = _origin_cluster(rows, index - 1, direction, self.config.origin_lookback)
+            volume_ratio = _volume_ratio(rows, impulse_index, self.config.volume_lookback)
+            origin = _origin_cluster(rows, impulse_index, direction, self.config.origin_lookback)
             if not origin:
                 reasons.append(f"NO_ORIGIN:{impulse.close_time.isoformat()}")
                 continue
 
-            origin_event_id = _stable_id("origin", symbol, timeframe, direction.value, origin[0].open_time.isoformat(), impulse.close_time.isoformat())
+            gap_low: float | None = None
+            gap_high: float | None = None
+            fvg_confirmed_at: datetime | None = None
+            if 0 < impulse_index < len(rows) - 1:
+                left = rows[impulse_index - 1]
+                right = rows[impulse_index + 1]
+                if direction == Direction.LONG and right.low > left.high:
+                    gap_low, gap_high = left.high, right.low
+                    fvg_confirmed_at = right.close_time
+                elif direction == Direction.SHORT and right.high < left.low:
+                    gap_low, gap_high = right.high, left.low
+                    fvg_confirmed_at = right.close_time
+            gap_atr = 0.0 if gap_low is None else (gap_high - gap_low) / atr
+
+            origin_event_id = _stable_id(
+                "origin",
+                symbol,
+                timeframe,
+                direction.value,
+                origin[0].open_time.isoformat(),
+                impulse.close_time.isoformat(),
+            )
             cluster_id = _stable_id("cluster", origin_event_id)
             origin_low, origin_high = _origin_bounds(origin, self.config.origin_wick_fraction)
             impulse_strength = _clamp(body_atr * 45.0 + range_atr * 20.0 + close_location * 20.0)
@@ -685,12 +723,17 @@ class POIImbalanceEngine:
                 event_type="DISPLACEMENT_IMPULSE",
                 relation=EvidenceRelation.PRIMARY,
                 anchor_time=impulse.open_time,
-                confirmed_at=right.close_time,
+                confirmed_at=impulse.close_time,
                 low=impulse.low,
                 high=impulse.high,
                 direction=direction,
                 strength=impulse_strength,
-                metadata={"body_atr": round(body_atr, 6), "range_atr": round(range_atr, 6), "close_location": round(close_location, 6), "volume_ratio": round(volume_ratio, 6)},
+                metadata={
+                    "body_atr": round(body_atr, 6),
+                    "range_atr": round(range_atr, 6),
+                    "close_location": round(close_location, 6),
+                    "volume_ratio": round(volume_ratio, 6),
+                },
             )
             origin_ev = _make_evidence(
                 cluster_id=cluster_id,
@@ -700,7 +743,7 @@ class POIImbalanceEngine:
                 event_type="ORIGIN_CLUSTER",
                 relation=EvidenceRelation.DERIVED,
                 anchor_time=origin[0].open_time,
-                confirmed_at=right.close_time,
+                confirmed_at=impulse.close_time,
                 low=origin_low,
                 high=origin_high,
                 direction=direction,
@@ -718,7 +761,7 @@ class POIImbalanceEngine:
                         event_type="STRUCTURAL_CONSEQUENCE",
                         relation=EvidenceRelation.DERIVED,
                         anchor_time=broken_pivot.bar_open_time,
-                        confirmed_at=right.close_time,
+                        confirmed_at=impulse.close_time,
                         low=broken_pivot.price,
                         high=broken_pivot.price,
                         direction=direction,
@@ -736,7 +779,7 @@ class POIImbalanceEngine:
                         event_type="VOLUME_EXPANSION",
                         relation=EvidenceRelation.DERIVED,
                         anchor_time=impulse.open_time,
-                        confirmed_at=right.close_time,
+                        confirmed_at=impulse.close_time,
                         low=impulse.low,
                         high=impulse.high,
                         direction=direction,
@@ -745,14 +788,6 @@ class POIImbalanceEngine:
                     )
                 )
             evidence.extend(event_evidence)
-            origin_components = _score_components(
-                body_atr=body_atr,
-                range_atr=range_atr,
-                structure_broken=structure_broken,
-                gap_atr=gap_atr,
-                volume_ratio=volume_ratio,
-                source=POISourceType.ORIGIN_OF_DISPLACEMENT,
-            )
             raw_zones.append(
                 _zone(
                     symbol=symbol,
@@ -762,15 +797,23 @@ class POIImbalanceEngine:
                     high=origin_high,
                     direction=direction,
                     formed_at=origin[0].open_time,
-                    confirmed_at=right.close_time,
+                    confirmed_at=impulse.close_time,
                     evidence_ids=[item.evidence_id for item in event_evidence],
                     cluster_ids=[cluster_id],
                     origin_event_id=origin_event_id,
                     atr_at_formation=atr,
-                    components=origin_components,
+                    components=_score_components(
+                        body_atr=body_atr,
+                        range_atr=range_atr,
+                        structure_broken=structure_broken,
+                        gap_atr=gap_atr,
+                        volume_ratio=volume_ratio,
+                        source=POISourceType.ORIGIN_OF_DISPLACEMENT,
+                    ),
                 )
             )
-            if gap_low is not None and gap_atr >= self.config.min_gap_atr:
+
+            if gap_low is not None and fvg_confirmed_at is not None and gap_atr >= self.config.min_gap_atr:
                 fvg_ev = _make_evidence(
                     cluster_id=cluster_id,
                     parent_event_id=primary.evidence_id,
@@ -779,7 +822,7 @@ class POIImbalanceEngine:
                     event_type="FVG_IMBALANCE",
                     relation=EvidenceRelation.DERIVED,
                     anchor_time=impulse.open_time,
-                    confirmed_at=right.close_time,
+                    confirmed_at=fvg_confirmed_at,
                     low=gap_low,
                     high=gap_high,
                     direction=direction,
@@ -796,7 +839,7 @@ class POIImbalanceEngine:
                         high=gap_high,
                         direction=direction,
                         formed_at=impulse.open_time,
-                        confirmed_at=right.close_time,
+                        confirmed_at=fvg_confirmed_at,
                         evidence_ids=[primary.evidence_id, fvg_ev.evidence_id],
                         cluster_ids=[cluster_id],
                         origin_event_id=origin_event_id,
@@ -813,14 +856,18 @@ class POIImbalanceEngine:
                 )
 
         composites = merge_composite_zones(raw_zones, self.config)
-        lifecycle = tuple(evaluate_zone_lifecycle(zone, rows, asof, self.config) for zone in composites)
+        lifecycle = tuple(
+            evaluate_zone_lifecycle(zone, rows, asof, self.config)
+            for zone in composites
+        )
+        clusters = cluster_evidence(evidence, self.config)
         return POISnapshot(
             symbol=symbol,
             timeframe=timeframe,
             evaluated_at=asof,
             zones=tuple(sorted(lifecycle, key=lambda item: (item.confirmed_at, item.poi_id))),
             evidence=tuple(sorted(evidence, key=lambda item: (item.confirmed_at, item.evidence_id))),
-            clusters=cluster_evidence(evidence, self.config),
+            clusters=clusters,
             reasons=tuple(sorted(set(reasons))),
         )
 
@@ -833,14 +880,28 @@ def snapshot_to_no_pnl_dict(snapshot: POISnapshot) -> dict[str, Any]:
             return value.value
         if isinstance(value, Mapping):
             return {str(key): convert(child) for key, child in value.items()}
-        if isinstance(value, (tuple, list)):
+        if isinstance(value, tuple):
+            return [convert(child) for child in value]
+        if isinstance(value, list):
             return [convert(child) for child in value]
         if hasattr(value, "__dataclass_fields__"):
             return convert(asdict(value))
         return value
 
     payload = convert(snapshot)
-    forbidden = ("pnl", "future_return", "trade_outcome", "tp_result", "sl_result", "mfe", "mae", "profit_factor", "net_return", "drawdown", "exit_price")
+    forbidden = (
+        "pnl",
+        "future_return",
+        "trade_outcome",
+        "tp_result",
+        "sl_result",
+        "mfe",
+        "mae",
+        "profit_factor",
+        "net_return",
+        "drawdown",
+        "exit_price",
+    )
     raw = json.dumps(payload, sort_keys=True).lower()
     for fragment in forbidden:
         if f'"{fragment}"' in raw:
