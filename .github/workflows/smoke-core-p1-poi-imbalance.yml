@@ -1,0 +1,60 @@
+name: SMOKE CORE P1 POI Imbalance
+
+on:
+  push:
+    branches: ['agent/smoke-core-1-p1-poi-imbalance']
+    paths:
+      - 'strategy_lab/poi_imbalance_engine_v1.py'
+      - 'strategy_lab/poi_imbalance_engine_v1_smoke_test.py'
+      - 'research/SMOKE_CORE_P1_POI_IMBALANCE_CONTRACT_V1.md'
+      - '.github/workflows/smoke-core-p1-poi-imbalance.yml'
+      - 'research_triggers/smoke_core_p1_poi_imbalance_ci.txt'
+  pull_request:
+    paths:
+      - 'strategy_lab/poi_imbalance_engine_v1.py'
+      - 'strategy_lab/poi_imbalance_engine_v1_smoke_test.py'
+      - 'research/SMOKE_CORE_P1_POI_IMBALANCE_CONTRACT_V1.md'
+      - '.github/workflows/smoke-core-p1-poi-imbalance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  p1-semantic-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install project
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+      - name: Compile P1
+        run: |
+          python -m py_compile strategy_lab/poi_imbalance_engine_v1.py
+          python -m py_compile strategy_lab/poi_imbalance_engine_v1_smoke_test.py
+      - name: Run P1 semantic tests
+        run: python -m strategy_lab.poi_imbalance_engine_v1_smoke_test
+      - name: Verify reused causal primitives
+        run: |
+          python -m strategy_lab.mtf_dealing_range_v2_smoke_test
+          python -m strategy_lab.mtf_semantic_corrections_v2_smoke_test
+      - name: Guard P1 defaults and no-outcome scope
+        run: |
+          python - <<'PY'
+          from strategy_lab.poi_imbalance_engine_v1 import POIConfig
+          cfg = POIConfig()
+          assert cfg.min_body_atr == 0.55
+          assert cfg.min_range_atr == 0.85
+          assert cfg.min_close_location == 0.67
+          assert cfg.min_gap_atr == 0.08
+          assert cfg.partial_mitigation_threshold == 0.50
+          assert cfg.invalidation_closes == 2
+          assert cfg.invalidation_buffer_atr == 0.05
+          assert cfg.cluster_total_cap == 30.0
+          print('SMOKE CORE P1 contract guard: PASS')
+          PY
