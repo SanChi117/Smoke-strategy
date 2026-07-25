@@ -1,0 +1,5 @@
+SMOKE CORE P1 POI/Imbalance semantic CI trigger.
+Authoritative final implementation blobs:
+- engine: fe90394846c9fab2430b0b27aa48e855a2192453
+- tests: 2e6c165607afafc7b876774ab9143c324aac7611
+No PnL, no recognition scan, no profitability, no paper, no live.
