@@ -25,9 +25,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p strategy_lab
-          cat research_triggers/p2_context_liquidity_chunks/chunk_00.b64 \
-              research_triggers/p2_context_liquidity_chunks/chunk_01.b64 \
-              research_triggers/p2_context_liquidity_chunks/chunk_02.b64 \
+          cat research_triggers/p2_context_liquidity_chunks/chunk_*.b64 \
             | tr -d '\n\r ' \
             | base64 --decode > strategy_lab/context_liquidity_engine_v1.py
           python -m py_compile strategy_lab/context_liquidity_engine_v1.py
@@ -42,5 +40,5 @@ jobs:
             echo 'P2 engine already synchronized.'
             exit 0
           fi
-          git commit -m 'Synchronize P2 context liquidity engine source'
+          git commit -m 'Synchronize complete P2 context liquidity engine source'
           git push origin HEAD:agent/smoke-core-1-p2-context-liquidity
