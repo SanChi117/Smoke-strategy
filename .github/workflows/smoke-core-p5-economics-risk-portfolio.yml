@@ -1,0 +1,81 @@
+name: SMOKE CORE P5 Economics Risk Portfolio
+
+on:
+  push:
+    branches:
+      - agent/smoke-core-1-p5-economics-risk-portfolio
+    paths:
+      - 'strategy_lab/economics_risk_portfolio_v1.py'
+      - 'strategy_lab/economics_risk_portfolio_v1_smoke_test.py'
+      - 'research/SMOKE_CORE_P5_ECONOMICS_RISK_PORTFOLIO_CONTRACT_V1.md'
+      - '.github/workflows/smoke-core-p5-economics-risk-portfolio.yml'
+  pull_request:
+    branches:
+      - agent/smoke-core-1-p4-execution-structure
+    paths:
+      - 'strategy_lab/economics_risk_portfolio_v1.py'
+      - 'strategy_lab/economics_risk_portfolio_v1_smoke_test.py'
+      - 'research/SMOKE_CORE_P5_ECONOMICS_RISK_PORTFOLIO_CONTRACT_V1.md'
+      - '.github/workflows/smoke-core-p5-economics-risk-portfolio.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  semantic-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install package
+        run: python -m pip install -e .
+      - name: Compile P1 through P5
+        run: |
+          python -m py_compile strategy_lab/poi_imbalance_engine_v1.py
+          python -m py_compile strategy_lab/context_liquidity_engine_v1.py
+          python -m py_compile strategy_lab/interaction_engine_v1.py
+          python -m py_compile strategy_lab/execution_structure_v1.py
+          python -m py_compile strategy_lab/execution_family_policy_v1.py
+          python -m py_compile strategy_lab/economics_risk_portfolio_v1.py
+      - name: P5 semantic tests
+        run: python -m strategy_lab.economics_risk_portfolio_v1_smoke_test
+      - name: P4 execution regressions
+        run: |
+          python -m strategy_lab.execution_structure_v1_smoke_test
+          python -m strategy_lab.execution_family_policy_v1_smoke_test
+      - name: P3 regression tests
+        run: python -m strategy_lab.interaction_engine_v1_smoke_test
+      - name: P2 regression tests
+        run: python -m strategy_lab.context_liquidity_engine_v1_smoke_test
+      - name: P1 regression tests
+        run: python -m strategy_lab.poi_imbalance_engine_v1_smoke_test
+      - name: Reused causal primitive tests
+        run: |
+          python -m strategy_lab.mtf_dealing_range_v2_smoke_test
+          python -m strategy_lab.mtf_semantic_corrections_v2_smoke_test
+      - name: P5 completeness frozen defaults and no-outcome guard
+        run: |
+          grep -q '^class CostModel' strategy_lab/economics_risk_portfolio_v1.py
+          grep -q '^class RiskLimits' strategy_lab/economics_risk_portfolio_v1.py
+          grep -q '^def calculate_economics' strategy_lab/economics_risk_portfolio_v1.py
+          grep -q '^def evaluate_candidate' strategy_lab/economics_risk_portfolio_v1.py
+          grep -q '^def rank_simultaneous_candidates' strategy_lab/economics_risk_portfolio_v1.py
+          grep -q '^def result_to_no_pnl_dict' strategy_lab/economics_risk_portfolio_v1.py
+          python - <<'PY'
+          from strategy_lab.economics_risk_portfolio_v1 import CostModel, RiskLimits
+          c=CostModel(); r=RiskLimits()
+          assert c.total_cost_pct == 0.15
+          assert r.risk_per_position_pct == 0.5
+          assert r.max_total_open_risk_pct == 2.0
+          assert r.default_leverage == 20.0
+          assert r.max_leverage == 25.0
+          assert r.max_margin_per_position_pct == 10.0
+          assert r.max_total_margin_pct == 25.0
+          assert r.max_total_notional_multiple == 2.5
+          assert r.min_net_rr == 1.35
+          assert r.preferred_net_rr == 1.70
+          assert r.conditional_score_min == 80.0
+          PY
