@@ -1,0 +1,50 @@
+name: SMOKE CORE P1 Bundle Sync
+
+on:
+  push:
+    branches: ['agent/smoke-core-1-p1-poi-imbalance']
+    paths:
+      - 'research_triggers/p1_bundle_chunks/engine_final.py.gz.b64'
+      - 'research_triggers/p1_bundle_chunks/test_final.py.gz.b64'
+      - '.github/workflows/smoke-core-p1-bundle-sync.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-final-bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/smoke-core-1-p1-poi-imbalance
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Reconstruct final P1 files
+        run: |
+          base64 -d research_triggers/p1_bundle_chunks/engine_final.py.gz.b64 | gzip -d > strategy_lab/poi_imbalance_engine_v1.py
+          base64 -d research_triggers/p1_bundle_chunks/test_final.py.gz.b64 | gzip -d > strategy_lab/poi_imbalance_engine_v1_smoke_test.py
+          test "$(git hash-object strategy_lab/poi_imbalance_engine_v1.py)" = "fe90394846c9fab2430b0b27aa48e855a2192453"
+          test "$(git hash-object strategy_lab/poi_imbalance_engine_v1_smoke_test.py)" = "2e6c165607afafc7b876774ab9143c324aac7611"
+      - name: Compile and run final P1 tests before push
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          python -m py_compile strategy_lab/poi_imbalance_engine_v1.py
+          python -m py_compile strategy_lab/poi_imbalance_engine_v1_smoke_test.py
+          python -m strategy_lab.poi_imbalance_engine_v1_smoke_test
+      - name: Commit reconstructed files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add strategy_lab/poi_imbalance_engine_v1.py strategy_lab/poi_imbalance_engine_v1_smoke_test.py
+          if git diff --cached --quiet; then
+            echo "Final P1 files already synchronized"
+          else
+            git commit -m "Synchronize final P1 POI imbalance implementation"
+            git push origin HEAD:agent/smoke-core-1-p1-poi-imbalance
+          fi
