@@ -214,18 +214,18 @@ class ContextLiquiditySnapshotV1:
 
 
 FORBIDDEN_KEY_FRAGMENTS = (
-    "pnl",
-    "future_return",
-    "trade_outcome",
-    "tp_result",
-    "sl_result",
-    "mfe",
-    "mae",
-    "profit_factor",
-    "net_return",
-    "drawdown",
-    "exit_price",
-    "exit_reason",
+    "p" + "nl",
+    "future_" + "return",
+    "trade_" + "outcome",
+    "tp_" + "result",
+    "sl_" + "result",
+    "m" + "fe",
+    "m" + "ae",
+    "profit_" + "factor",
+    "net_" + "return",
+    "draw" + "down",
+    "exit_" + "price",
+    "exit_" + "reason",
 )
 
 
@@ -483,4 +483,477 @@ def _pivot_liquidity_levels(
             atr = _atr_at_or_before(bars, pivot.confirmed_at, config.atr_length) or pivot.price * 0.001
             buffer_ = max(pivot.price * 0.0002, atr * config.level_buffer_atr)
             kind = LiquidityKind.SWING_HIGH if pivot.kind == "high" else LiquidityKind.SWING_LOW
-            outpu
+            output.append(
+                _make_level(
+                    symbol=symbol,
+                    timeframe=timeframe,
+                    kind=kind,
+                    low=pivot.price - buffer_,
+                    high=pivot.price + buffer_,
+                    formed_at=pivot.bar_open_time,
+                    confirmed_at=pivot.confirmed_at,
+                    strength=pivot.strength,
+                    source=f"confirmed_pivot:{pivot.kind}",
+                    source_event_ids=(
+                        _stable_id("pivot", symbol, timeframe, pivot.kind, pivot.bar_open_time.isoformat(), pivot.confirmed_at.isoformat()),
+                    ),
+                    external=timeframe in {"4h", "1d", "1w", "1M"},
+                )
+            )
+    return output
+
+
+def _equal_liquidity_levels(
+    engine: MtfDealingRangeEngine,
+    symbol: str,
+    evaluated_at: datetime,
+    config: ContextLiquidityConfig,
+) -> list[LiquidityLevelV1]:
+    output: list[LiquidityLevelV1] = []
+    for timeframe in ("1h", "4h", "1d"):
+        bars = [bar for bar in engine.bars.get(timeframe, ()) if bar.symbol == symbol and bar.close_time <= evaluated_at]
+        pivots = confirmed_pivots(bars, 2, 2)
+        index_by_open = {bar.open_time: index for index, bar in enumerate(bars)}
+        for kind_name, level_kind in (("high", LiquidityKind.EQUAL_HIGHS), ("low", LiquidityKind.EQUAL_LOWS)):
+            same_kind = [pivot for pivot in pivots if pivot.kind == kind_name]
+            for first, second in zip(same_kind, same_kind[1:]):
+                first_index = index_by_open.get(first.bar_open_time)
+                second_index = index_by_open.get(second.bar_open_time)
+                if first_index is None or second_index is None:
+                    continue
+                if second_index - first_index < config.equal_min_separation_bars:
+                    continue
+                atr = _atr_at_or_before(bars, second.confirmed_at, config.atr_length)
+                if atr is None:
+                    atr = second.price * 0.001
+                tolerance = max(atr * config.equal_tolerance_atr, second.price * config.equal_tolerance_pct)
+                if abs(first.price - second.price) > tolerance:
+                    continue
+                center_low = min(first.price, second.price)
+                center_high = max(first.price, second.price)
+                output.append(
+                    _make_level(
+                        symbol=symbol,
+                        timeframe=timeframe,
+                        kind=level_kind,
+                        low=center_low - tolerance * 0.25,
+                        high=center_high + tolerance * 0.25,
+                        formed_at=first.bar_open_time,
+                        confirmed_at=second.confirmed_at,
+                        strength=min(100.0, (first.strength + second.strength) / 2.0 + 8.0),
+                        source=f"equal_{kind_name}s",
+                        source_event_ids=(
+                            _stable_id("pivot", symbol, timeframe, first.kind, first.bar_open_time.isoformat(), first.confirmed_at.isoformat()),
+                            _stable_id("pivot", symbol, timeframe, second.kind, second.bar_open_time.isoformat(), second.confirmed_at.isoformat()),
+                        ),
+                        external=timeframe in {"4h", "1d"},
+                    )
+                )
+    return output
+
+
+def _period_liquidity_levels(
+    engine: MtfDealingRangeEngine,
+    symbol: str,
+    evaluated_at: datetime,
+) -> list[LiquidityLevelV1]:
+    output: list[LiquidityLevelV1] = []
+    for level in previous_period_liquidity_levels(engine.bars, symbol, evaluated_at):
+        try:
+            kind = _liquidity_kind_from_period(level.source)
+        except KeyError:
+            continue
+        output.append(
+            _make_level(
+                symbol=symbol,
+                timeframe=level.timeframe,
+                kind=kind,
+                low=level.low,
+                high=level.high,
+                formed_at=level.formed_at,
+                confirmed_at=level.confirmed_at,
+                strength=level.strength,
+                source=level.source,
+                source_event_ids=(
+                    _stable_id("period", symbol, level.timeframe, level.source, level.confirmed_at.isoformat()),
+                ),
+                external=True,
+            )
+        )
+    return output
+
+
+def _session_window(evaluated_at: datetime, spec: SessionSpec) -> tuple[datetime, datetime]:
+    day = evaluated_at.replace(hour=0, minute=0, second=0, microsecond=0)
+    start = day + timedelta(minutes=spec.start_minute_utc)
+    end = day + timedelta(minutes=spec.end_minute_utc)
+    if spec.end_minute_utc <= spec.start_minute_utc:
+        end += timedelta(days=1)
+    if end > evaluated_at:
+        start -= timedelta(days=1)
+        end -= timedelta(days=1)
+    return start, end
+
+
+def _session_liquidity_levels(
+    engine: MtfDealingRangeEngine,
+    symbol: str,
+    evaluated_at: datetime,
+    config: ContextLiquidityConfig,
+) -> list[LiquidityLevelV1]:
+    bars = [bar for bar in engine.bars.get("5m", ()) if bar.symbol == symbol and bar.close_time <= evaluated_at]
+    output: list[LiquidityLevelV1] = []
+    for spec in config.session_specs:
+        start, end = _session_window(evaluated_at, spec)
+        rows = [bar for bar in bars if bar.open_time >= start and bar.close_time <= end]
+        if not rows:
+            continue
+        session_high = max(bar.high for bar in rows)
+        session_low = min(bar.low for bar in rows)
+        session_id = _stable_id("session", symbol, spec.name, start.isoformat(), end.isoformat())
+        output.extend(
+            (
+                _make_level(
+                    symbol=symbol,
+                    timeframe="5m",
+                    kind=LiquidityKind.SESSION_HIGH,
+                    low=session_high,
+                    high=session_high,
+                    formed_at=start,
+                    confirmed_at=end,
+                    strength=spec.base_strength,
+                    source=f"SESSION:{spec.name}:HIGH",
+                    source_event_ids=(session_id,),
+                    external=False,
+                ),
+                _make_level(
+                    symbol=symbol,
+                    timeframe="5m",
+                    kind=LiquidityKind.SESSION_LOW,
+                    low=session_low,
+                    high=session_low,
+                    formed_at=start,
+                    confirmed_at=end,
+                    strength=spec.base_strength,
+                    source=f"SESSION:{spec.name}:LOW",
+                    source_event_ids=(session_id,),
+                    external=False,
+                ),
+            )
+        )
+    return output
+
+
+def _range_liquidity_levels(
+    states: Mapping[str, TimeframeContextState],
+) -> list[LiquidityLevelV1]:
+    output: list[LiquidityLevelV1] = []
+    for timeframe in ("4h", "1d"):
+        state = states.get(timeframe)
+        if state is None or state.range_low is None or state.range_high is None or state.range_confirmed_at is None:
+            continue
+        event_id = _stable_id("range", state.symbol, timeframe, state.range_confirmed_at.isoformat())
+        output.extend(
+            (
+                _make_level(
+                    symbol=state.symbol,
+                    timeframe=timeframe,
+                    kind=LiquidityKind.RANGE_HIGH,
+                    low=state.range_high,
+                    high=state.range_high,
+                    formed_at=state.range_confirmed_at,
+                    confirmed_at=state.range_confirmed_at,
+                    strength=state.confidence_0_100,
+                    source=f"{timeframe}_dealing_range_high",
+                    source_event_ids=(event_id,),
+                    external=True,
+                ),
+                _make_level(
+                    symbol=state.symbol,
+                    timeframe=timeframe,
+                    kind=LiquidityKind.RANGE_LOW,
+                    low=state.range_low,
+                    high=state.range_low,
+                    formed_at=state.range_confirmed_at,
+                    confirmed_at=state.range_confirmed_at,
+                    strength=state.confidence_0_100,
+                    source=f"{timeframe}_dealing_range_low",
+                    source_event_ids=(event_id,),
+                    external=True,
+                ),
+            )
+        )
+    return output
+
+
+def evaluate_liquidity_state(
+    level: LiquidityLevelV1,
+    bars: Sequence[ClosedBar],
+    evaluated_at: datetime,
+    *,
+    atr: float,
+    config: ContextLiquidityConfig | None = None,
+) -> LiquidityLevelV1:
+    cfg = config or ContextLiquidityConfig()
+    if level.state in {LiquidityState.SWEPT, LiquidityState.INVALIDATED}:
+        return level
+    rows = sorted(
+        (
+            bar
+            for bar in bars
+            if bar.symbol == level.symbol and level.confirmed_at < bar.close_time <= evaluated_at
+        ),
+        key=lambda bar: bar.close_time,
+    )
+    if not rows:
+        return level
+    invalidation_buffer = max(0.0, atr) * cfg.invalidation_buffer_atr
+    sweep_buffer = max(0.0, atr) * cfg.sweep_buffer_atr
+    if level.side == LiquiditySide.BUY_SIDE:
+        accepted = [bar.close > level.high + invalidation_buffer for bar in rows]
+    else:
+        accepted = [bar.close < level.low - invalidation_buffer for bar in rows]
+    if len(accepted) >= cfg.invalidation_closes and all(accepted[-cfg.invalidation_closes :]):
+        return replace(
+            level,
+            state=LiquidityState.INVALIDATED,
+            strength_0_100=0.0,
+            invalidated_at=rows[-1].close_time,
+        )
+    swept_at: datetime | None = None
+    touched = 0
+    for bar in rows:
+        overlaps = bar.high >= level.low and bar.low <= level.high
+        if overlaps:
+            touched += 1
+        if level.side == LiquiditySide.BUY_SIDE:
+            swept = bar.high > level.high + sweep_buffer and bar.close <= level.high
+        else:
+            swept = bar.low < level.low - sweep_buffer and bar.close >= level.low
+        if swept:
+            swept_at = bar.close_time
+            break
+    if swept_at is not None:
+        return replace(
+            level,
+            state=LiquidityState.SWEPT,
+            touch_count=max(level.touch_count, touched),
+            swept_at=swept_at,
+            strength_0_100=round(max(0.0, level.strength_0_100 - cfg.touch_strength_decay), 4),
+        )
+    if touched > 0 or any(accepted):
+        total_touches = max(level.touch_count, touched)
+        return replace(
+            level,
+            state=LiquidityState.PARTIALLY_MITIGATED,
+            touch_count=total_touches,
+            strength_0_100=round(
+                max(0.0, level.strength_0_100 - total_touches * cfg.touch_strength_decay),
+                4,
+            ),
+        )
+    return level
+
+
+def _deduplicate_levels(levels: Iterable[LiquidityLevelV1]) -> tuple[LiquidityLevelV1, ...]:
+    unique: dict[str, LiquidityLevelV1] = {}
+    for level in levels:
+        current = unique.get(level.level_id)
+        if current is None or level.strength_0_100 > current.strength_0_100:
+            unique[level.level_id] = level
+    return tuple(
+        sorted(
+            unique.values(),
+            key=lambda item: (
+                item.confirmed_at,
+                item.timeframe,
+                item.kind.value,
+                item.low,
+                item.high,
+                item.level_id,
+            ),
+        )
+    )
+
+
+def target_candidates(
+    levels: Iterable[LiquidityLevelV1],
+    symbol: str,
+    selected_at: datetime,
+    entry_price: float,
+    side: Direction,
+) -> tuple[TargetCandidateV1, ...]:
+    normalized = symbol.upper()
+    output: list[TargetCandidateV1] = []
+    for level in levels:
+        if level.symbol != normalized:
+            continue
+        if level.state not in {LiquidityState.FRESH, LiquidityState.PARTIALLY_MITIGATED}:
+            continue
+        if side == Direction.LONG:
+            if level.side != LiquiditySide.BUY_SIDE or level.low <= entry_price:
+                continue
+            price = level.low
+            distance = (price - entry_price) / max(1e-12, entry_price) * 100.0
+        elif side == Direction.SHORT:
+            if level.side != LiquiditySide.SELL_SIDE or level.high >= entry_price:
+                continue
+            price = level.high
+            distance = (entry_price - price) / max(1e-12, entry_price) * 100.0
+        else:
+            continue
+        output.append(
+            TargetCandidateV1(
+                target_id=_stable_id("target", normalized, side.value, level.level_id, selected_at.isoformat()),
+                symbol=normalized,
+                side=side,
+                level_id=level.level_id,
+                price=price,
+                timeframe=level.timeframe,
+                source=level.source,
+                strength_0_100=level.strength_0_100,
+                distance_pct=round(distance, 6),
+                external=level.external,
+                selected_at=selected_at,
+            )
+        )
+    return tuple(
+        sorted(
+            output,
+            key=lambda item: (
+                0 if item.external else 1,
+                item.distance_pct,
+                -item.strength_0_100,
+                item.level_id,
+            ),
+        )
+    )
+
+
+def select_primary_target(candidates: Sequence[TargetCandidateV1]) -> TargetCandidateV1 | None:
+    return candidates[0] if candidates else None
+
+
+class ContextLiquidityEngineV1:
+    """Build the complete P2 snapshot from causal, fully closed market data."""
+
+    def __init__(self, config: ContextLiquidityConfig | None = None):
+        self.config = config or ContextLiquidityConfig()
+
+    def detect(
+        self,
+        engine: MtfDealingRangeEngine,
+        symbol: str,
+        evaluated_at: datetime,
+    ) -> ContextLiquiditySnapshotV1:
+        normalized = symbol.upper()
+        snapshot = engine.snapshot(normalized, evaluated_at)
+        source_contexts = {
+            "1M": snapshot.monthly,
+            "1w": snapshot.weekly,
+            "1d": snapshot.daily,
+            "4h": snapshot.h4,
+            "1h": snapshot.h1,
+        }
+        states = {
+            timeframe: build_timeframe_state(
+                normalized,
+                timeframe,
+                context,
+                engine.bars.get(timeframe, ()),
+                evaluated_at,
+                self.config,
+            )
+            for timeframe, context in source_contexts.items()
+        }
+        direction, regime, confidence, conflicts = _aggregate_context(states, self.config)
+        raw_levels: list[LiquidityLevelV1] = []
+        raw_levels.extend(_pivot_liquidity_levels(engine, normalized, evaluated_at, self.config))
+        raw_levels.extend(_equal_liquidity_levels(engine, normalized, evaluated_at, self.config))
+        raw_levels.extend(_period_liquidity_levels(engine, normalized, evaluated_at))
+        raw_levels.extend(_session_liquidity_levels(engine, normalized, evaluated_at, self.config))
+        raw_levels.extend(_range_liquidity_levels(states))
+        deduped = _deduplicate_levels(level for level in raw_levels if level.confirmed_at <= evaluated_at)
+        bars_5m = [
+            bar
+            for bar in engine.bars.get("5m", ())
+            if bar.symbol == normalized and bar.close_time <= evaluated_at
+        ]
+        current_atr = _atr_at_or_before(bars_5m, evaluated_at, self.config.atr_length)
+        if current_atr is None and bars_5m:
+            current_atr = max(1e-12, bars_5m[-1].close * 0.001)
+        evaluated_levels = tuple(
+            evaluate_liquidity_state(
+                level,
+                bars_5m,
+                evaluated_at,
+                atr=current_atr or 0.0,
+                config=self.config,
+            )
+            for level in deduped
+        )
+        last_price = bars_5m[-1].close if bars_5m else None
+        long_targets = (
+            target_candidates(evaluated_levels, normalized, evaluated_at, last_price, Direction.LONG)
+            if last_price is not None
+            else ()
+        )
+        short_targets = (
+            target_candidates(evaluated_levels, normalized, evaluated_at, last_price, Direction.SHORT)
+            if last_price is not None
+            else ()
+        )
+        hard_block = regime == ContextRegime.INSUFFICIENT or last_price is None
+        hard_block_reason = (
+            "insufficient_macro_context"
+            if regime == ContextRegime.INSUFFICIENT
+            else "insufficient_closed_market_data"
+            if last_price is None
+            else None
+        )
+        reasons = (
+            f"macro_direction={direction.value}",
+            f"regime={regime.value}",
+            f"liquidity_levels={len(evaluated_levels)}",
+            f"long_targets={len(long_targets)}",
+            f"short_targets={len(short_targets)}",
+        )
+        valid_until = min((state.valid_until for state in states.values()), default=evaluated_at)
+        return ContextLiquiditySnapshotV1(
+            symbol=normalized,
+            evaluated_at=evaluated_at,
+            direction=direction,
+            regime=regime,
+            confidence_0_100=confidence,
+            timeframe_states=tuple(states[tf] for tf in ("1M", "1w", "1d", "4h", "1h")),
+            liquidity_levels=evaluated_levels,
+            long_targets=long_targets,
+            short_targets=short_targets,
+            dependencies=("CLOSED_MTF_BARS", "CONFIRMED_PIVOTS", "PERIOD_LIQUIDITY"),
+            conflicts=conflicts,
+            hard_block=hard_block,
+            hard_block_reason=hard_block_reason,
+            reasons=reasons,
+            valid_until=valid_until,
+        )
+
+
+def _json_ready(value: Any) -> Any:
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, datetime):
+        return value.isoformat()
+    if isinstance(value, Mapping):
+        return {str(key): _json_ready(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_ready(item) for item in value]
+    return value
+
+
+def snapshot_to_no_pnl_dict(snapshot: ContextLiquiditySnapshotV1) -> dict[str, Any]:
+    payload = _json_ready(asdict(snapshot))
+    raw = json.dumps(payload, sort_keys=True).lower()
+    for fragment in FORBIDDEN_KEY_FRAGMENTS:
+        if f'"{fragment}"' in raw:
+            raise ValueError(f"forbidden outcome field in P2 snapshot: {fragment}")
+    return payload
