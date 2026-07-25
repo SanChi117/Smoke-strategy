@@ -37,7 +37,25 @@ jobs:
           python -m py_compile strategy_lab/context_liquidity_engine_v1_smoke_test.py
           python -m py_compile strategy_lab/poi_imbalance_engine_v1.py
       - name: P2 semantic tests
-        run: python -m unittest strategy_lab.context_liquidity_engine_v1_smoke_test -v
+        id: p2_tests
+        shell: bash
+        run: |
+          set +e
+          python -m unittest strategy_lab.context_liquidity_engine_v1_smoke_test -v > p2-semantic-test-output.txt 2>&1
+          status=$?
+          cat p2-semantic-test-output.txt
+          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Upload P2 semantic diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p2-semantic-test-diagnostics
+          path: p2-semantic-test-output.txt
+          if-no-files-found: error
+      - name: Enforce P2 semantic result
+        if: steps.p2_tests.outputs.exit_code != '0'
+        run: exit 1
       - name: P1 regression tests
         run: python -m unittest strategy_lab.poi_imbalance_engine_v1_smoke_test -v
       - name: Reused causal primitive tests
