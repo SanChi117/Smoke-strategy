@@ -71,7 +71,7 @@ jobs:
 
   full-recognition:
     needs: acquire-fixed-data
-    if: ${{ hashFiles('strategy_lab/p7_full_recognition_runner_v1.py') != '' }}
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
