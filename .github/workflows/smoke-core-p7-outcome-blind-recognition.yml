@@ -7,6 +7,7 @@ on:
     paths:
       - 'strategy_lab/outcome_blind_recognition_v1.py'
       - 'strategy_lab/outcome_blind_recognition_v1_smoke_test.py'
+      - 'strategy_lab/outcome_blind_pilot_v1.py'
       - 'research/SMOKE_CORE_P7_OUTCOME_BLIND_RECOGNITION_PREREG_V1.md'
       - '.github/workflows/smoke-core-p7-outcome-blind-recognition.yml'
   pull_request:
@@ -36,7 +37,8 @@ jobs:
             strategy_lab/execution_structure_v1.py \
             strategy_lab/economics_risk_portfolio_v1.py \
             strategy_lab/scenario_fusion_v1.py \
-            strategy_lab/outcome_blind_recognition_v1.py
+            strategy_lab/outcome_blind_recognition_v1.py \
+            strategy_lab/outcome_blind_pilot_v1.py
       - name: Causal primitive - dealing range
         run: python -u strategy_lab/mtf_dealing_range_v2_smoke_test.py
       - name: Causal primitive - prior period liquidity
@@ -62,6 +64,7 @@ jobs:
         run: |
           set -euo pipefail
           test -s research/SMOKE_CORE_P7_OUTCOME_BLIND_RECOGNITION_PREREG_V1.md
+          grep -q 'SMOKE_CORE_P7_PILOT_FIXED_V1' research/SMOKE_CORE_P7_OUTCOME_BLIND_RECOGNITION_PREREG_V1.md
           grep -q 'at least 60 independent' research/SMOKE_CORE_P7_OUTCOME_BLIND_RECOGNITION_PREREG_V1.md
           grep -q 'exactly 10 chronological folds' research/SMOKE_CORE_P7_OUTCOME_BLIND_RECOGNITION_PREREG_V1.md
           grep -q 'BTCUSDT' research/SMOKE_CORE_P7_OUTCOME_BLIND_RECOGNITION_PREREG_V1.md
@@ -74,3 +77,11 @@ jobs:
               names = [f.name.lower() for f in fields(cls)]
               assert not any(any(x in name for x in forbidden) for name in names), (cls.__name__, names)
           PY
+      - name: Fixed outcome-blind no-PnL pilot
+        run: python -u strategy_lab/outcome_blind_pilot_v1.py
+      - name: Upload P7 pilot diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: p7-outcome-blind-pilot-v1
+          path: research_outputs/p7_outcome_blind_pilot_v1.json
+          if-no-files-found: error
