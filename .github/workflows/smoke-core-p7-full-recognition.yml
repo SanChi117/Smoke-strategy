@@ -8,6 +8,8 @@ on:
       - 'research/SMOKE_CORE_P7_FULL_RECOGNITION_PREREG_V1.md'
       - 'strategy_lab/p7_binance_vision_acquisition_v1.py'
       - 'strategy_lab/p7_full_recognition_runner_v1.py'
+      - 'strategy_lab/p7_full_recognition_entrypoint_v1.py'
+      - 'strategy_lab/p7_full_recognition_runner_v1_smoke_test.py'
       - '.github/workflows/smoke-core-p7-full-recognition.yml'
   workflow_dispatch:
 
@@ -34,8 +36,15 @@ jobs:
           grep -q 'Exactly 30 archives' research/SMOKE_CORE_P7_FULL_RECOGNITION_PREREG_V1.md
           grep -q 'exactly 10 contiguous chronological folds' research/SMOKE_CORE_P7_FULL_RECOGNITION_PREREG_V1.md
           grep -q 'at least 60 independent' research/SMOKE_CORE_P7_FULL_RECOGNITION_PREREG_V1.md
-      - name: Compile acquisition
-        run: python -m py_compile strategy_lab/p7_binance_vision_acquisition_v1.py
+      - name: Compile acquisition and exact runner
+        run: |
+          python -m py_compile \
+            strategy_lab/p7_binance_vision_acquisition_v1.py \
+            strategy_lab/p7_full_recognition_runner_v1.py \
+            strategy_lab/p7_full_recognition_entrypoint_v1.py \
+            strategy_lab/p7_full_recognition_runner_v1_smoke_test.py
+      - name: Focused full-recognition semantic tests
+        run: python -u strategy_lab/p7_full_recognition_runner_v1_smoke_test.py
       - name: Acquire exact Binance Vision archives
         run: python -u strategy_lab/p7_binance_vision_acquisition_v1.py
       - name: Verify acquisition manifest
@@ -57,6 +66,8 @@ jobs:
               assert row['row_count'] > 50000, (symbol, row)
               assert len(row['sha256']) == 64
               assert (root / row['filename']).is_file()
+              assert row['first_open_time'].startswith('2024-01-01T00:00:00')
+              assert row['last_open_time'].startswith('2024-06-30T23:55:00')
           forbidden = ('pnl','profit_factor','future_return','trade_outcome','mfe','mae','drawdown','equity','target_hit','stop_hit')
           raw = json.dumps(manifest, sort_keys=True).lower()
           assert not any(f'"{key}"' in raw for key in forbidden)
@@ -71,7 +82,6 @@ jobs:
 
   full-recognition:
     needs: acquire-fixed-data
-    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -96,9 +106,25 @@ jobs:
             strategy_lab/economics_risk_portfolio_v1.py \
             strategy_lab/scenario_fusion_v1.py \
             strategy_lab/outcome_blind_recognition_v1.py \
-            strategy_lab/p7_full_recognition_runner_v1.py
-      - name: Execute exact full partitioned recognition
-        run: python -u strategy_lab/p7_full_recognition_runner_v1.py
+            strategy_lab/p7_full_recognition_runner_v1.py \
+            strategy_lab/p7_full_recognition_entrypoint_v1.py
+      - name: Execute exact full partitioned recognition once
+        run: python -u strategy_lab/p7_full_recognition_entrypoint_v1.py
+      - name: Verify no-outcome recognition report
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('research_outputs/p7_full_recognition_report_v1.json')
+          report = json.loads(path.read_text())
+          assert report['recognition_id'] == 'SMOKE_CORE_P7_FULL_RECOGNITION_FIXED_V1'
+          assert report['fold_count'] == 10
+          forbidden = ('pnl','profit_factor','future_return','trade_outcome','mfe','mae','drawdown','equity','target_hit','stop_hit')
+          raw = json.dumps(report, sort_keys=True).lower()
+          assert not any(f'"{key}"' in raw for key in forbidden)
+          PY
       - name: Upload recognition report
         uses: actions/upload-artifact@v4
         with:
