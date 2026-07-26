@@ -25,6 +25,18 @@ The pilot uses a small, fixed chronological subset selected before any recogniti
 - no forbidden outcome fields;
 - operational strictness diagnostics without market outcomes.
 
+### Frozen pilot fixture
+
+- Pilot ID: `SMOKE_CORE_P7_PILOT_FIXED_V1`.
+- Source file: `strategy_lab/outcome_blind_pilot_v1.py`.
+- Chronological evaluation interval: `2026-01-05T00:00:00+00:00` through `2026-01-06T09:00:00+00:00`.
+- Exactly 12 deterministic causal P6 observations are constructed before execution.
+- The fixture spans all three frozen scenario families, all five recognition symbols, both directions, ENTRY_READY and non-entry lifecycle states, economics/risk cancellations, expiry and causal invalidation.
+- Every case has a unique frozen P6 fingerprint and complete POI/liquidity/interaction/anchor/structure evidence provenance.
+- Hard blocks are limited to preregistered prefixes `causal:`, `data:`, `economics:` and `risk:`.
+- The fixture contains no price outcomes, future returns, target/stop results, PnL, MFE, MAE, drawdown or equity fields.
+- Pilot counts are diagnostics only and cannot change any threshold, weight, lifecycle, provenance, fingerprint or rearm rule.
+
 Pilot PASS requires:
 
 1. zero future/outcome-field access;
