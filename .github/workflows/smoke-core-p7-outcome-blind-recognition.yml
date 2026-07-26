@@ -39,9 +39,9 @@ jobs:
             strategy_lab/outcome_blind_recognition_v1.py
       - name: Reused causal primitive tests
         run: |
-          python -m unittest -v \
-            strategy_lab.mtf_dealing_range_v2_smoke_test \
-            strategy_lab.period_liquidity_levels_smoke_test
+          set -euo pipefail
+          python strategy_lab/mtf_dealing_range_v2_smoke_test.py
+          python strategy_lab/period_liquidity_levels_smoke_test.py
       - name: P7 outcome-blind semantic tests
         run: python strategy_lab/outcome_blind_recognition_v1_smoke_test.py
       - name: P6 regression tests
