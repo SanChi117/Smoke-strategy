@@ -132,3 +132,5 @@ jobs:
           path: research_outputs/p7_full_recognition_report_v1.json
           if-no-files-found: error
           retention-days: 90
+
+# Technical retrigger: exact preregistered full-recognition run; no semantic changes.
