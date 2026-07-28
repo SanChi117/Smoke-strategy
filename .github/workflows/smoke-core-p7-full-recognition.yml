@@ -54,7 +54,19 @@ jobs:
             strategy_lab/p7_full_recognition_entrypoint_v1.py \
             strategy_lab/p7_full_recognition_runner_v1_smoke_test.py
       - name: Focused full-recognition semantic tests
-        run: python -u strategy_lab/p7_full_recognition_runner_v1_smoke_test.py
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p research_outputs
+          python -u strategy_lab/p7_full_recognition_runner_v1_smoke_test.py 2>&1 | tee research_outputs/p7_full_recognition_smoke_test.log
+      - name: Upload focused-test diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p7-full-recognition-smoke-diagnostics
+          path: research_outputs/p7_full_recognition_smoke_test.log
+          if-no-files-found: error
+          retention-days: 30
       - name: Acquire exact Binance Vision archives
         run: python -u strategy_lab/p7_binance_vision_acquisition_v1.py
       - name: Verify acquisition manifest
@@ -143,4 +155,4 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-# Technical trigger repair: run the exact frozen recognition on PR synchronization too.
+# Technical trigger repair and failure diagnostics only; frozen recognition semantics are unchanged.
