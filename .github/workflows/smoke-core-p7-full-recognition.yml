@@ -11,6 +11,16 @@ on:
       - 'strategy_lab/p7_full_recognition_entrypoint_v1.py'
       - 'strategy_lab/p7_full_recognition_runner_v1_smoke_test.py'
       - '.github/workflows/smoke-core-p7-full-recognition.yml'
+  pull_request:
+    branches:
+      - agent/smoke-core-1-p6-scenario-fusion
+    paths:
+      - 'research/SMOKE_CORE_P7_FULL_RECOGNITION_PREREG_V1.md'
+      - 'strategy_lab/p7_binance_vision_acquisition_v1.py'
+      - 'strategy_lab/p7_full_recognition_runner_v1.py'
+      - 'strategy_lab/p7_full_recognition_entrypoint_v1.py'
+      - 'strategy_lab/p7_full_recognition_runner_v1_smoke_test.py'
+      - '.github/workflows/smoke-core-p7-full-recognition.yml'
   workflow_dispatch:
 
 permissions:
@@ -133,4 +143,4 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-# Technical retrigger: exact preregistered full-recognition run; no semantic changes.
+# Technical trigger repair: run the exact frozen recognition on PR synchronization too.
