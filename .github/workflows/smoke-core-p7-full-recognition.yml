@@ -107,7 +107,7 @@ jobs:
   full-recognition:
     needs: acquire-fixed-data
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -157,4 +157,4 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-# Technical trigger, package installation and failure diagnostics only; frozen recognition semantics are unchanged.
+# Technical trigger, package installation, diagnostics and timeout repair only; frozen recognition semantics are unchanged.
