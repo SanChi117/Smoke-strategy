@@ -103,7 +103,7 @@ jobs:
   scan-symbol:
     needs: acquire-fixed-data
     runs-on: ubuntu-latest
-    timeout-minutes: 300
+    timeout-minutes: 360
     strategy:
       fail-fast: false
       matrix:
@@ -181,6 +181,6 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-# Technical execution partitioning only. Frozen period, source, symbols, folds,
+# Technical timeout correction only. Frozen period, source, symbols, folds,
 # semantics, weights, thresholds, lifecycle, fingerprint, rearm and no-outcome
 # scope remain unchanged; final accounting still uses one global de-duplication.
