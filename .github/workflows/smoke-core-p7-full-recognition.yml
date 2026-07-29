@@ -10,6 +10,8 @@ on:
       - 'strategy_lab/p7_full_recognition_runner_v1.py'
       - 'strategy_lab/p7_full_recognition_entrypoint_v1.py'
       - 'strategy_lab/p7_full_recognition_runner_v1_smoke_test.py'
+      - 'strategy_lab/p7_partitioned_recognition_v1.py'
+      - 'strategy_lab/p7_partitioned_recognition_v1_smoke_test.py'
       - '.github/workflows/smoke-core-p7-full-recognition.yml'
   pull_request:
     branches:
@@ -20,6 +22,8 @@ on:
       - 'strategy_lab/p7_full_recognition_runner_v1.py'
       - 'strategy_lab/p7_full_recognition_entrypoint_v1.py'
       - 'strategy_lab/p7_full_recognition_runner_v1_smoke_test.py'
+      - 'strategy_lab/p7_partitioned_recognition_v1.py'
+      - 'strategy_lab/p7_partitioned_recognition_v1_smoke_test.py'
       - '.github/workflows/smoke-core-p7-full-recognition.yml'
   workflow_dispatch:
 
@@ -48,27 +52,19 @@ jobs:
           grep -q 'Exactly 30 archives' research/SMOKE_CORE_P7_FULL_RECOGNITION_PREREG_V1.md
           grep -q 'exactly 10 contiguous chronological folds' research/SMOKE_CORE_P7_FULL_RECOGNITION_PREREG_V1.md
           grep -q 'at least 60 independent' research/SMOKE_CORE_P7_FULL_RECOGNITION_PREREG_V1.md
-      - name: Compile acquisition and exact runner
+      - name: Compile acquisition and exact runners
         run: |
           python -m py_compile \
             strategy_lab/p7_binance_vision_acquisition_v1.py \
             strategy_lab/p7_full_recognition_runner_v1.py \
             strategy_lab/p7_full_recognition_entrypoint_v1.py \
-            strategy_lab/p7_full_recognition_runner_v1_smoke_test.py
+            strategy_lab/p7_full_recognition_runner_v1_smoke_test.py \
+            strategy_lab/p7_partitioned_recognition_v1.py \
+            strategy_lab/p7_partitioned_recognition_v1_smoke_test.py
       - name: Focused full-recognition semantic tests
-        shell: bash
         run: |
-          set -o pipefail
-          mkdir -p research_outputs
-          python -u strategy_lab/p7_full_recognition_runner_v1_smoke_test.py 2>&1 | tee research_outputs/p7_full_recognition_smoke_test.log
-      - name: Upload focused-test diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: p7-full-recognition-smoke-diagnostics
-          path: research_outputs/p7_full_recognition_smoke_test.log
-          if-no-files-found: error
-          retention-days: 30
+          python -u strategy_lab/p7_full_recognition_runner_v1_smoke_test.py
+          python -u strategy_lab/p7_partitioned_recognition_v1_smoke_test.py
       - name: Acquire exact Binance Vision archives
         run: python -u strategy_lab/p7_binance_vision_acquisition_v1.py
       - name: Verify acquisition manifest
@@ -104,10 +100,14 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-  full-recognition:
+  scan-symbol:
     needs: acquire-fixed-data
     runs-on: ubuntu-latest
     timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -120,21 +120,41 @@ jobs:
         with:
           name: p7-full-recognition-data-v1
           path: research_outputs/p7_full_recognition_data_v1
-      - name: Compile P1 through P7 full runner
+      - name: Execute exact symbol partition
         run: |
-          python -m py_compile \
-            strategy_lab/poi_imbalance_engine_v1.py \
-            strategy_lab/context_liquidity_engine_v1.py \
-            strategy_lab/interaction_engine_v1.py \
-            strategy_lab/execution_structure_v1.py \
-            strategy_lab/economics_risk_portfolio_v1.py \
-            strategy_lab/scenario_fusion_v1.py \
-            strategy_lab/outcome_blind_recognition_v1.py \
-            strategy_lab/p7_full_recognition_runner_v1.py \
-            strategy_lab/p7_full_recognition_entrypoint_v1.py
-      - name: Execute exact full partitioned recognition once
-        run: python -u strategy_lab/p7_full_recognition_entrypoint_v1.py
-      - name: Verify no-outcome recognition report
+          python -u strategy_lab/p7_partitioned_recognition_v1.py scan \
+            --symbol '${{ matrix.symbol }}' \
+            --output 'research_outputs/p7_partitions/p7_partition_${{ matrix.symbol }}.json'
+      - name: Upload outcome-blind symbol partition
+        uses: actions/upload-artifact@v4
+        with:
+          name: p7-full-recognition-partition-${{ matrix.symbol }}
+          path: research_outputs/p7_partitions/p7_partition_${{ matrix.symbol }}.json
+          if-no-files-found: error
+          retention-days: 90
+
+  aggregate-recognition:
+    needs: scan-symbol
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install package
+        run: python -m pip install -e .
+      - name: Download all symbol partitions
+        uses: actions/download-artifact@v4
+        with:
+          pattern: p7-full-recognition-partition-*
+          path: research_outputs/p7_partitions
+      - name: Aggregate once with global fingerprint de-duplication
+        run: |
+          python -u strategy_lab/p7_partitioned_recognition_v1.py aggregate \
+            --input-dir research_outputs/p7_partitions \
+            --output research_outputs/p7_full_recognition_report_v1.json
+      - name: Verify exact no-outcome recognition report
         shell: bash
         run: |
           set -euo pipefail
@@ -145,6 +165,10 @@ jobs:
           report = json.loads(path.read_text())
           assert report['recognition_id'] == 'SMOKE_CORE_P7_FULL_RECOGNITION_FIXED_V1'
           assert report['fold_count'] == 10
+          assert report['execution_topology'] == 'FIVE_SYMBOL_PARTITIONS_THEN_GLOBAL_DEDUPE_V1'
+          assert set(report['recognition']['by_symbol']) == {'BTCUSDT','ETHUSDT','SOLUSDT','LINKUSDT','AAVEUSDT'}
+          assert set(report['recognition']['by_direction']) == {'LONG','SHORT'}
+          assert set(map(int, report['recognition']['by_fold'])) == set(range(10))
           forbidden = ('pnl','profit_factor','future_return','trade_outcome','mfe','mae','drawdown','equity','target_hit','stop_hit')
           raw = json.dumps(report, sort_keys=True).lower()
           assert not any(f'"{key}"' in raw for key in forbidden)
@@ -157,4 +181,6 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-# Technical trigger, package installation, diagnostics and timeout repair only; frozen recognition semantics are unchanged.
+# Technical execution partitioning only. Frozen period, source, symbols, folds,
+# semantics, weights, thresholds, lifecycle, fingerprint, rearm and no-outcome
+# scope remain unchanged; final accounting still uses one global de-duplication.
