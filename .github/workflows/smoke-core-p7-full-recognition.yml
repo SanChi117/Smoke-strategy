@@ -1,20 +1,6 @@
 name: SMOKE CORE P7 Full Recognition
 
 on:
-  push:
-    branches:
-      - agent/smoke-core-1-p7-outcome-blind-recognition
-    paths:
-      - 'research/SMOKE_CORE_P7_FULL_RECOGNITION_PREREG_V1.md'
-      - 'strategy_lab/p7_binance_vision_acquisition_v1.py'
-      - 'strategy_lab/p7_full_recognition_runner_v1.py'
-      - 'strategy_lab/p7_full_recognition_entrypoint_v1.py'
-      - 'strategy_lab/p7_full_recognition_runner_v1_smoke_test.py'
-      - 'strategy_lab/p7_partitioned_recognition_v1.py'
-      - 'strategy_lab/p7_partitioned_recognition_v1_smoke_test.py'
-      - 'strategy_lab/p7_symbol_partitioned_recognition_v1.py'
-      - 'strategy_lab/p7_symbol_partitioned_recognition_v1_smoke_test.py'
-      - '.github/workflows/smoke-core-p7-full-recognition.yml'
   pull_request:
     branches:
       - agent/smoke-core-1-p6-scenario-fusion
@@ -31,11 +17,40 @@ on:
       - '.github/workflows/smoke-core-p7-full-recognition.yml'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
+  actions: write
 
 jobs:
+  cleanup-stale-runs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Cancel superseded runs of this workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          workflow_file='smoke-core-p7-full-recognition.yml'
+          for status in queued in_progress; do
+            gh api --paginate \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_file}/runs?status=${status}&per_page=100" \
+              --jq '.workflow_runs[].id' | while read -r run_id; do
+                if [[ -n "${run_id}" && "${run_id}" != "${GITHUB_RUN_ID}" ]]; then
+                  echo "Cancelling superseded P7 full-recognition run ${run_id}"
+                  gh api --method POST \
+                    "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/cancel" || true
+                fi
+              done
+          done
+
   acquire-fixed-data:
+    needs: cleanup-stale-runs
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
