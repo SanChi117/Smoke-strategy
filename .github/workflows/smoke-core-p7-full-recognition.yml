@@ -12,6 +12,8 @@ on:
       - 'strategy_lab/p7_full_recognition_runner_v1_smoke_test.py'
       - 'strategy_lab/p7_partitioned_recognition_v1.py'
       - 'strategy_lab/p7_partitioned_recognition_v1_smoke_test.py'
+      - 'strategy_lab/p7_symbol_partitioned_recognition_v1.py'
+      - 'strategy_lab/p7_symbol_partitioned_recognition_v1_smoke_test.py'
       - '.github/workflows/smoke-core-p7-full-recognition.yml'
   pull_request:
     branches:
@@ -24,6 +26,8 @@ on:
       - 'strategy_lab/p7_full_recognition_runner_v1_smoke_test.py'
       - 'strategy_lab/p7_partitioned_recognition_v1.py'
       - 'strategy_lab/p7_partitioned_recognition_v1_smoke_test.py'
+      - 'strategy_lab/p7_symbol_partitioned_recognition_v1.py'
+      - 'strategy_lab/p7_symbol_partitioned_recognition_v1_smoke_test.py'
       - '.github/workflows/smoke-core-p7-full-recognition.yml'
   workflow_dispatch:
 
@@ -60,11 +64,14 @@ jobs:
             strategy_lab/p7_full_recognition_entrypoint_v1.py \
             strategy_lab/p7_full_recognition_runner_v1_smoke_test.py \
             strategy_lab/p7_partitioned_recognition_v1.py \
-            strategy_lab/p7_partitioned_recognition_v1_smoke_test.py
+            strategy_lab/p7_partitioned_recognition_v1_smoke_test.py \
+            strategy_lab/p7_symbol_partitioned_recognition_v1.py \
+            strategy_lab/p7_symbol_partitioned_recognition_v1_smoke_test.py
       - name: Focused full-recognition semantic tests
         run: |
           python -u strategy_lab/p7_full_recognition_runner_v1_smoke_test.py
           python -u strategy_lab/p7_partitioned_recognition_v1_smoke_test.py
+          python -u strategy_lab/p7_symbol_partitioned_recognition_v1_smoke_test.py
       - name: Acquire exact Binance Vision archives
         run: python -u strategy_lab/p7_binance_vision_acquisition_v1.py
       - name: Verify acquisition manifest
@@ -100,15 +107,15 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-  scan-symbol-fold:
+  scan-symbol:
     needs: acquire-fixed-data
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 360
     strategy:
       fail-fast: false
+      max-parallel: 5
       matrix:
         symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
-        fold: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -121,22 +128,21 @@ jobs:
         with:
           name: p7-full-recognition-data-v1
           path: research_outputs/p7_full_recognition_data_v1
-      - name: Execute exact symbol-fold partition
+      - name: Execute exact complete-symbol scan with internal ten-fold accounting
         run: |
-          python -u strategy_lab/p7_partitioned_recognition_v1.py scan \
+          python -u strategy_lab/p7_symbol_partitioned_recognition_v1.py scan \
             --symbol '${{ matrix.symbol }}' \
-            --fold '${{ matrix.fold }}' \
-            --output 'research_outputs/p7_partitions/p7_partition_${{ matrix.symbol }}_fold${{ matrix.fold }}.json'
-      - name: Upload outcome-blind symbol-fold partition
+            --output 'research_outputs/p7_symbol_partitions/p7_symbol_${{ matrix.symbol }}.json'
+      - name: Upload outcome-blind symbol partition
         uses: actions/upload-artifact@v4
         with:
-          name: p7-full-recognition-partition-${{ matrix.symbol }}-fold${{ matrix.fold }}
-          path: research_outputs/p7_partitions/p7_partition_${{ matrix.symbol }}_fold${{ matrix.fold }}.json
+          name: p7-full-recognition-symbol-${{ matrix.symbol }}
+          path: research_outputs/p7_symbol_partitions/p7_symbol_${{ matrix.symbol }}.json
           if-no-files-found: error
           retention-days: 90
 
   aggregate-recognition:
-    needs: scan-symbol-fold
+    needs: scan-symbol
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -146,15 +152,15 @@ jobs:
           python-version: '3.12'
       - name: Install package
         run: python -m pip install -e .
-      - name: Download all symbol-fold partitions
+      - name: Download all complete-symbol partitions
         uses: actions/download-artifact@v4
         with:
-          pattern: p7-full-recognition-partition-*
-          path: research_outputs/p7_partitions
+          pattern: p7-full-recognition-symbol-*
+          path: research_outputs/p7_symbol_partitions
       - name: Aggregate once with global fingerprint de-duplication
         run: |
-          python -u strategy_lab/p7_partitioned_recognition_v1.py aggregate \
-            --input-dir research_outputs/p7_partitions \
+          python -u strategy_lab/p7_symbol_partitioned_recognition_v1.py aggregate \
+            --input-dir research_outputs/p7_symbol_partitions \
             --output research_outputs/p7_full_recognition_report_v1.json
       - name: Verify exact no-outcome recognition report
         shell: bash
@@ -167,7 +173,7 @@ jobs:
           report = json.loads(path.read_text())
           assert report['recognition_id'] == 'SMOKE_CORE_P7_FULL_RECOGNITION_FIXED_V1'
           assert report['fold_count'] == 10
-          assert report['execution_topology'] == 'FIFTY_SYMBOL_FOLD_PARTITIONS_THEN_GLOBAL_DEDUPE_V1'
+          assert report['execution_topology'] == 'FIVE_SYMBOL_PARTITIONS_WITH_INTERNAL_TEN_FOLD_ACCOUNTING_THEN_GLOBAL_DEDUPE_V1'
           assert set(report['recognition']['by_symbol']) == {'BTCUSDT','ETHUSDT','SOLUSDT','LINKUSDT','AAVEUSDT'}
           assert set(report['recognition']['by_direction']) == {'LONG','SHORT'}
           assert set(map(int, report['recognition']['by_fold'])) == set(range(10))
@@ -183,6 +189,7 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-# Technical execution partitioning only. Frozen period, source, symbols, folds,
-# semantics, weights, thresholds, lifecycle, fingerprint, rearm and no-outcome
-# scope remain unchanged; final accounting still uses one global de-duplication.
+# Technical execution topology only. Each symbol is scanned once, while the
+# frozen 10 chronological folds remain embedded in observations and final
+# accounting. Period, source, symbols, directions, semantics, weights,
+# thresholds, lifecycle, fingerprint, rearm and no-outcome scope are unchanged.
