@@ -19,38 +19,13 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
-  actions: write
 
 jobs:
-  cleanup-stale-runs:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - name: Cancel superseded runs of this workflow
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          workflow_file='smoke-core-p7-full-recognition.yml'
-          for status in queued in_progress; do
-            gh api --paginate \
-              "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_file}/runs?status=${status}&per_page=100" \
-              --jq '.workflow_runs[].id' | while read -r run_id; do
-                if [[ -n "${run_id}" && "${run_id}" != "${GITHUB_RUN_ID}" ]]; then
-                  echo "Cancelling superseded P7 full-recognition run ${run_id}"
-                  gh api --method POST \
-                    "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/cancel" || true
-                fi
-              done
-          done
-
   acquire-fixed-data:
-    needs: cleanup-stale-runs
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -206,5 +181,7 @@ jobs:
 
 # Technical execution topology only. Each symbol is scanned once, while the
 # frozen 10 chronological folds remain embedded in observations and final
-# accounting. Period, source, symbols, directions, semantics, weights,
-# thresholds, lifecycle, fingerprint, rearm and no-outcome scope are unchanged.
+# accounting. Auto-cancellation is disabled so an exact run cannot be killed
+# by a concurrent PR synchronization or manual dispatch. Period, source,
+# symbols, directions, semantics, weights, thresholds, lifecycle, fingerprint,
+# rearm and no-outcome scope are unchanged.
