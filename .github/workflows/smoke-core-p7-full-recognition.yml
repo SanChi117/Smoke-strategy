@@ -182,3 +182,4 @@ jobs:
 # global fingerprint de-duplication and recognition gate. Frozen period, source,
 # symbols, directions, semantics, weights, thresholds, lifecycle, fingerprint,
 # rearm and no-outcome scope are unchanged.
+# Technical retrigger after the complete-symbol topology exceeded the six-hour job ceiling.
