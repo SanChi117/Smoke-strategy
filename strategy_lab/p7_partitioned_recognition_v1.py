@@ -25,13 +25,24 @@ from strategy_lab.outcome_blind_recognition_v1 import (
     report_to_no_outcome_dict,
     run_full_recognition,
 )
+from strategy_lab.p7_incremental_poi_adapter_v1 import install_incremental_poi_adapter
 import strategy_lab.p7_full_recognition_runner_v1 as runner
+
+# Preserve the exact P1 semantics through the separately equivalence-tested
+# incremental transport. The previous symbol x fold runner accidentally omitted
+# this installation and therefore repeated a full historical P1 scan at every
+# hourly decision boundary.
+install_incremental_poi_adapter(runner)
 
 RECOGNITION_ID = runner.RECOGNITION_ID
 DATA_ROOT = runner.DATA_ROOT
 REPORT_PATH = runner.REPORT_PATH
 ScenarioFamily = runner.ScenarioFamily
 FOLD_COUNT = runner.FOLD_COUNT
+
+
+def _emit(event: str, **fields: Any) -> None:
+    print(json.dumps({"event": event, **fields}, sort_keys=True), flush=True)
 
 
 def _observation_to_dict(row: RecognitionObservation) -> dict[str, Any]:
@@ -76,6 +87,7 @@ def _fold_bounds(boundaries: Sequence[datetime], fold: int) -> tuple[int, int]:
 
 def scan_symbol_fold(symbol: str, candles: Sequence[Any], fold: int) -> tuple[list[RecognitionObservation], dict[str, Any]]:
     """Run the frozen scan for one exact chronological fold with full prior history."""
+    _emit("p7_partition_engine_started", symbol=symbol, fold=fold, candles_5m=len(candles))
     engine = runner.MtfDealingRangeEngine(candles)
     bars_5m_all = [bar for bar in engine.bars["5m"] if bar.symbol == symbol]
     bars_15m_all = [bar for bar in engine.bars["15m"] if bar.symbol == symbol]
@@ -85,12 +97,40 @@ def scan_symbol_fold(symbol: str, candles: Sequence[Any], fold: int) -> tuple[li
     selected = bars_15m_all[start:end]
     if not selected or any(folds[bar.close_time] != fold for bar in selected):
         raise AssertionError("fold partition mismatch")
+    _emit(
+        "p7_partition_engine_completed",
+        symbol=symbol,
+        fold=fold,
+        bars_5m=len(bars_5m_all),
+        bars_15m=len(bars_15m_all),
+        fold_boundaries=len(selected),
+        first_boundary=selected[0].close_time.isoformat(),
+        last_boundary=selected[-1].close_time.isoformat(),
+    )
 
     context_cfg = runner.ContextLiquidityConfig()
     interaction_cfg = runner.InteractionConfig()
     interaction_engine = runner.InteractionEngineV1(interaction_cfg)
     poi_engine = runner.POIImbalanceEngine()
-    levels_all = runner._precompute_levels(engine, symbol, boundaries, context_cfg)
+
+    # Levels confirmed after this fold can never be visible to any timestamp in
+    # this partition. Truncating only the technical precompute horizon therefore
+    # preserves the exact causal level set while avoiding repeated future work.
+    partition_boundaries = boundaries[:end]
+    _emit(
+        "p7_partition_levels_started",
+        symbol=symbol,
+        fold=fold,
+        precompute_boundaries=len(partition_boundaries),
+    )
+    levels_all = runner._precompute_levels(engine, symbol, partition_boundaries, context_cfg)
+    _emit(
+        "p7_partition_levels_completed",
+        symbol=symbol,
+        fold=fold,
+        raw_levels=len(levels_all),
+    )
+
     context_cache: dict[datetime, Any] = {}
     poi_cache: dict[datetime, Any] = {}
     observations: list[RecognitionObservation] = []
@@ -104,6 +144,8 @@ def scan_symbol_fold(symbol: str, candles: Sequence[Any], fold: int) -> tuple[li
         "entry_geometries": 0,
         "observations": 0,
         "raw_levels": len(levels_all),
+        "poi_transport": "EXACT_INCREMENTAL_P1_EQUIVALENT_V1",
+        "level_precompute_end": partition_boundaries[-1].isoformat(),
     }
 
     first_open = selected[0].open_time
@@ -114,7 +156,8 @@ def scan_symbol_fold(symbol: str, candles: Sequence[Any], fold: int) -> tuple[li
         cursor_5m += 1
     bars_5m = list(bars_5m_all[:cursor_5m])
 
-    for current_15m in selected:
+    _emit("p7_partition_scan_started", symbol=symbol, fold=fold, fold_boundaries=len(selected))
+    for boundary_index, current_15m in enumerate(selected, start=1):
         timestamp = current_15m.close_time
         while cursor_5m < len(bars_5m_all) and bars_5m_all[cursor_5m].close_time <= timestamp:
             bars_5m.append(bars_5m_all[cursor_5m])
@@ -127,81 +170,98 @@ def scan_symbol_fold(symbol: str, candles: Sequence[Any], fold: int) -> tuple[li
         if cache_key not in poi_cache:
             poi_cache[cache_key] = runner._active_pois(engine, timestamp, poi_engine)
         pois, evidence_map = poi_cache[cache_key]
-        if view.hard_block or not pois:
-            continue
-        lookback = interaction_cfg.atr_length + max(
-            interaction_cfg.inducement_max_age_bars,
-            interaction_cfg.anchor_expiry_bars,
-            interaction_cfg.acceptance_closes,
-            interaction_cfg.invalidation_closes,
-        ) + 2
-        recent_15m = bars_15m[-lookback:]
-        relevant_levels = runner._relevant_levels(levels_all, bars_5m, recent_15m, timestamp, context_cfg)
-        relevant_pois = tuple(
-            poi for poi in pois
-            if any(bar.high >= poi.low and bar.low <= poi.high for bar in recent_15m)
-        )
-        if not relevant_levels and not relevant_pois:
-            continue
-        interaction = interaction_engine.snapshot(
-            symbol=symbol,
-            timeframe="15m",
-            bars=recent_15m,
-            pois=relevant_pois,
-            levels=relevant_levels,
-            evaluated_at=timestamp,
-        )
-        diagnostics["anchors_seen"] += len(interaction.anchors)
-        specs = runner._family_specs(
-            interaction,
-            {poi.poi_id: poi for poi in relevant_pois},
-            {level.level_id: level for level in relevant_levels},
-            view,
-            recent_15m,
-        )
-        diagnostics["family_specs"] += len(specs)
-        for spec in specs:
-            structure = runner.evaluate_execution_structure(
-                spec.anchor,
-                {
-                    "5m": [bar for bar in bars_5m if bar.close_time >= spec.anchor.confirmed_at],
-                    "15m": [bar for bar in bars_15m if bar.close_time >= spec.anchor.confirmed_at],
-                },
-                timestamp,
+        if not view.hard_block and pois:
+            lookback = interaction_cfg.atr_length + max(
+                interaction_cfg.inducement_max_age_bars,
+                interaction_cfg.anchor_expiry_bars,
+                interaction_cfg.acceptance_closes,
+                interaction_cfg.invalidation_closes,
+            ) + 2
+            recent_15m = bars_15m[-lookback:]
+            relevant_levels = runner._relevant_levels(levels_all, bars_5m, recent_15m, timestamp, context_cfg)
+            relevant_pois = tuple(
+                poi for poi in pois
+                if any(bar.high >= poi.low and bar.low <= poi.high for bar in recent_15m)
             )
-            if not runner.apply_family_policy(structure, spec.policy_family).allowed:
-                continue
-            geometry = runner._entry_geometry(structure, spec.family, bars_15m, timestamp)
-            if geometry is None:
-                continue
-            entry_price, entry_timestamp = geometry
-            diagnostics["entry_geometries"] += 1
-            target, target_level = runner._select_target(
-                levels_all,
-                bars_5m,
-                spec.anchor.confirmed_at,
-                entry_price,
-                spec.anchor.direction,
-                context_cfg,
+            if relevant_levels or relevant_pois:
+                interaction = interaction_engine.snapshot(
+                    symbol=symbol,
+                    timeframe="15m",
+                    bars=recent_15m,
+                    pois=relevant_pois,
+                    levels=relevant_levels,
+                    evaluated_at=timestamp,
+                )
+                diagnostics["anchors_seen"] += len(interaction.anchors)
+                specs = runner._family_specs(
+                    interaction,
+                    {poi.poi_id: poi for poi in relevant_pois},
+                    {level.level_id: level for level in relevant_levels},
+                    view,
+                    recent_15m,
+                )
+                diagnostics["family_specs"] += len(specs)
+                for spec in specs:
+                    structure = runner.evaluate_execution_structure(
+                        spec.anchor,
+                        {
+                            "5m": [bar for bar in bars_5m if bar.close_time >= spec.anchor.confirmed_at],
+                            "15m": [bar for bar in bars_15m if bar.close_time >= spec.anchor.confirmed_at],
+                        },
+                        timestamp,
+                    )
+                    if not runner.apply_family_policy(structure, spec.policy_family).allowed:
+                        continue
+                    geometry = runner._entry_geometry(structure, spec.family, bars_15m, timestamp)
+                    if geometry is None:
+                        continue
+                    entry_price, entry_timestamp = geometry
+                    diagnostics["entry_geometries"] += 1
+                    target, target_level = runner._select_target(
+                        levels_all,
+                        bars_5m,
+                        spec.anchor.confirmed_at,
+                        entry_price,
+                        spec.anchor.direction,
+                        context_cfg,
+                    )
+                    if target is None or target_level is None:
+                        continue
+                    observation = runner._build_observation(
+                        symbol,
+                        fold,
+                        entry_timestamp,
+                        spec,
+                        view,
+                        structure,
+                        entry_price,
+                        target,
+                        target_level,
+                        bars_15m,
+                        evidence_map,
+                    )
+                    if observation is not None:
+                        observations.append(observation)
+
+        if boundary_index % 96 == 0 or boundary_index == len(selected):
+            _emit(
+                "p7_partition_scan_progress",
+                symbol=symbol,
+                fold=fold,
+                completed_boundaries=boundary_index,
+                total_boundaries=len(selected),
+                observations=len(observations),
             )
-            if target is None or target_level is None:
-                continue
-            observation = runner._build_observation(
-                symbol,
-                fold,
-                entry_timestamp,
-                spec,
-                view,
-                structure,
-                entry_price,
-                target,
-                target_level,
-                bars_15m,
-                evidence_map,
-            )
-            if observation is not None:
-                observations.append(observation)
+
     diagnostics["observations"] = len(observations)
+    _emit(
+        "p7_partition_scan_completed",
+        symbol=symbol,
+        fold=fold,
+        observations=len(observations),
+        anchors_seen=diagnostics["anchors_seen"],
+        family_specs=diagnostics["family_specs"],
+    )
     return observations, diagnostics
 
 
