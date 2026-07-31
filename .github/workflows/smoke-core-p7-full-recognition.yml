@@ -103,7 +103,7 @@ jobs:
   scan-partition:
     needs: acquire-fixed-data
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 360
     strategy:
       fail-fast: false
       max-parallel: 10
@@ -190,4 +190,4 @@ jobs:
 # global fingerprint de-duplication and recognition gate. Frozen period, source,
 # symbols, directions, semantics, weights, thresholds, lifecycle, fingerprint,
 # rearm and no-outcome scope are unchanged.
-# Technical retrigger after installing the shared side-enum compatibility entrypoint.
+# Technical retrigger after raising the partition timeout to GitHub's six-hour ceiling.
