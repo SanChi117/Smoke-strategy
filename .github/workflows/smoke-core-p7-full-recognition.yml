@@ -11,6 +11,7 @@ on:
       - 'strategy_lab/p7_full_recognition_entrypoint_v1.py'
       - 'strategy_lab/p7_full_recognition_runner_v1_smoke_test.py'
       - 'strategy_lab/p7_partitioned_recognition_v1.py'
+      - 'strategy_lab/p7_partitioned_recognition_entrypoint_v1.py'
       - 'strategy_lab/p7_partitioned_recognition_v1_smoke_test.py'
       - '.github/workflows/smoke-core-p7-full-recognition.yml'
   workflow_dispatch:
@@ -52,11 +53,18 @@ jobs:
             strategy_lab/p7_full_recognition_entrypoint_v1.py \
             strategy_lab/p7_full_recognition_runner_v1_smoke_test.py \
             strategy_lab/p7_partitioned_recognition_v1.py \
+            strategy_lab/p7_partitioned_recognition_entrypoint_v1.py \
             strategy_lab/p7_partitioned_recognition_v1_smoke_test.py
       - name: Focused full-recognition semantic tests
         run: |
           python -u strategy_lab/p7_full_recognition_runner_v1_smoke_test.py
           python -u strategy_lab/p7_partitioned_recognition_v1_smoke_test.py
+          python - <<'PY'
+          import strategy_lab.p7_partitioned_recognition_entrypoint_v1 as entrypoint
+          import strategy_lab.p7_full_recognition_runner_v1 as runner
+          assert callable(entrypoint.main)
+          assert getattr(runner, '_p7_incremental_poi_installed', False)
+          PY
       - name: Acquire exact Binance Vision archives
         run: python -u strategy_lab/p7_binance_vision_acquisition_v1.py
       - name: Verify acquisition manifest
@@ -116,7 +124,7 @@ jobs:
           path: research_outputs/p7_full_recognition_data_v1
       - name: Execute exact symbol-fold partition
         run: |
-          python -u strategy_lab/p7_partitioned_recognition_v1.py scan \
+          python -u strategy_lab/p7_partitioned_recognition_entrypoint_v1.py scan \
             --symbol '${{ matrix.symbol }}' \
             --fold '${{ matrix.fold }}' \
             --output 'research_outputs/p7_partitions/p7_partition_${{ matrix.symbol }}_${{ matrix.fold }}.json'
@@ -146,7 +154,7 @@ jobs:
           path: research_outputs/p7_partitions
       - name: Aggregate once with global fingerprint de-duplication
         run: |
-          python -u strategy_lab/p7_partitioned_recognition_v1.py aggregate \
+          python -u strategy_lab/p7_partitioned_recognition_entrypoint_v1.py aggregate \
             --input-dir research_outputs/p7_partitions \
             --output research_outputs/p7_full_recognition_report_v1.json
       - name: Verify exact no-outcome recognition report
@@ -182,4 +190,4 @@ jobs:
 # global fingerprint de-duplication and recognition gate. Frozen period, source,
 # symbols, directions, semantics, weights, thresholds, lifecycle, fingerprint,
 # rearm and no-outcome scope are unchanged.
-# Technical retrigger after the complete-symbol topology exceeded the six-hour job ceiling.
+# Technical retrigger after installing the shared side-enum compatibility entrypoint.
