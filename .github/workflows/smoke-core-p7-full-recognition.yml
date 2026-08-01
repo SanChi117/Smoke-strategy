@@ -13,6 +13,7 @@ on:
       - 'strategy_lab/p7_partitioned_recognition_v1.py'
       - 'strategy_lab/p7_partitioned_recognition_entrypoint_v1.py'
       - 'strategy_lab/p7_partitioned_recognition_v1_smoke_test.py'
+      - 'strategy_lab/p7_precomputed_levels_v1.py'
       - '.github/workflows/smoke-core-p7-full-recognition.yml'
   workflow_dispatch:
 
@@ -54,7 +55,8 @@ jobs:
             strategy_lab/p7_full_recognition_runner_v1_smoke_test.py \
             strategy_lab/p7_partitioned_recognition_v1.py \
             strategy_lab/p7_partitioned_recognition_entrypoint_v1.py \
-            strategy_lab/p7_partitioned_recognition_v1_smoke_test.py
+            strategy_lab/p7_partitioned_recognition_v1_smoke_test.py \
+            strategy_lab/p7_precomputed_levels_v1.py
       - name: Focused full-recognition semantic tests
         run: |
           python -u strategy_lab/p7_full_recognition_runner_v1_smoke_test.py
@@ -100,8 +102,42 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-  scan-partition:
+  precompute-levels:
     needs: acquire-fixed-data
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install package
+        run: python -m pip install -e .
+      - name: Download locked P7 dataset
+        uses: actions/download-artifact@v4
+        with:
+          name: p7-full-recognition-data-v1
+          path: research_outputs/p7_full_recognition_data_v1
+      - name: Precompute exact symbol liquidity levels once
+        run: |
+          python -u strategy_lab/p7_precomputed_levels_v1.py \
+            --symbol '${{ matrix.symbol }}' \
+            --output 'research_outputs/p7_levels/p7_levels_${{ matrix.symbol }}.pkl'
+      - name: Upload exact symbol levels
+        uses: actions/upload-artifact@v4
+        with:
+          name: p7-full-recognition-levels-${{ matrix.symbol }}
+          path: research_outputs/p7_levels/p7_levels_${{ matrix.symbol }}.pkl
+          if-no-files-found: error
+          retention-days: 90
+
+  scan-partition:
+    needs: [acquire-fixed-data, precompute-levels]
     runs-on: ubuntu-latest
     timeout-minutes: 360
     strategy:
@@ -122,7 +158,15 @@ jobs:
         with:
           name: p7-full-recognition-data-v1
           path: research_outputs/p7_full_recognition_data_v1
+      - name: Download exact symbol levels
+        uses: actions/download-artifact@v4
+        with:
+          name: p7-full-recognition-levels-${{ matrix.symbol }}
+          path: research_outputs/p7_levels
       - name: Execute exact symbol-fold partition
+        env:
+          P7_LEVELS_FILE: research_outputs/p7_levels/p7_levels_${{ matrix.symbol }}.pkl
+          P7_LEVELS_SYMBOL: ${{ matrix.symbol }}
         run: |
           python -u strategy_lab/p7_partitioned_recognition_entrypoint_v1.py scan \
             --symbol '${{ matrix.symbol }}' \
@@ -184,10 +228,10 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-# Technical execution topology only. The exact preregistered universe is split
-# into 50 symbol-fold jobs. Every job reconstructs full causal prior history,
-# emits only its fixed chronological fold, and the final job performs the same
-# global fingerprint de-duplication and recognition gate. Frozen period, source,
-# symbols, directions, semantics, weights, thresholds, lifecycle, fingerprint,
-# rearm and no-outcome scope are unchanged.
-# Technical retrigger after raising the partition timeout to GitHub's six-hour ceiling.
+# Technical execution topology only. The exact preregistered universe remains
+# five symbols x ten chronological folds. Exact liquidity levels are computed
+# once per symbol from the locked data and reused by its ten fold jobs; each fold
+# still emits only its own observations, followed by the same global fingerprint
+# de-duplication and recognition gate. Frozen period, source, symbols, directions,
+# semantics, weights, thresholds, lifecycle, fingerprint, rearm and no-outcome
+# scope are unchanged.
