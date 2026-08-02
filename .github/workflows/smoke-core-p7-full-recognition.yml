@@ -102,15 +102,16 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-  precompute-levels:
+  precompute-level-part:
     needs: acquire-fixed-data
     runs-on: ubuntu-latest
     timeout-minutes: 360
     strategy:
       fail-fast: false
-      max-parallel: 5
+      max-parallel: 20
       matrix:
         symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+        part: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -123,10 +124,47 @@ jobs:
         with:
           name: p7-full-recognition-data-v1
           path: research_outputs/p7_full_recognition_data_v1
-      - name: Precompute exact symbol liquidity levels once
+      - name: Precompute exact chronological level part
         run: |
-          python -u strategy_lab/p7_precomputed_levels_v1.py \
+          python -u strategy_lab/p7_precomputed_levels_v1.py part \
             --symbol '${{ matrix.symbol }}' \
+            --part-index '${{ matrix.part }}' \
+            --part-count '12' \
+            --output 'research_outputs/p7_level_parts/p7_levels_${{ matrix.symbol }}_part_${{ matrix.part }}.pkl'
+      - name: Upload exact level part
+        uses: actions/upload-artifact@v4
+        with:
+          name: p7-full-recognition-level-part-${{ matrix.symbol }}-${{ matrix.part }}
+          path: research_outputs/p7_level_parts/p7_levels_${{ matrix.symbol }}_part_${{ matrix.part }}.pkl
+          if-no-files-found: error
+          retention-days: 90
+
+  merge-levels:
+    needs: precompute-level-part
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install package
+        run: python -m pip install -e .
+      - name: Download exact symbol level parts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: p7-full-recognition-level-part-${{ matrix.symbol }}-*
+          path: research_outputs/p7_level_parts
+      - name: Merge in original frozen source and chronological order
+        run: |
+          python -u strategy_lab/p7_precomputed_levels_v1.py merge \
+            --symbol '${{ matrix.symbol }}' \
+            --input-dir research_outputs/p7_level_parts \
             --output 'research_outputs/p7_levels/p7_levels_${{ matrix.symbol }}.pkl'
       - name: Upload exact symbol levels
         uses: actions/upload-artifact@v4
@@ -137,7 +175,7 @@ jobs:
           retention-days: 90
 
   scan-partition:
-    needs: [acquire-fixed-data, precompute-levels]
+    needs: [acquire-fixed-data, merge-levels]
     runs-on: ubuntu-latest
     timeout-minutes: 360
     strategy:
@@ -229,9 +267,10 @@ jobs:
           retention-days: 90
 
 # Technical execution topology only. The exact preregistered universe remains
-# five symbols x ten chronological folds. Exact liquidity levels are computed
-# once per symbol from the locked data and reused by its ten fold jobs; each fold
-# still emits only its own observations, followed by the same global fingerprint
-# de-duplication and recognition gate. Frozen period, source, symbols, directions,
-# semantics, weights, thresholds, lifecycle, fingerprint, rearm and no-outcome
-# scope are unchanged.
+# five symbols x ten chronological folds. Each symbol's exact level construction
+# is divided into twelve contiguous chronological parts, merged back in the
+# original source order, and passed through the same global level de-duplication.
+# Each fold still emits only its own observations, followed by the same global
+# fingerprint de-duplication and recognition gate. Frozen period, source,
+# symbols, directions, semantics, weights, thresholds, lifecycle, fingerprint,
+# rearm and no-outcome scope are unchanged.
