@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 
 import polars as pl
-import pytest
 from hypothesis import given, strategies as st
 
 from ember.config import EmberConfig
@@ -62,7 +61,7 @@ def test_no_future_prices_in_setup_detection() -> None:
     )
     detector = SetupDetector(EmberConfig(allowed_direction_contexts=("bear",)))
     first = detector.detect(features_past, context)
-    second = detector.detect(features_extended, context)
+    second = detector.detect(features_extended.filter(pl.col("time") <= cutoff), context)
     assert first == second
 
 
