@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-
 from ember.config import EmberConfig
 from ember.models import PortfolioState, Trade
 from ember.utils import ensure_utc
