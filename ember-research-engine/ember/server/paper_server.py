@@ -12,7 +12,6 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ConfigDict, model_validator
 
-
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS paper_trades (
     id INTEGER PRIMARY KEY,
