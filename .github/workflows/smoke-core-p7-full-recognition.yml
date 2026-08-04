@@ -13,6 +13,8 @@ on:
       - 'strategy_lab/p7_partitioned_recognition_v1.py'
       - 'strategy_lab/p7_partitioned_recognition_entrypoint_v1.py'
       - 'strategy_lab/p7_partitioned_recognition_v1_smoke_test.py'
+      - 'strategy_lab/p7_partition_shards_v1.py'
+      - 'strategy_lab/p7_partition_shards_v1_smoke_test.py'
       - 'strategy_lab/p7_precomputed_levels_v1.py'
       - '.github/workflows/smoke-core-p7-full-recognition.yml'
   workflow_dispatch:
@@ -56,11 +58,14 @@ jobs:
             strategy_lab/p7_partitioned_recognition_v1.py \
             strategy_lab/p7_partitioned_recognition_entrypoint_v1.py \
             strategy_lab/p7_partitioned_recognition_v1_smoke_test.py \
+            strategy_lab/p7_partition_shards_v1.py \
+            strategy_lab/p7_partition_shards_v1_smoke_test.py \
             strategy_lab/p7_precomputed_levels_v1.py
       - name: Focused full-recognition semantic tests
         run: |
           python -u strategy_lab/p7_full_recognition_runner_v1_smoke_test.py
           python -u strategy_lab/p7_partitioned_recognition_v1_smoke_test.py
+          python -u strategy_lab/p7_partition_shards_v1_smoke_test.py
           python - <<'PY'
           import strategy_lab.p7_partitioned_recognition_entrypoint_v1 as entrypoint
           import strategy_lab.p7_full_recognition_runner_v1 as runner
@@ -174,7 +179,7 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-  scan-partition:
+  scan-partition-shard:
     needs: [acquire-fixed-data, merge-levels]
     runs-on: ubuntu-latest
     timeout-minutes: 360
@@ -184,6 +189,7 @@ jobs:
       matrix:
         symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
         fold: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        shard: [0, 1, 2, 3]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -201,16 +207,55 @@ jobs:
         with:
           name: p7-full-recognition-levels-${{ matrix.symbol }}
           path: research_outputs/p7_levels
-      - name: Execute exact symbol-fold partition
+      - name: Execute exact contiguous fold shard
         env:
           P7_LEVELS_FILE: research_outputs/p7_levels/p7_levels_${{ matrix.symbol }}.pkl
           P7_LEVELS_SYMBOL: ${{ matrix.symbol }}
         run: |
-          python -u strategy_lab/p7_partitioned_recognition_entrypoint_v1.py scan \
+          python -u strategy_lab/p7_partition_shards_v1.py scan \
+            --symbol '${{ matrix.symbol }}' \
+            --fold '${{ matrix.fold }}' \
+            --shard-index '${{ matrix.shard }}' \
+            --shard-count '4' \
+            --output 'research_outputs/p7_partition_shards/p7_partition_shard_${{ matrix.symbol }}_${{ matrix.fold }}_${{ matrix.shard }}.json'
+      - name: Upload exact outcome-blind fold shard
+        uses: actions/upload-artifact@v4
+        with:
+          name: p7-full-recognition-scan-shard-${{ matrix.symbol }}-${{ matrix.fold }}-${{ matrix.shard }}
+          path: research_outputs/p7_partition_shards/p7_partition_shard_${{ matrix.symbol }}_${{ matrix.fold }}_${{ matrix.shard }}.json
+          if-no-files-found: error
+          retention-days: 90
+
+  merge-partition-shards:
+    needs: scan-partition-shard
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+        fold: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install package
+        run: python -m pip install -e .
+      - name: Download exact fold shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: p7-full-recognition-scan-shard-${{ matrix.symbol }}-${{ matrix.fold }}-*
+          path: research_outputs/p7_partition_shards
+      - name: Merge shards back into one exact symbol-fold partition
+        run: |
+          python -u strategy_lab/p7_partition_shards_v1.py merge \
+            --input-dir research_outputs/p7_partition_shards \
             --symbol '${{ matrix.symbol }}' \
             --fold '${{ matrix.fold }}' \
             --output 'research_outputs/p7_partitions/p7_partition_${{ matrix.symbol }}_${{ matrix.fold }}.json'
-      - name: Upload outcome-blind partition
+      - name: Upload exact outcome-blind partition
         uses: actions/upload-artifact@v4
         with:
           name: p7-full-recognition-partition-${{ matrix.symbol }}-${{ matrix.fold }}
@@ -219,7 +264,7 @@ jobs:
           retention-days: 90
 
   aggregate-recognition:
-    needs: scan-partition
+    needs: merge-partition-shards
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -268,9 +313,11 @@ jobs:
 
 # Technical execution topology only. The exact preregistered universe remains
 # five symbols x ten chronological folds. Each symbol's exact level construction
-# is divided into twelve contiguous chronological parts, merged back in the
-# original source order, and passed through the same global level de-duplication.
-# Each fold still emits only its own observations, followed by the same global
-# fingerprint de-duplication and recognition gate. Frozen period, source,
-# symbols, directions, semantics, weights, thresholds, lifecycle, fingerprint,
-# rearm and no-outcome scope are unchanged.
+# is divided into twelve contiguous chronological parts and merged in original
+# source order. Each exact fold is then divided into four contiguous execution
+# shards solely to stay below the hosted-runner six-hour job limit. Every shard
+# reconstructs the same full causal history before its first evaluated boundary,
+# and the four shards are merged back into the original exact symbol-fold
+# partition before the unchanged global fingerprint de-duplication and gate.
+# Frozen period, source, symbols, directions, semantics, weights, thresholds,
+# lifecycle, fingerprint, rearm and no-outcome scope are unchanged.
