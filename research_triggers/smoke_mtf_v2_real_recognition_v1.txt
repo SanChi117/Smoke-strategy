@@ -1,0 +1,5 @@
+SMOKE_MTF_V2_REAL_RECOGNITION_RUN_V1
+Recognition contract unchanged.
+Outcome fields remain excluded.
+Rerun 8: definition-only semantic corrections from the frozen 28-case audit.
+Same five symbols, same history, same scan, same chronological first-4 rule.

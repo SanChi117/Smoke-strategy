@@ -1,0 +1,122 @@
+name: SMOKE MTF V2 Semantic Replay V1
+
+on:
+  push:
+    branches: ['agent/smoke-mtf-dealing-range-v2']
+    paths: ['research_triggers/smoke_mtf_v2_semantic_replay_v1.txt']
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  build-closed-information-review-packets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout current recognition implementation
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install and test semantic replay
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          python -m py_compile scripts/build_smoke_mtf_v2_semantic_replay.py
+          python -m strategy_lab.mtf_recognition_fast_runtime_v2_smoke_test
+          python -m strategy_lab.mtf_semantic_replay_smoke_test
+          python -m strategy_lab.mtf_semantic_corrections_v2_smoke_test
+      - name: Download frozen combined recognition artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: smoke-mtf-v2-real-recognition-v1-combined
+          path: ${{ runner.temp }}/frozen-recognition
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: SanChi117/Smoke-strategy
+          run-id: '29847860881'
+      - name: Create frozen five-symbol universe
+        run: |
+          printf '%s\n' BTCUSDT ETHUSDT SOLUSDT LINKUSDT AAVEUSDT > "$RUNNER_TEMP/symbols.txt"
+      - name: Download fixed Binance Futures history
+        run: |
+          python scripts/download_binance_vision_futures_archives.py \
+            --symbols-file "$RUNNER_TEMP/symbols.txt" \
+            --interval 5m --start-date '2024-07-01' --end-date '2025-02-08' \
+            --out-dir "$RUNNER_TEMP/binance-history" \
+            --summary-json "$RUNNER_TEMP/archive_download_summary.json" \
+            --workers 8 --retries 2 --timeout 30
+      - name: Merge and verify closed candles
+        run: |
+          python scripts/merge_binance_vision_futures_klines.py \
+            --input-dir "$RUNNER_TEMP/binance-history" \
+            --out "$RUNNER_TEMP/five-symbols-5m.csv" \
+            --symbols-file "$RUNNER_TEMP/symbols.txt" \
+            --interval 5m --start-date '2024-07-01' --end-date '2025-02-08' \
+            --summary-json "$RUNNER_TEMP/archive_merge_summary.json" \
+            --min-coverage 0.95
+      - name: Build exact causal semantic replay packets
+        id: replay
+        shell: bash
+        run: |
+          set +e
+          mkdir -p "$RUNNER_TEMP/semantic-replay"
+          python scripts/build_smoke_mtf_v2_semantic_replay.py \
+            --candles "$RUNNER_TEMP/five-symbols-5m.csv" \
+            --frozen-candidates "$RUNNER_TEMP/frozen-recognition/recognition_candidates.json" \
+            --out-dir "$RUNNER_TEMP/semantic-replay" \
+            > "$RUNNER_TEMP/semantic-replay/replay.log" 2>&1
+          status=$?
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          cp "$RUNNER_TEMP/archive_download_summary.json" "$RUNNER_TEMP/semantic-replay/archive_download_summary.json"
+          cp "$RUNNER_TEMP/archive_merge_summary.json" "$RUNNER_TEMP/semantic-replay/archive_merge_summary.json"
+          echo '----- semantic replay log -----'
+          cat "$RUNNER_TEMP/semantic-replay/replay.log"
+          echo '----- end semantic replay log -----'
+          exit 0
+      - name: Enforce replay outcome-field exclusion
+        if: steps.replay.outputs.status == '0'
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from strategy_lab.mtf_recognition_export_v2 import assert_no_outcome_fields
+          root = Path('${{ runner.temp }}') / 'semantic-replay'
+          assert_no_outcome_fields(json.loads((root / 'summary.json').read_text(encoding='utf-8')))
+          for packet in (root / 'packets').glob('*.json'):
+              assert_no_outcome_fields(json.loads(packet.read_text(encoding='utf-8')))
+          print('Semantic replay closed-information contract: OK')
+          PY
+      - name: Write workflow summary
+        if: steps.replay.outputs.status == '0'
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          data = json.loads((Path('${{ runner.temp }}') / 'semantic-replay' / 'summary.json').read_text(encoding='utf-8'))
+          print('## SMOKE MTF V2 semantic replay')
+          print('')
+          print(f"- Frozen rows: **{data['frozen_rows']}**")
+          print(f"- Unique cases: **{data['unique_cases']}**")
+          print(f"- Exact replay matches: **{data['exact_replay_matches']}**")
+          print(f"- Exact replay mismatches: **{data['exact_replay_mismatches']}**")
+          print(f"- Entry-ready cases: **{data['entry_ready_cases']}**")
+          print('- Outcome fields: **excluded**')
+          PY
+      - name: Upload semantic replay or mismatch diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-mtf-v2-semantic-replay-v1
+          path: ${{ runner.temp }}/semantic-replay/**
+          if-no-files-found: error
+          retention-days: 30
+      - name: Fail on replay mismatch
+        if: steps.replay.outputs.status != '0'
+        run: |
+          echo 'Frozen semantic replay did not reproduce the source artifact.' >&2
+          exit 1

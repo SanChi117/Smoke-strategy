@@ -1,0 +1,66 @@
+name: SMOKE MTF V2 Run Inspector
+
+on:
+  push:
+    branches: ['agent/smoke-mtf-dealing-range-v2']
+    paths: ['research_triggers/smoke_mtf_v2_run_inspector.txt']
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  inspect-development-v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/smoke-mtf-dealing-range-v2
+          fetch-depth: 0
+      - name: Inspect exact development run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          python - <<'PY'
+          import json, os, urllib.parse, urllib.request
+          from pathlib import Path
+
+          token=os.environ['GH_TOKEN']; repo=os.environ['REPO']
+          trigger=Path('research_triggers/smoke_mtf_v2_run_inspector.txt').read_text(encoding='utf-8').splitlines()
+          if len(trigger) < 2 or len(trigger[1].strip()) != 40:
+              raise RuntimeError('run inspector trigger must contain target SHA on line 2')
+          sha=trigger[1].strip()
+          def get(path):
+              req=urllib.request.Request(f'https://api.github.com{path}')
+              req.add_header('Authorization',f'Bearer {token}')
+              req.add_header('Accept','application/vnd.github+json')
+              req.add_header('X-GitHub-Api-Version','2022-11-28')
+              with urllib.request.urlopen(req,timeout=60) as r:
+                  return json.loads(r.read().decode())
+          query=urllib.parse.urlencode({'head_sha':sha,'per_page':100})
+          payload=get(f'/repos/{repo}/actions/runs?{query}')
+          runs=[r for r in payload.get('workflow_runs',[]) if r.get('name')=='SMOKE MTF V2 Development Profitability V2' and r.get('head_sha')==sha]
+          result={'target_sha':sha,'run_found':bool(runs)}
+          if runs:
+              run=max(runs,key=lambda x:int(x['id']))
+              result['run']={k:run.get(k) for k in ('id','name','status','conclusion','run_number','html_url','created_at','updated_at','head_sha')}
+              jobs=get(f"/repos/{repo}/actions/runs/{run['id']}/jobs?per_page=100").get('jobs',[])
+              result['jobs']=[{k:j.get(k) for k in ('id','name','status','conclusion','started_at','completed_at')} for j in jobs]
+              arts=get(f"/repos/{repo}/actions/runs/{run['id']}/artifacts?per_page=100").get('artifacts',[])
+              result['artifacts']=[{k:a.get(k) for k in ('id','name','size_in_bytes','expired','digest')} for a in arts]
+          out=Path('results/smoke_mtf_v2_run_inspector.json')
+          out.parent.mkdir(parents=True,exist_ok=True)
+          out.write_text(json.dumps(result,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          print(json.dumps(result,ensure_ascii=False,indent=2))
+          PY
+      - name: Commit inspector result
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add results/smoke_mtf_v2_run_inspector.json
+          git commit -m 'Record development profitability action status' || exit 0
+          git pull --rebase origin agent/smoke-mtf-dealing-range-v2
+          git push origin HEAD:agent/smoke-mtf-dealing-range-v2

@@ -1,0 +1,178 @@
+name: SMOKE MTF V2 Real Recognition V1
+
+on:
+  push:
+    branches: ['agent/smoke-mtf-dealing-range-v2']
+    paths: ['research_triggers/smoke_mtf_v2_real_recognition_v1.txt']
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  recognition-symbol:
+    name: recognition-${{ matrix.symbol }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    steps:
+      - name: Checkout exact frozen trigger commit
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install and verify frozen exporter
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          python -m py_compile \
+            strategy_lab/mtf_recognition_fast_runtime_v2.py \
+            strategy_lab/mtf_recognition_export_v2.py \
+            scripts/export_smoke_mtf_v2_recognition_candidates.py
+          python -m strategy_lab.mtf_recognition_fast_runtime_v2_smoke_test
+          python -m strategy_lab.mtf_recognition_export_v2_smoke_test
+          python -m strategy_lab.mtf_entry_state_machine_v2_smoke_test
+      - name: Create one-symbol frozen universe
+        run: printf '%s\n' '${{ matrix.symbol }}' > "$RUNNER_TEMP/symbol.txt"
+      - name: Download fixed Binance Futures history
+        run: |
+          python scripts/download_binance_vision_futures_archives.py \
+            --symbols-file "$RUNNER_TEMP/symbol.txt" \
+            --interval 5m --start-date '2024-07-01' --end-date '2025-02-08' \
+            --out-dir "$RUNNER_TEMP/binance-${{ matrix.symbol }}" \
+            --summary-json "$RUNNER_TEMP/archive_download_summary.json" \
+            --workers 4 --retries 2 --timeout 30
+      - name: Merge and verify closed candles
+        run: |
+          python scripts/merge_binance_vision_futures_klines.py \
+            --input-dir "$RUNNER_TEMP/binance-${{ matrix.symbol }}" \
+            --out "$RUNNER_TEMP/${{ matrix.symbol }}-5m.csv" \
+            --symbols-file "$RUNNER_TEMP/symbol.txt" \
+            --interval 5m --start-date '2024-07-01' --end-date '2025-02-08' \
+            --summary-json "$RUNNER_TEMP/archive_merge_summary.json" \
+            --min-coverage 0.95
+      - name: Export frozen symbol without PnL
+        run: |
+          mkdir -p "$RUNNER_TEMP/recognition-part"
+          /usr/bin/time -v -o "$RUNNER_TEMP/recognition-part/performance.txt" \
+            python scripts/export_smoke_mtf_v2_recognition_candidates.py \
+              --candles "$RUNNER_TEMP/${{ matrix.symbol }}-5m.csv" \
+              --scan-start '2025-02-01T00:00:00' \
+              --scan-end '2025-02-08T00:00:00' \
+              --per-group 4 --workers 1 \
+              --out-dir "$RUNNER_TEMP/recognition-part"
+      - name: Enforce symbol no-PnL contract
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from strategy_lab.mtf_recognition_export_v2 import assert_no_outcome_fields
+          root = Path('${{ runner.temp }}') / 'recognition-part'
+          for name in ('summary.json', 'recognition_candidates.json'):
+              assert_no_outcome_fields(json.loads((root / name).read_text(encoding='utf-8')))
+          text = (root / 'recognition_candidates.csv').read_text(encoding='utf-8').lower()
+          forbidden = ('pnl', 'future_return', 'realized_return', 'tp_hit', 'sl_hit', 'mfe', 'mae')
+          found = [token for token in forbidden if token in text]
+          if found:
+              raise RuntimeError(f'forbidden outcome fields in CSV: {found}')
+          PY
+      - name: Attach source verification metadata
+        run: |
+          cp "$RUNNER_TEMP/archive_download_summary.json" "$RUNNER_TEMP/recognition-part/archive_download_summary.json"
+          cp "$RUNNER_TEMP/archive_merge_summary.json" "$RUNNER_TEMP/recognition-part/archive_merge_summary.json"
+      - name: Upload symbol result
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-mtf-v2-real-recognition-part-${{ matrix.symbol }}
+          path: ${{ runner.temp }}/recognition-part/**
+          if-no-files-found: error
+          retention-days: 14
+
+  aggregate-recognition:
+    name: aggregate-5-frozen-symbols
+    needs: recognition-symbol
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact frozen trigger commit
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install and verify deterministic merger
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          python -m py_compile \
+            scripts/merge_smoke_mtf_v2_recognition_parts.py \
+            scripts/build_smoke_mtf_v2_review_queue.py
+          python -m strategy_lab.mtf_recognition_partition_merge_smoke_test
+          python -m strategy_lab.mtf_review_queue_smoke_test
+      - name: Download all five frozen symbol results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: smoke-mtf-v2-real-recognition-part-*
+          path: ${{ runner.temp }}/recognition-parts
+          merge-multiple: false
+      - name: Merge with original global chronological rule
+        run: |
+          python scripts/merge_smoke_mtf_v2_recognition_parts.py \
+            --parts-root "$RUNNER_TEMP/recognition-parts" \
+            --out-dir "$RUNNER_TEMP/combined-recognition" \
+            --scan-start '2025-02-01T00:00:00' \
+            --scan-end '2025-02-08T00:00:00' \
+            --per-group 4 --expected-parts 5
+      - name: Enforce combined no-PnL contract
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from strategy_lab.mtf_recognition_export_v2 import assert_no_outcome_fields
+          root = Path('${{ runner.temp }}') / 'combined-recognition'
+          for name in ('summary.json', 'recognition_candidates.json'):
+              assert_no_outcome_fields(json.loads((root / name).read_text(encoding='utf-8')))
+          text = (root / 'recognition_candidates.csv').read_text(encoding='utf-8').lower()
+          forbidden = ('pnl', 'future_return', 'realized_return', 'tp_hit', 'sl_hit', 'mfe', 'mae')
+          found = [token for token in forbidden if token in text]
+          if found:
+              raise RuntimeError(f'forbidden outcome fields in CSV: {found}')
+          print('Combined no-PnL output contract: OK')
+          PY
+      - name: Build balanced causal review queue
+        run: |
+          python scripts/build_smoke_mtf_v2_review_queue.py \
+            --candidates-json "$RUNNER_TEMP/combined-recognition/recognition_candidates.json" \
+            --out-dir "$RUNNER_TEMP/combined-recognition/review_queue"
+      - name: Write visible workflow summary
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          root = Path('${{ runner.temp }}') / 'combined-recognition'
+          data = json.loads((root / 'summary.json').read_text(encoding='utf-8'))
+          queue = json.loads((root / 'review_queue' / 'recognition_review_queue.json').read_text(encoding='utf-8'))
+          print('## SMOKE MTF V2 real recognition')
+          print('')
+          print('- Status: **success**')
+          print(f"- Evaluated 15m bars: **{data['evaluated_15m_bars']}**")
+          print(f"- Side snapshots: **{data['evaluated_side_snapshots']}**")
+          print(f"- Qualifying snapshots: **{data['qualifying_snapshots']}**")
+          print(f"- Selected review snapshots: **{data['selected_snapshots']}**")
+          print(f"- Causal review packets: **{queue['row_count']}**")
+          print('- PnL/future outcomes: **not used**')
+          PY
+      - name: Upload combined recognition result
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-mtf-v2-real-recognition-v1-combined
+          path: ${{ runner.temp }}/combined-recognition/**
+          if-no-files-found: error
+          retention-days: 30

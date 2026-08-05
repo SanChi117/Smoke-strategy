@@ -1,0 +1,4 @@
+SMOKE_MTF_V2_EXPORT_DIAGNOSTIC_V1
+SOLUSDT fixed one-day benchmark.
+Frozen dates and recognition contract unchanged.
+Rerun 5 after exact-equivalent incremental level-touch runtime.

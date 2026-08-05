@@ -1,0 +1,174 @@
+name: SMOKE MTF V2 Development Profitability V2
+
+on:
+  push:
+    branches: ['agent/smoke-mtf-dealing-range-v2']
+    paths: ['research_triggers/smoke_mtf_v2_development_profitability_v2.txt']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  prepare-symbol-data:
+    name: prepare-${{ matrix.symbol }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    steps:
+      - name: Checkout exact preregistered trigger commit
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+      - name: Create one-symbol universe
+        run: printf '%s\n' '${{ matrix.symbol }}' > "$RUNNER_TEMP/symbol.txt"
+      - name: Download official closed 5m history
+        run: |
+          python scripts/download_binance_vision_futures_archives.py \
+            --symbols-file "$RUNNER_TEMP/symbol.txt" \
+            --interval 5m --start-date '2024-07-01' --end-date '2026-06-30' \
+            --out-dir "$RUNNER_TEMP/klines" \
+            --summary-json "$RUNNER_TEMP/kline_download_summary.json" \
+            --workers 6 --retries 2 --timeout 30
+      - name: Merge and verify closed candles
+        run: |
+          mkdir -p "$RUNNER_TEMP/development-data"
+          python scripts/merge_binance_vision_futures_klines.py \
+            --input-dir "$RUNNER_TEMP/klines" \
+            --out "$RUNNER_TEMP/development-data/${{ matrix.symbol }}-5m.csv" \
+            --symbols-file "$RUNNER_TEMP/symbol.txt" \
+            --interval 5m --start-date '2024-07-01' --end-date '2026-06-30' \
+            --summary-json "$RUNNER_TEMP/development-data/kline_merge_summary.json" \
+            --min-coverage 0.95
+          cp "$RUNNER_TEMP/kline_download_summary.json" "$RUNNER_TEMP/development-data/"
+      - name: Download official monthly funding rates
+        run: |
+          python scripts/download_binance_vision_funding_archives.py \
+            --symbol '${{ matrix.symbol }}' \
+            --start-month '2025-01' --end-month-exclusive '2026-07' \
+            --out-dir "$RUNNER_TEMP/funding-archives" \
+            --summary-json "$RUNNER_TEMP/development-data/funding_download_summary.json" \
+            --workers 4 --retries 2 --timeout 30
+      - name: Merge and verify funding rates
+        run: |
+          python scripts/merge_binance_vision_funding_rates.py \
+            --input-dir "$RUNNER_TEMP/funding-archives" \
+            --symbol '${{ matrix.symbol }}' \
+            --start '2025-01-01T00:00:00' \
+            --end-exclusive '2026-07-01T00:00:00' \
+            --out "$RUNNER_TEMP/development-data/funding.csv" \
+            --summary-json "$RUNNER_TEMP/development-data/funding_merge_summary.json"
+      - name: Upload immutable symbol data
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-mtf-v2-development-data-${{ matrix.symbol }}
+          path: ${{ runner.temp }}/development-data/**
+          if-no-files-found: error
+          retention-days: 7
+
+  development-fold:
+    name: fold-${{ matrix.fold }}-${{ matrix.symbol }}-${{ matrix.side }}
+    needs: prepare-symbol-data
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+        fold: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        side: [long, short]
+    steps:
+      - name: Checkout exact preregistered trigger commit
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install and verify frozen runner
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          python -m strategy_lab.mtf_development_backtest_v1_smoke_test
+          python -m strategy_lab.mtf_development_partition_v2_smoke_test
+          python -m strategy_lab.mtf_recognition_fast_runtime_v2_smoke_test
+      - name: Download immutable symbol data
+        uses: actions/download-artifact@v4
+        with:
+          name: smoke-mtf-v2-development-data-${{ matrix.symbol }}
+          path: ${{ runner.temp }}/development-data
+      - name: Run frozen symbol-fold-side evaluation
+        run: |
+          CANDLES=$(find "$RUNNER_TEMP/development-data" -name '*-5m.csv' -print -quit)
+          FUNDING=$(find "$RUNNER_TEMP/development-data" -name 'funding.csv' -print -quit)
+          FUNDING_SUMMARY=$(find "$RUNNER_TEMP/development-data" -name 'funding_merge_summary.json' -print -quit)
+          test -n "$CANDLES" && test -n "$FUNDING" && test -n "$FUNDING_SUMMARY"
+          mkdir -p "$RUNNER_TEMP/fold-result"
+          /usr/bin/time -v -o "$RUNNER_TEMP/fold-result/performance.txt" \
+            python scripts/run_smoke_mtf_v2_development_fold.py \
+              --candles "$CANDLES" \
+              --funding "$FUNDING" \
+              --funding-summary "$FUNDING_SUMMARY" \
+              --fold '${{ matrix.fold }}' \
+              --side '${{ matrix.side }}' \
+              --out-dir "$RUNNER_TEMP/fold-result"
+      - name: Upload frozen fold result
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-mtf-v2-development-fold-${{ matrix.fold }}-${{ matrix.symbol }}-${{ matrix.side }}
+          path: ${{ runner.temp }}/fold-result/**
+          if-no-files-found: error
+          retention-days: 30
+
+  aggregate-development:
+    name: aggregate-development-portfolio
+    needs: development-fold
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact preregistered trigger commit
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install and verify aggregator
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          python -m strategy_lab.mtf_development_backtest_v1_smoke_test
+          python -m strategy_lab.mtf_development_partition_v2_smoke_test
+      - name: Download all 100 fold-side results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: smoke-mtf-v2-development-fold-*
+          path: ${{ runner.temp }}/development-parts
+          merge-multiple: false
+      - name: Aggregate one frozen candidate
+        run: |
+          python scripts/aggregate_smoke_mtf_v2_development.py \
+            --parts-root "$RUNNER_TEMP/development-parts" \
+            --out-dir "$RUNNER_TEMP/development-result" \
+            --expected-parts 100
+      - name: Write visible result
+        run: cat "$RUNNER_TEMP/development-result/DEVELOPMENT_RESULT.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload final development result
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-mtf-v2-development-profitability-v2-result
+          path: ${{ runner.temp }}/development-result/**
+          if-no-files-found: error
+          retention-days: 90

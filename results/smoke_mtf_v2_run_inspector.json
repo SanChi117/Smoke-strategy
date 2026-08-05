@@ -1,0 +1,1421 @@
+{
+  "target_sha": "bc041a388a3123a88acdb1cb62256f6297e678ce",
+  "run_found": true,
+  "run": {
+    "id": 29906237656,
+    "name": "SMOKE MTF V2 Development Profitability V2",
+    "status": "queued",
+    "conclusion": null,
+    "run_number": 2,
+    "html_url": "https://github.com/SanChi117/Smoke-strategy/actions/runs/29906237656",
+    "created_at": "2026-07-22T09:00:35Z",
+    "updated_at": "2026-07-22T09:01:11Z",
+    "head_sha": "bc041a388a3123a88acdb1cb62256f6297e678ce"
+  },
+  "jobs": [
+    {
+      "id": 88878259006,
+      "name": "prepare-AAVEUSDT",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T09:00:38Z",
+      "completed_at": "2026-07-22T09:01:10Z"
+    },
+    {
+      "id": 88878259012,
+      "name": "prepare-LINKUSDT",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T09:00:38Z",
+      "completed_at": "2026-07-22T09:01:04Z"
+    },
+    {
+      "id": 88878259036,
+      "name": "prepare-SOLUSDT",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T09:00:37Z",
+      "completed_at": "2026-07-22T09:01:03Z"
+    },
+    {
+      "id": 88878259080,
+      "name": "prepare-ETHUSDT",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T09:00:38Z",
+      "completed_at": "2026-07-22T09:01:09Z"
+    },
+    {
+      "id": 88878259104,
+      "name": "prepare-BTCUSDT",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T09:00:38Z",
+      "completed_at": "2026-07-22T09:01:05Z"
+    },
+    {
+      "id": 88878395237,
+      "name": "fold-1-BTCUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T09:01:13Z",
+      "completed_at": "2026-07-22T10:15:45Z"
+    },
+    {
+      "id": 88878395252,
+      "name": "fold-2-BTCUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T09:01:14Z",
+      "completed_at": "2026-07-22T10:30:26Z"
+    },
+    {
+      "id": 88878395260,
+      "name": "fold-2-BTCUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T09:01:13Z",
+      "completed_at": "2026-07-22T10:34:42Z"
+    },
+    {
+      "id": 88878395284,
+      "name": "fold-5-BTCUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T10:00:16Z",
+      "completed_at": "2026-07-22T12:20:43Z"
+    },
+    {
+      "id": 88878395294,
+      "name": "fold-7-BTCUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T10:15:46Z",
+      "completed_at": "2026-07-22T12:23:09Z"
+    },
+    {
+      "id": 88878395297,
+      "name": "fold-5-BTCUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T10:02:36Z",
+      "completed_at": "2026-07-22T12:06:17Z"
+    },
+    {
+      "id": 88878395301,
+      "name": "fold-0-BTCUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T09:01:13Z",
+      "completed_at": "2026-07-22T10:02:34Z"
+    },
+    {
+      "id": 88878395305,
+      "name": "fold-4-BTCUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T09:01:13Z",
+      "completed_at": "2026-07-22T11:06:03Z"
+    },
+    {
+      "id": 88878395322,
+      "name": "fold-4-BTCUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T09:01:13Z",
+      "completed_at": "2026-07-22T11:04:38Z"
+    },
+    {
+      "id": 88878395329,
+      "name": "fold-0-BTCUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T09:01:13Z",
+      "completed_at": "2026-07-22T10:00:13Z"
+    },
+    {
+      "id": 88878395334,
+      "name": "fold-8-BTCUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T10:46:30Z",
+      "completed_at": "2026-07-22T13:55:34Z"
+    },
+    {
+      "id": 88878395336,
+      "name": "fold-6-BTCUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T10:14:16Z",
+      "completed_at": "2026-07-22T12:49:39Z"
+    },
+    {
+      "id": 88878395349,
+      "name": "fold-6-BTCUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T10:14:13Z",
+      "completed_at": "2026-07-22T11:58:25Z"
+    },
+    {
+      "id": 88878395354,
+      "name": "fold-3-BTCUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T09:01:13Z",
+      "completed_at": "2026-07-22T10:14:15Z"
+    },
+    {
+      "id": 88878395395,
+      "name": "fold-9-BTCUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T11:04:40Z",
+      "completed_at": "2026-07-22T14:34:24Z"
+    },
+    {
+      "id": 88878395397,
+      "name": "fold-9-BTCUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T11:06:05Z",
+      "completed_at": "2026-07-22T14:33:44Z"
+    },
+    {
+      "id": 88878395406,
+      "name": "fold-1-BTCUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T09:01:13Z",
+      "completed_at": "2026-07-22T10:14:11Z"
+    },
+    {
+      "id": 88878395412,
+      "name": "fold-8-BTCUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T10:34:44Z",
+      "completed_at": "2026-07-22T13:40:58Z"
+    },
+    {
+      "id": 88878395431,
+      "name": "fold-7-BTCUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T10:30:28Z",
+      "completed_at": "2026-07-22T13:19:02Z"
+    },
+    {
+      "id": 88878395452,
+      "name": "fold-3-BTCUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T09:01:13Z",
+      "completed_at": "2026-07-22T10:46:29Z"
+    },
+    {
+      "id": 88878396710,
+      "name": "fold-0-ETHUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T11:58:28Z",
+      "completed_at": "2026-07-22T12:59:08Z"
+    },
+    {
+      "id": 88878396748,
+      "name": "fold-1-ETHUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T12:20:45Z",
+      "completed_at": "2026-07-22T13:37:44Z"
+    },
+    {
+      "id": 88878396758,
+      "name": "fold-0-ETHUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T12:06:20Z",
+      "completed_at": "2026-07-22T12:58:29Z"
+    },
+    {
+      "id": 88878396830,
+      "name": "fold-1-ETHUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T12:23:11Z",
+      "completed_at": "2026-07-22T13:36:53Z"
+    },
+    {
+      "id": 88878396844,
+      "name": "fold-2-ETHUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T12:49:41Z",
+      "completed_at": "2026-07-22T14:18:23Z"
+    },
+    {
+      "id": 88878396888,
+      "name": "fold-2-ETHUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T12:58:32Z",
+      "completed_at": "2026-07-22T14:03:38Z"
+    },
+    {
+      "id": 88878396941,
+      "name": "fold-3-ETHUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T12:59:10Z",
+      "completed_at": "2026-07-22T14:45:57Z"
+    },
+    {
+      "id": 88878397011,
+      "name": "fold-3-ETHUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T13:19:04Z",
+      "completed_at": "2026-07-22T15:03:58Z"
+    },
+    {
+      "id": 88878397083,
+      "name": "fold-4-ETHUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T13:36:56Z",
+      "completed_at": "2026-07-22T15:33:36Z"
+    },
+    {
+      "id": 88878397227,
+      "name": "fold-4-ETHUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T13:37:46Z",
+      "completed_at": "2026-07-22T15:33:44Z"
+    },
+    {
+      "id": 88878397969,
+      "name": "fold-5-ETHUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T13:41:00Z",
+      "completed_at": "2026-07-22T16:00:53Z"
+    },
+    {
+      "id": 88878398090,
+      "name": "fold-5-ETHUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T13:55:35Z",
+      "completed_at": "2026-07-22T16:14:48Z"
+    },
+    {
+      "id": 88878398155,
+      "name": "fold-7-ETHUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T14:33:47Z",
+      "completed_at": "2026-07-22T16:54:45Z"
+    },
+    {
+      "id": 88878398177,
+      "name": "fold-8-ETHUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T14:45:59Z",
+      "completed_at": "2026-07-22T17:21:45Z"
+    },
+    {
+      "id": 88878398183,
+      "name": "fold-6-ETHUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T14:18:25Z",
+      "completed_at": "2026-07-22T15:58:50Z"
+    },
+    {
+      "id": 88878398184,
+      "name": "fold-7-ETHUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T14:34:26Z",
+      "completed_at": "2026-07-22T17:20:21Z"
+    },
+    {
+      "id": 88878398189,
+      "name": "fold-8-ETHUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T15:04:00Z",
+      "completed_at": "2026-07-22T18:07:49Z"
+    },
+    {
+      "id": 88878398311,
+      "name": "fold-6-ETHUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T14:03:40Z",
+      "completed_at": "2026-07-22T16:34:16Z"
+    },
+    {
+      "id": 88878398384,
+      "name": "fold-9-ETHUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T15:33:38Z",
+      "completed_at": "2026-07-22T18:45:20Z"
+    },
+    {
+      "id": 88878398605,
+      "name": "fold-9-ETHUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T15:33:46Z",
+      "completed_at": "2026-07-22T18:54:29Z"
+    },
+    {
+      "id": 88878399163,
+      "name": "fold-0-SOLUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T15:58:53Z",
+      "completed_at": "2026-07-22T16:59:24Z"
+    },
+    {
+      "id": 88878399307,
+      "name": "fold-1-SOLUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T16:34:18Z",
+      "completed_at": "2026-07-22T17:48:58Z"
+    },
+    {
+      "id": 88878399339,
+      "name": "fold-3-SOLUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T16:59:55Z",
+      "completed_at": "2026-07-22T18:44:23Z"
+    },
+    {
+      "id": 88878399361,
+      "name": "fold-0-SOLUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T16:00:55Z",
+      "completed_at": "2026-07-22T16:59:53Z"
+    },
+    {
+      "id": 88878399375,
+      "name": "fold-1-SOLUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T16:14:50Z",
+      "completed_at": "2026-07-22T17:25:23Z"
+    },
+    {
+      "id": 88878399383,
+      "name": "fold-2-SOLUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T16:54:48Z",
+      "completed_at": "2026-07-22T18:06:10Z"
+    },
+    {
+      "id": 88878399413,
+      "name": "fold-2-SOLUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T16:59:26Z",
+      "completed_at": "2026-07-22T18:22:59Z"
+    },
+    {
+      "id": 88878399662,
+      "name": "fold-3-SOLUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T17:20:23Z",
+      "completed_at": "2026-07-22T18:47:27Z"
+    },
+    {
+      "id": 88878399823,
+      "name": "fold-4-SOLUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T17:21:49Z",
+      "completed_at": "2026-07-22T19:22:26Z"
+    },
+    {
+      "id": 88878399864,
+      "name": "fold-4-SOLUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T17:25:25Z",
+      "completed_at": "2026-07-22T19:23:31Z"
+    },
+    {
+      "id": 88878400330,
+      "name": "fold-5-SOLUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T17:49:00Z",
+      "completed_at": "2026-07-22T20:07:34Z"
+    },
+    {
+      "id": 88878400437,
+      "name": "fold-5-SOLUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T18:06:12Z",
+      "completed_at": "2026-07-22T19:59:09Z"
+    },
+    {
+      "id": 88878400465,
+      "name": "fold-6-SOLUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T18:07:51Z",
+      "completed_at": "2026-07-22T20:49:16Z"
+    },
+    {
+      "id": 88878400518,
+      "name": "fold-6-SOLUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T18:23:01Z",
+      "completed_at": "2026-07-22T20:51:30Z"
+    },
+    {
+      "id": 88878400566,
+      "name": "fold-7-SOLUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T18:44:27Z",
+      "completed_at": "2026-07-22T21:21:20Z"
+    },
+    {
+      "id": 88878400672,
+      "name": "fold-7-SOLUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T18:45:22Z",
+      "completed_at": "2026-07-22T21:32:42Z"
+    },
+    {
+      "id": 88878400749,
+      "name": "fold-8-SOLUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T18:47:29Z",
+      "completed_at": "2026-07-22T21:46:36Z"
+    },
+    {
+      "id": 88878400966,
+      "name": "fold-8-SOLUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T18:54:31Z",
+      "completed_at": "2026-07-22T21:53:44Z"
+    },
+    {
+      "id": 88878401235,
+      "name": "fold-9-SOLUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T19:22:28Z",
+      "completed_at": "2026-07-22T22:35:06Z"
+    },
+    {
+      "id": 88878401385,
+      "name": "fold-9-SOLUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T19:23:33Z",
+      "completed_at": "2026-07-22T22:36:13Z"
+    },
+    {
+      "id": 88878401593,
+      "name": "fold-0-LINKUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T19:59:11Z",
+      "completed_at": "2026-07-22T20:40:27Z"
+    },
+    {
+      "id": 88878401693,
+      "name": "fold-0-LINKUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T20:07:36Z",
+      "completed_at": "2026-07-22T21:11:55Z"
+    },
+    {
+      "id": 88878401710,
+      "name": "fold-1-LINKUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T20:49:18Z",
+      "completed_at": "2026-07-22T22:00:55Z"
+    },
+    {
+      "id": 88878401713,
+      "name": "fold-1-LINKUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T20:49:18Z",
+      "completed_at": "2026-07-22T22:01:21Z"
+    },
+    {
+      "id": 88878401747,
+      "name": "fold-2-LINKUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T20:51:33Z",
+      "completed_at": "2026-07-22T22:14:35Z"
+    },
+    {
+      "id": 88878401897,
+      "name": "fold-2-LINKUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T21:11:57Z",
+      "completed_at": "2026-07-22T22:08:36Z"
+    },
+    {
+      "id": 88878401962,
+      "name": "fold-3-LINKUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T21:21:22Z",
+      "completed_at": "2026-07-22T22:47:15Z"
+    },
+    {
+      "id": 88878402144,
+      "name": "fold-3-LINKUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T21:37:45Z",
+      "completed_at": "2026-07-22T23:23:11Z"
+    },
+    {
+      "id": 88878402543,
+      "name": "fold-4-LINKUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T21:51:41Z",
+      "completed_at": "2026-07-22T23:52:45Z"
+    },
+    {
+      "id": 88878402621,
+      "name": "fold-4-LINKUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T21:53:46Z",
+      "completed_at": "2026-07-22T23:50:20Z"
+    },
+    {
+      "id": 88878402891,
+      "name": "fold-5-LINKUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T22:00:57Z",
+      "completed_at": "2026-07-23T00:13:57Z"
+    },
+    {
+      "id": 88878402994,
+      "name": "fold-5-LINKUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T22:01:23Z",
+      "completed_at": "2026-07-23T00:17:53Z"
+    },
+    {
+      "id": 88878403036,
+      "name": "fold-6-LINKUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T22:08:38Z",
+      "completed_at": "2026-07-23T00:34:29Z"
+    },
+    {
+      "id": 88878403068,
+      "name": "fold-6-LINKUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T22:14:37Z",
+      "completed_at": "2026-07-23T00:18:59Z"
+    },
+    {
+      "id": 88878403230,
+      "name": "fold-7-LINKUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T22:35:08Z",
+      "completed_at": "2026-07-23T01:26:09Z"
+    },
+    {
+      "id": 88878403281,
+      "name": "fold-7-LINKUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T22:36:16Z",
+      "completed_at": "2026-07-23T01:13:45Z"
+    },
+    {
+      "id": 88878403484,
+      "name": "fold-8-LINKUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-22T22:47:17Z",
+      "completed_at": "2026-07-23T01:44:16Z"
+    },
+    {
+      "id": 88878403660,
+      "name": "fold-8-LINKUSDT-short",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-22T23:23:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 88878403792,
+      "name": "fold-9-LINKUSDT-long",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-22T23:50:22Z",
+      "completed_at": null
+    },
+    {
+      "id": 88878403816,
+      "name": "fold-9-LINKUSDT-short",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-22T23:52:47Z",
+      "completed_at": null
+    },
+    {
+      "id": 88878404126,
+      "name": "fold-0-AAVEUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T00:13:58Z",
+      "completed_at": "2026-07-23T00:51:04Z"
+    },
+    {
+      "id": 88878404180,
+      "name": "fold-0-AAVEUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T00:17:55Z",
+      "completed_at": "2026-07-23T01:03:41Z"
+    },
+    {
+      "id": 88878404273,
+      "name": "fold-1-AAVEUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T00:19:01Z",
+      "completed_at": "2026-07-23T01:28:10Z"
+    },
+    {
+      "id": 88878404338,
+      "name": "fold-1-AAVEUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T00:34:32Z",
+      "completed_at": "2026-07-23T01:46:02Z"
+    },
+    {
+      "id": 88878404446,
+      "name": "fold-2-AAVEUSDT-long",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-23T00:51:06Z",
+      "completed_at": null
+    },
+    {
+      "id": 88878404640,
+      "name": "fold-2-AAVEUSDT-short",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-23T01:03:43Z",
+      "completed_at": null
+    },
+    {
+      "id": 88878404662,
+      "name": "fold-3-AAVEUSDT-long",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-23T01:13:48Z",
+      "completed_at": null
+    },
+    {
+      "id": 88878404873,
+      "name": "fold-3-AAVEUSDT-short",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-23T01:26:11Z",
+      "completed_at": null
+    },
+    {
+      "id": 88878404995,
+      "name": "fold-4-AAVEUSDT-long",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-23T01:28:12Z",
+      "completed_at": null
+    },
+    {
+      "id": 88878405077,
+      "name": "fold-4-AAVEUSDT-short",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-23T01:44:19Z",
+      "completed_at": null
+    },
+    {
+      "id": 88878405337,
+      "name": "fold-5-AAVEUSDT-long",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-23T01:46:04Z",
+      "completed_at": null
+    },
+    {
+      "id": 88878405406,
+      "name": "fold-6-AAVEUSDT-long",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-22T09:01:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 88878405414,
+      "name": "fold-6-AAVEUSDT-short",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-22T09:01:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 88878405452,
+      "name": "fold-7-AAVEUSDT-long",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-22T09:01:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 88878405464,
+      "name": "fold-5-AAVEUSDT-short",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-07-22T09:01:13Z",
+      "completed_at": null
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 8550262894,
+      "name": "smoke-mtf-v2-development-fold-1-AAVEUSDT-short",
+      "size_in_bytes": 2348,
+      "expired": false,
+      "digest": "sha256:dc34a54af642571d670ad1a7c5f74ae36c2150b4c6730b97cf6b054546543c1e"
+    },
+    {
+      "id": 8550232611,
+      "name": "smoke-mtf-v2-development-fold-8-LINKUSDT-long",
+      "size_in_bytes": 2362,
+      "expired": false,
+      "digest": "sha256:d2f59306dd670051c9a999fff6745952bfb6fd2bc28e03196fee9dacca67af0e"
+    },
+    {
+      "id": 8549963920,
+      "name": "smoke-mtf-v2-development-fold-1-AAVEUSDT-long",
+      "size_in_bytes": 2346,
+      "expired": false,
+      "digest": "sha256:b32c73fd8bad248b98be439e6d37bedb4d588cf550b66a45f907c714e73a9c0d"
+    },
+    {
+      "id": 8549935028,
+      "name": "smoke-mtf-v2-development-fold-7-LINKUSDT-long",
+      "size_in_bytes": 2357,
+      "expired": false,
+      "digest": "sha256:486bfe569164eb7770b7a8be3b91235d46a8e16bda10c49fe83ac31ced5d6eef"
+    },
+    {
+      "id": 8549748774,
+      "name": "smoke-mtf-v2-development-fold-7-LINKUSDT-short",
+      "size_in_bytes": 2352,
+      "expired": false,
+      "digest": "sha256:d4435c75097f242675087868fd0d56f68961d2a978f4bc3cc604bb772739e289"
+    },
+    {
+      "id": 8549583036,
+      "name": "smoke-mtf-v2-development-fold-0-AAVEUSDT-short",
+      "size_in_bytes": 2345,
+      "expired": false,
+      "digest": "sha256:790cf784245ea1d71a9468127e910185773e58b8bbd446a27dc579b016a21293"
+    },
+    {
+      "id": 8549358845,
+      "name": "smoke-mtf-v2-development-fold-0-AAVEUSDT-long",
+      "size_in_bytes": 2347,
+      "expired": false,
+      "digest": "sha256:29b2058dbb1ac3e144b3657c50090c9cc4688925cb2ba5b89e0cd6a72382bcc6"
+    },
+    {
+      "id": 8549064379,
+      "name": "smoke-mtf-v2-development-fold-6-LINKUSDT-long",
+      "size_in_bytes": 2361,
+      "expired": false,
+      "digest": "sha256:2bd21c7adbf8df127a11a6e8a1ab9aef272b545aed8402c469ff6d222c621e79"
+    },
+    {
+      "id": 8548802192,
+      "name": "smoke-mtf-v2-development-fold-6-LINKUSDT-short",
+      "size_in_bytes": 2355,
+      "expired": false,
+      "digest": "sha256:129b01b54e6e4a215d9dfbb2c123bfd4fd3670de2c38b61255f827aba4e41583"
+    },
+    {
+      "id": 8548784608,
+      "name": "smoke-mtf-v2-development-fold-5-LINKUSDT-short",
+      "size_in_bytes": 2356,
+      "expired": false,
+      "digest": "sha256:321d1c8a8cfa72e131cc7c01da0860459be54468a76c60e041fc4fe90b2fd38e"
+    },
+    {
+      "id": 8548720509,
+      "name": "smoke-mtf-v2-development-fold-5-LINKUSDT-long",
+      "size_in_bytes": 2352,
+      "expired": false,
+      "digest": "sha256:fad862adf8083e5876d426458e284c92d17539dda00f6bb34932113427b79ff7"
+    },
+    {
+      "id": 8548358660,
+      "name": "smoke-mtf-v2-development-fold-4-LINKUSDT-long",
+      "size_in_bytes": 2354,
+      "expired": false,
+      "digest": "sha256:0a4fa48f5d1f183367f079f193e6e50a123592d983a07227a8290bd6076b08f6"
+    },
+    {
+      "id": 8548314251,
+      "name": "smoke-mtf-v2-development-fold-4-LINKUSDT-short",
+      "size_in_bytes": 2354,
+      "expired": false,
+      "digest": "sha256:3b390517248ddd5efddb704720d2d8fbf33bd4f3d20ce04aa416bb846fff5a2f"
+    },
+    {
+      "id": 8547820363,
+      "name": "smoke-mtf-v2-development-fold-3-LINKUSDT-short",
+      "size_in_bytes": 2356,
+      "expired": false,
+      "digest": "sha256:bf57ecd8b22c5970acefd64de66a5513c736009f73cd8c1bf09f336af7b6d758"
+    },
+    {
+      "id": 8547115733,
+      "name": "smoke-mtf-v2-development-fold-3-LINKUSDT-long",
+      "size_in_bytes": 2354,
+      "expired": false,
+      "digest": "sha256:6624c166e373881e36809ef612ff33a12c4ef49d489637c7ce3514ff0070880b"
+    },
+    {
+      "id": 8546879247,
+      "name": "smoke-mtf-v2-development-fold-9-SOLUSDT-short",
+      "size_in_bytes": 2343,
+      "expired": false,
+      "digest": "sha256:42aedf9ef8e091cce5343813de9c2ee00c8996cf826865464c5fee6c420de4ec"
+    },
+    {
+      "id": 8546854578,
+      "name": "smoke-mtf-v2-development-fold-9-SOLUSDT-long",
+      "size_in_bytes": 2346,
+      "expired": false,
+      "digest": "sha256:bcd5180343e058f82eea7bd031e5ff6459d345fe9ba7a427398605307bbe9053"
+    },
+    {
+      "id": 8546392662,
+      "name": "smoke-mtf-v2-development-fold-2-LINKUSDT-long",
+      "size_in_bytes": 2351,
+      "expired": false,
+      "digest": "sha256:49dc41fa45718d29c254f9197cec577a2109128c0a4ed08c2873b96d3fff4ca7"
+    },
+    {
+      "id": 8546257322,
+      "name": "smoke-mtf-v2-development-fold-2-LINKUSDT-short",
+      "size_in_bytes": 2353,
+      "expired": false,
+      "digest": "sha256:da032698a3f32fde8bfeaf66e18376fa688e29c1448fde3f7a674f569572927f"
+    },
+    {
+      "id": 8546088750,
+      "name": "smoke-mtf-v2-development-fold-1-LINKUSDT-short",
+      "size_in_bytes": 2350,
+      "expired": false,
+      "digest": "sha256:7e77c316d5efec8be4892463e84f4d6cdec8522d07646c6e8e2f41e54b79307d"
+    },
+    {
+      "id": 8546078928,
+      "name": "smoke-mtf-v2-development-fold-1-LINKUSDT-long",
+      "size_in_bytes": 2350,
+      "expired": false,
+      "digest": "sha256:2ec064176984231e0b5c36e2432feba56002718139e0866d6f04136d5ce358bf"
+    },
+    {
+      "id": 8545904720,
+      "name": "smoke-mtf-v2-development-fold-8-SOLUSDT-short",
+      "size_in_bytes": 2355,
+      "expired": false,
+      "digest": "sha256:89f359139f30ebbfe34aa78804cce51876d81a8dbfcbeb5a90a65295da785385"
+    },
+    {
+      "id": 8545755648,
+      "name": "smoke-mtf-v2-development-fold-8-SOLUSDT-long",
+      "size_in_bytes": 2355,
+      "expired": false,
+      "digest": "sha256:47eff330c864b2aac7047e92a203994c39ecedbd108886282e78acc8e9dde55a"
+    },
+    {
+      "id": 8545427506,
+      "name": "smoke-mtf-v2-development-fold-7-SOLUSDT-short",
+      "size_in_bytes": 2348,
+      "expired": false,
+      "digest": "sha256:b9f282bc57ecaf34f40526d9ca48174bf6c0e3d875aa5ccafae134e0a900fd09"
+    },
+    {
+      "id": 8545141375,
+      "name": "smoke-mtf-v2-development-fold-7-SOLUSDT-long",
+      "size_in_bytes": 2352,
+      "expired": false,
+      "digest": "sha256:a7b24fe59d15253ea77a4f3ddbaa6682d33311b4d3ebd9332cba1513c80a66a6"
+    },
+    {
+      "id": 8544902740,
+      "name": "smoke-mtf-v2-development-fold-0-LINKUSDT-short",
+      "size_in_bytes": 2346,
+      "expired": false,
+      "digest": "sha256:cb8487601b37fcae2ff3a427271488922e15837d9f88deeeb6b7898bf6af0a56"
+    },
+    {
+      "id": 8544371203,
+      "name": "smoke-mtf-v2-development-fold-6-SOLUSDT-short",
+      "size_in_bytes": 2360,
+      "expired": false,
+      "digest": "sha256:28fa42bb19f2baec4f2004681399887ead9ac61b7db8938ef730696a6b5536e3"
+    },
+    {
+      "id": 8544311685,
+      "name": "smoke-mtf-v2-development-fold-6-SOLUSDT-long",
+      "size_in_bytes": 2354,
+      "expired": false,
+      "digest": "sha256:9b02ed6c431110bdb8f6a6b4d908373bdb70143ecb292987f62e26f888421734"
+    },
+    {
+      "id": 8544080643,
+      "name": "smoke-mtf-v2-development-fold-0-LINKUSDT-long",
+      "size_in_bytes": 2348,
+      "expired": false,
+      "digest": "sha256:cc030cc5f4b519bb3d01fe2fe6914dc18f6dfea90f764e5fe9e6016d2d791ed9"
+    },
+    {
+      "id": 8543186821,
+      "name": "smoke-mtf-v2-development-fold-5-SOLUSDT-long",
+      "size_in_bytes": 2348,
+      "expired": false,
+      "digest": "sha256:77a39cab2b127a0f6a94183dad870cb895f61645a6aa4a3c4b1e43a3d0e9adf7"
+    },
+    {
+      "id": 8542962036,
+      "name": "smoke-mtf-v2-development-fold-5-SOLUSDT-short",
+      "size_in_bytes": 2346,
+      "expired": false,
+      "digest": "sha256:032f985319491281b8ce332a41ca29b0c4378e0ab6405ea100119fadec4d82a5"
+    },
+    {
+      "id": 8542010368,
+      "name": "smoke-mtf-v2-development-fold-4-SOLUSDT-short",
+      "size_in_bytes": 2353,
+      "expired": false,
+      "digest": "sha256:24d24584b9274ba700d2c90972f1ee84aed88046e224d88a4d92538979c3b3ff"
+    },
+    {
+      "id": 8541980132,
+      "name": "smoke-mtf-v2-development-fold-4-SOLUSDT-long",
+      "size_in_bytes": 2350,
+      "expired": false,
+      "digest": "sha256:eb3fee3027fade2a06e1420d15da7260311030770496e03d56f41d51112de76a"
+    },
+    {
+      "id": 8541221806,
+      "name": "smoke-mtf-v2-development-fold-9-ETHUSDT-short",
+      "size_in_bytes": 2350,
+      "expired": false,
+      "digest": "sha256:37cfef265bf4b63c4141ef1e3e828e2403ff7405899227371471ecd599a6ce2a"
+    },
+    {
+      "id": 8541021241,
+      "name": "smoke-mtf-v2-development-fold-3-SOLUSDT-short",
+      "size_in_bytes": 2349,
+      "expired": false,
+      "digest": "sha256:4011baed81aa07ae420081fe3cca6e98dca2f449960421019d9b43222c407646"
+    },
+    {
+      "id": 8540961311,
+      "name": "smoke-mtf-v2-development-fold-9-ETHUSDT-long",
+      "size_in_bytes": 2351,
+      "expired": false,
+      "digest": "sha256:68a6158c79866888292642ae8293bf20a48dd969ac0835ed45ee6fbfc8197a7f"
+    },
+    {
+      "id": 8540933749,
+      "name": "smoke-mtf-v2-development-fold-3-SOLUSDT-long",
+      "size_in_bytes": 2341,
+      "expired": false,
+      "digest": "sha256:7b06aaa48b692a505f72325d7ad0d9f4052e10aebb978dd25d4c02a69cc77dbf"
+    },
+    {
+      "id": 8540313832,
+      "name": "smoke-mtf-v2-development-fold-2-SOLUSDT-short",
+      "size_in_bytes": 2348,
+      "expired": false,
+      "digest": "sha256:3a8aa642e52e42ed3a10f920430bbb0f81a515a3248b9905a858e5e3f6bd449b"
+    },
+    {
+      "id": 8539882974,
+      "name": "smoke-mtf-v2-development-fold-8-ETHUSDT-short",
+      "size_in_bytes": 2357,
+      "expired": false,
+      "digest": "sha256:1926b0fd3abe7d634efbca20fc2325156f14d60fb3a738a6f34817090efdbc99"
+    },
+    {
+      "id": 8539836193,
+      "name": "smoke-mtf-v2-development-fold-2-SOLUSDT-long",
+      "size_in_bytes": 2342,
+      "expired": false,
+      "digest": "sha256:5c5e5547cd7c370e6ac7a6a64657a05874ae62ca857a553e75a9b149ec55a42c"
+    },
+    {
+      "id": 8539345927,
+      "name": "smoke-mtf-v2-development-fold-1-SOLUSDT-short",
+      "size_in_bytes": 2346,
+      "expired": false,
+      "digest": "sha256:139d95931d1da143344ed5869ffd15a2c7ade35a32d5ebbeb1ec3edc47bb3cf8"
+    },
+    {
+      "id": 8538662596,
+      "name": "smoke-mtf-v2-development-fold-1-SOLUSDT-long",
+      "size_in_bytes": 2347,
+      "expired": false,
+      "digest": "sha256:5487f5f14d6065610354531fa1b3a2bbb9b0d1101bddedab7617a1d6847ae989"
+    },
+    {
+      "id": 8538561612,
+      "name": "smoke-mtf-v2-development-fold-8-ETHUSDT-long",
+      "size_in_bytes": 2359,
+      "expired": false,
+      "digest": "sha256:89e02e6e440e1a531aec68efb07c1f04909f8bb9df48ecc77673710c5126f120"
+    },
+    {
+      "id": 8538522803,
+      "name": "smoke-mtf-v2-development-fold-7-ETHUSDT-short",
+      "size_in_bytes": 2352,
+      "expired": false,
+      "digest": "sha256:6a44078770764914c7e2eb5a39dccdf7c9628a291add2b19edeaa3402ed2f579"
+    },
+    {
+      "id": 8537929360,
+      "name": "smoke-mtf-v2-development-fold-0-SOLUSDT-short",
+      "size_in_bytes": 2342,
+      "expired": false,
+      "digest": "sha256:a2a1c4b646fb8df7ef01fe96c508af41c8d9591cfc8d9445bda2d22b23283858"
+    },
+    {
+      "id": 8537914547,
+      "name": "smoke-mtf-v2-development-fold-0-SOLUSDT-long",
+      "size_in_bytes": 2340,
+      "expired": false,
+      "digest": "sha256:4506f34e3a52660b6743221f9350e07fddb80c0d3168742a39fa0f293d7f9ff5"
+    },
+    {
+      "id": 8537777557,
+      "name": "smoke-mtf-v2-development-fold-7-ETHUSDT-long",
+      "size_in_bytes": 2351,
+      "expired": false,
+      "digest": "sha256:af3fccdb277e5b3b0ebe762d4adf1c6f0d0dd2812fe771684077a4f54388ad20"
+    },
+    {
+      "id": 8537166753,
+      "name": "smoke-mtf-v2-development-fold-6-ETHUSDT-long",
+      "size_in_bytes": 2354,
+      "expired": false,
+      "digest": "sha256:7b9e4cb0e15bd9d611d961fdc6c8ee53deea43e5ddaeb454095f32b8de17eb78"
+    },
+    {
+      "id": 8536577491,
+      "name": "smoke-mtf-v2-development-fold-5-ETHUSDT-short",
+      "size_in_bytes": 2346,
+      "expired": false,
+      "digest": "sha256:65a407e5a98037a3c9d3e63f34b907e75bf3d2510fcac71208985aa184f391fc"
+    },
+    {
+      "id": 8536135929,
+      "name": "smoke-mtf-v2-development-fold-5-ETHUSDT-long",
+      "size_in_bytes": 2347,
+      "expired": false,
+      "digest": "sha256:aa44cc75dd97fd4115483a1b923f40417e8ea25d519f21589207ee19e849582a"
+    },
+    {
+      "id": 8536071404,
+      "name": "smoke-mtf-v2-development-fold-6-ETHUSDT-short",
+      "size_in_bytes": 2359,
+      "expired": false,
+      "digest": "sha256:8a397ee70bf4d5c3f221bc98358ab281823f86c854a2cff6d933dbbfc846d822"
+    },
+    {
+      "id": 8535241892,
+      "name": "smoke-mtf-v2-development-fold-4-ETHUSDT-short",
+      "size_in_bytes": 2349,
+      "expired": false,
+      "digest": "sha256:5fa08b8b83d0aa09a3cba463a93532b75ff00329993464b21074f2028c48aaa9"
+    },
+    {
+      "id": 8535237682,
+      "name": "smoke-mtf-v2-development-fold-4-ETHUSDT-long",
+      "size_in_bytes": 2348,
+      "expired": false,
+      "digest": "sha256:31b466671681aea79e1256d7217f1ecafcb68b58c97bc358848fc94a94e6791c"
+    },
+    {
+      "id": 8534267343,
+      "name": "smoke-mtf-v2-development-fold-3-ETHUSDT-short",
+      "size_in_bytes": 2347,
+      "expired": false,
+      "digest": "sha256:002481390025d3ad0ff08fcdc8dfe1e0eaea7d483bd40cd9f1a60ba957b1dc5e"
+    },
+    {
+      "id": 8533660873,
+      "name": "smoke-mtf-v2-development-fold-3-ETHUSDT-long",
+      "size_in_bytes": 2342,
+      "expired": false,
+      "digest": "sha256:4b24ea6de0d74498ba4e7d132e557fda7cc7aa91af66157eb46397a854770cd7"
+    },
+    {
+      "id": 8533269805,
+      "name": "smoke-mtf-v2-development-fold-9-BTCUSDT-long",
+      "size_in_bytes": 2347,
+      "expired": false,
+      "digest": "sha256:23b7252d8056ee7d997deda2685ed6d10919e41f65213bda6ece8dc0124783d4"
+    },
+    {
+      "id": 8533246955,
+      "name": "smoke-mtf-v2-development-fold-9-BTCUSDT-short",
+      "size_in_bytes": 2352,
+      "expired": false,
+      "digest": "sha256:c193bf1de6b5487789ac07e9f83b62f78fcfe4e3d143a4b6b58f98fb3dd094f4"
+    },
+    {
+      "id": 8532740004,
+      "name": "smoke-mtf-v2-development-fold-2-ETHUSDT-long",
+      "size_in_bytes": 2349,
+      "expired": false,
+      "digest": "sha256:26947fe2927c2eb7549edeeb2203683102039233d3749580f233a691e2ae28b2"
+    },
+    {
+      "id": 8532257793,
+      "name": "smoke-mtf-v2-development-fold-2-ETHUSDT-short",
+      "size_in_bytes": 2343,
+      "expired": false,
+      "digest": "sha256:f79db34feab1b6d0c96c7ffc721ebe217417a25204a989ee633104256c274eea"
+    },
+    {
+      "id": 8531991502,
+      "name": "smoke-mtf-v2-development-fold-8-BTCUSDT-short",
+      "size_in_bytes": 2357,
+      "expired": false,
+      "digest": "sha256:5e99de114521c26c6c7bf8420af73eaf440519e51ee8f8e19654e6fa712d73c4"
+    },
+    {
+      "id": 8531521640,
+      "name": "smoke-mtf-v2-development-fold-8-BTCUSDT-long",
+      "size_in_bytes": 2357,
+      "expired": false,
+      "digest": "sha256:ad35990b8af6f024ad539f8cf2ff220f69950619b417dd40b7251ac9f50cd0ca"
+    },
+    {
+      "id": 8531419601,
+      "name": "smoke-mtf-v2-development-fold-1-ETHUSDT-long",
+      "size_in_bytes": 2341,
+      "expired": false,
+      "digest": "sha256:3775f7b46adbe70a759b256a9928b991967d0e62f3f397e90d922c4d6a2f2a67"
+    },
+    {
+      "id": 8531391880,
+      "name": "smoke-mtf-v2-development-fold-1-ETHUSDT-short",
+      "size_in_bytes": 2713,
+      "expired": false,
+      "digest": "sha256:3a5ffc0bd7a47c854f2d20162172f5706d3e3329adb16d7a49da975fb0afef8a"
+    },
+    {
+      "id": 8530844814,
+      "name": "smoke-mtf-v2-development-fold-7-BTCUSDT-short",
+      "size_in_bytes": 2353,
+      "expired": false,
+      "digest": "sha256:25d501e32b379e2d9ef74c08855b5044fcfc101f70cdceeea5fb4a15610d4046"
+    },
+    {
+      "id": 8530254790,
+      "name": "smoke-mtf-v2-development-fold-0-ETHUSDT-long",
+      "size_in_bytes": 2346,
+      "expired": false,
+      "digest": "sha256:293a16357acbafa1a16c59bc88d3067f8b59ebd689b780d88d082e396be6e76e"
+    },
+    {
+      "id": 8530236324,
+      "name": "smoke-mtf-v2-development-fold-0-ETHUSDT-short",
+      "size_in_bytes": 2336,
+      "expired": false,
+      "digest": "sha256:52962cf54eb666f36263deec002de3d0abdae74ac12415d8aa6a530e24987ad6"
+    },
+    {
+      "id": 8529981439,
+      "name": "smoke-mtf-v2-development-fold-6-BTCUSDT-short",
+      "size_in_bytes": 2358,
+      "expired": false,
+      "digest": "sha256:5c6e93a1b4c1c2018c561959224af15a688f81d62023bdf87faa1d2b46f84f79"
+    },
+    {
+      "id": 8529239526,
+      "name": "smoke-mtf-v2-development-fold-7-BTCUSDT-long",
+      "size_in_bytes": 2355,
+      "expired": false,
+      "digest": "sha256:6432228edbfdf9bc25082a9623330cc8eef3e38f7d6040f9642b83cee2dc65d7"
+    },
+    {
+      "id": 8529175341,
+      "name": "smoke-mtf-v2-development-fold-5-BTCUSDT-long",
+      "size_in_bytes": 2349,
+      "expired": false,
+      "digest": "sha256:50adcbfd382ef8d45d1738adb14486c346be3ab8611add7c1aa3cebda3c1bf26"
+    },
+    {
+      "id": 8528794659,
+      "name": "smoke-mtf-v2-development-fold-5-BTCUSDT-short",
+      "size_in_bytes": 2345,
+      "expired": false,
+      "digest": "sha256:f2448588dbf12b390a5ea3b09455b79c3e15f14a5ab340f8c9badf80139758c4"
+    },
+    {
+      "id": 8528588300,
+      "name": "smoke-mtf-v2-development-fold-6-BTCUSDT-long",
+      "size_in_bytes": 2351,
+      "expired": false,
+      "digest": "sha256:d8c0572cb8165f9eb3f1399bc1af2d61fe007685c1cb3f64253343143a9b3f1a"
+    },
+    {
+      "id": 8527241859,
+      "name": "smoke-mtf-v2-development-fold-4-BTCUSDT-short",
+      "size_in_bytes": 2345,
+      "expired": false,
+      "digest": "sha256:7c6c1dead0d1301d040ae2f36c1120fa0d8bf103b47b4c0cd0490f5711557b21"
+    },
+    {
+      "id": 8527206305,
+      "name": "smoke-mtf-v2-development-fold-4-BTCUSDT-long",
+      "size_in_bytes": 2352,
+      "expired": false,
+      "digest": "sha256:5108215850f0e85adcef2ebff326a49a415f382e46b1b15ff7c6c706b211090c"
+    },
+    {
+      "id": 8526731989,
+      "name": "smoke-mtf-v2-development-fold-3-BTCUSDT-short",
+      "size_in_bytes": 2352,
+      "expired": false,
+      "digest": "sha256:84076433110c6940833f871dae9d822d8241f20e5dacc606abb52ec5d17be747"
+    },
+    {
+      "id": 8526427042,
+      "name": "smoke-mtf-v2-development-fold-2-BTCUSDT-short",
+      "size_in_bytes": 2349,
+      "expired": false,
+      "digest": "sha256:98f152ef2388ccfe228d56f660839b507a2ed0c0c7770e0f51e44a1ca855d397"
+    },
+    {
+      "id": 8526315227,
+      "name": "smoke-mtf-v2-development-fold-2-BTCUSDT-long",
+      "size_in_bytes": 2348,
+      "expired": false,
+      "digest": "sha256:19c31a8cbb409463d0aeb765b3b21d6ca9e0555c868c771739d4e266e5f6b47c"
+    },
+    {
+      "id": 8525942183,
+      "name": "smoke-mtf-v2-development-fold-1-BTCUSDT-short",
+      "size_in_bytes": 2342,
+      "expired": false,
+      "digest": "sha256:310e1393c1f231c8aae8317515d9953936c0fe1c2c426bfd5b98e7680ee5d0b5"
+    },
+    {
+      "id": 8525904197,
+      "name": "smoke-mtf-v2-development-fold-3-BTCUSDT-long",
+      "size_in_bytes": 2346,
+      "expired": false,
+      "digest": "sha256:1981f26507550201415bb3e2203a37e5729c8e3e40702387e770c185b180a22f"
+    },
+    {
+      "id": 8525902987,
+      "name": "smoke-mtf-v2-development-fold-1-BTCUSDT-long",
+      "size_in_bytes": 2345,
+      "expired": false,
+      "digest": "sha256:7f00aefe1452025aee8bb5644cb677e6d0862817ac86af9d11786d71a8d99070"
+    },
+    {
+      "id": 8525599907,
+      "name": "smoke-mtf-v2-development-fold-0-BTCUSDT-short",
+      "size_in_bytes": 2341,
+      "expired": false,
+      "digest": "sha256:272dc79b53c86123a22aeceda2adaacad5a9a6b8035dee65b7a8a2062da48149"
+    },
+    {
+      "id": 8525536149,
+      "name": "smoke-mtf-v2-development-fold-0-BTCUSDT-long",
+      "size_in_bytes": 2338,
+      "expired": false,
+      "digest": "sha256:57d968a6d1e7cb17cbb432aa40aff0fabb139d73c0e2b59c3138cf6f0d3d664e"
+    },
+    {
+      "id": 8523944312,
+      "name": "smoke-mtf-v2-development-data-AAVEUSDT",
+      "size_in_bytes": 3180547,
+      "expired": false,
+      "digest": "sha256:cf4252b86620e16a295de16a1aac3eca8653faa0e7c9cae8ca7fd11bf752ce11"
+    },
+    {
+      "id": 8523944273,
+      "name": "smoke-mtf-v2-development-data-ETHUSDT",
+      "size_in_bytes": 4067148,
+      "expired": false,
+      "digest": "sha256:4ab485bb95a4316068a089ad82caec2cf440fd73998b0faff8d94ac676e01382"
+    },
+    {
+      "id": 8523941936,
+      "name": "smoke-mtf-v2-development-data-SOLUSDT",
+      "size_in_bytes": 3377662,
+      "expired": false,
+      "digest": "sha256:c1ded51bbdd7d70053884b93310ae98f44a5885539cb986846f8e9d5c2dabfa1"
+    },
+    {
+      "id": 8523941760,
+      "name": "smoke-mtf-v2-development-data-BTCUSDT",
+      "size_in_bytes": 4034956,
+      "expired": false,
+      "digest": "sha256:5de24cea9667874026dcba6487cde81f324ebdea0624b916928377e836c1a1d9"
+    },
+    {
+      "id": 8523941325,
+      "name": "smoke-mtf-v2-development-data-LINKUSDT",
+      "size_in_bytes": 3423256,
+      "expired": false,
+      "digest": "sha256:5f0e2b31f7b21ff219ab1ba2bd030065a6df6fe7685c91c7b6fe62f4215ededf"
+    }
+  ]
+}

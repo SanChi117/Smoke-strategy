@@ -1,0 +1,105 @@
+name: SMOKE MTF V2 Recognition
+
+on:
+  pull_request:
+    paths:
+      - 'strategy_lab/mtf_*.py'
+      - 'strategy_lab/period_liquidity_levels*.py'
+      - 'strategy_lab/event_risk.py'
+      - 'research/smoke_mtf_v2_*.json'
+      - 'scripts/*smoke_mtf_v2*.py'
+      - 'scripts/*funding*.py'
+      - '.github/workflows/smoke-mtf-v2-recognition.yml'
+      - '.github/workflows/smoke-mtf-v2-development-profitability-v2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recognition-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+      - name: Compile SMOKE MTF V2
+        run: |
+          python -m py_compile \
+            strategy_lab/mtf_dealing_range_v2.py \
+            strategy_lab/mtf_entry_model_v2.py \
+            strategy_lab/mtf_raid_signal_v2.py \
+            strategy_lab/mtf_volume_confirmation_v2.py \
+            strategy_lab/mtf_vc_zone_test_v2.py \
+            strategy_lab/mtf_target_selection_v2.py \
+            strategy_lab/period_liquidity_levels.py \
+            strategy_lab/mtf_liquidity_map_v2.py \
+            strategy_lab/mtf_reference_validation.py \
+            strategy_lab/mtf_labelled_replay.py \
+            strategy_lab/mtf_recognition_fast_runtime_v2.py \
+            strategy_lab/mtf_recognition_export_v2.py \
+            strategy_lab/mtf_semantic_corrections_v2_smoke_test.py \
+            strategy_lab/mtf_development_backtest_v1.py \
+            scripts/merge_smoke_mtf_v2_recognition_parts.py \
+            scripts/probe_smoke_mtf_v2_real_recognition.py \
+            scripts/probe_smoke_mtf_v2_export_diagnostic.py \
+            scripts/build_smoke_mtf_v2_review_queue.py \
+            scripts/build_smoke_mtf_v2_semantic_replay.py \
+            scripts/run_smoke_mtf_v2_development_fold.py \
+            scripts/aggregate_smoke_mtf_v2_development.py \
+            scripts/download_binance_vision_funding_archives.py \
+            scripts/merge_binance_vision_funding_rates.py
+      - name: Test closed MTF context and levels
+        run: python -m strategy_lab.mtf_dealing_range_v2_smoke_test
+      - name: Test fresh H1 raid
+        run: python -m strategy_lab.mtf_raid_signal_v2_smoke_test
+      - name: Test H1 volume confirmation
+        run: python -m strategy_lab.mtf_volume_confirmation_v2_smoke_test
+      - name: Test later closed 15m VC-zone retest
+        run: python -m strategy_lab.mtf_vc_zone_test_v2_smoke_test
+      - name: Test 5m BOS and next 15m execution
+        run: python -m strategy_lab.mtf_entry_model_v2_smoke_test
+      - name: Test full raid and VC entry state machine
+        run: python -m strategy_lab.mtf_entry_state_machine_v2_smoke_test
+      - name: Test deterministic frozen-part merge
+        run: python -m strategy_lab.mtf_recognition_partition_merge_smoke_test
+      - name: Test timeframe-matched FTA targets
+        run: python -m strategy_lab.mtf_target_selection_v2_smoke_test
+      - name: Test previous D W M liquidity levels
+        run: python -m strategy_lab.period_liquidity_levels_smoke_test
+      - name: Test unified liquidity map
+        run: python -m strategy_lab.mtf_liquidity_map_v2_smoke_test
+      - name: Test frozen semantic branches
+        run: python -m strategy_lab.mtf_reference_validation_smoke_test
+      - name: Test labelled replay contract
+        run: python -m strategy_lab.mtf_labelled_replay_smoke_test
+      - name: Test semantic definition corrections
+        run: python -m strategy_lab.mtf_semantic_corrections_v2_smoke_test
+      - name: Test cached runtime output equivalence
+        run: python -m strategy_lab.mtf_recognition_fast_runtime_v2_smoke_test
+      - name: Test recognition export contract
+        run: python -m strategy_lab.mtf_recognition_export_v2_smoke_test
+      - name: Test balanced no-PnL review queue
+        run: python -m strategy_lab.mtf_review_queue_smoke_test
+      - name: Test targeted causal semantic replay
+        run: python -m strategy_lab.mtf_semantic_replay_smoke_test
+      - name: Test artifact-only status probe
+        run: python -m strategy_lab.mtf_status_probe_smoke_test
+      - name: Test development accounting
+        run: python -m strategy_lab.mtf_development_backtest_v1_smoke_test
+      - name: Write semantic audit
+        run: python scripts/validate_smoke_mtf_v2_reference_scenarios.py
+      - name: Upload semantic audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-mtf-v2-recognition-audit
+          path: results/smoke_mtf_v2_reference_validation/report.json
+          if-no-files-found: error

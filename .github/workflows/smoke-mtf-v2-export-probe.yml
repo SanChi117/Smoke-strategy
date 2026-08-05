@@ -1,0 +1,45 @@
+name: SMOKE MTF V2 Export Probe
+
+on:
+  push:
+    branches: ['agent/smoke-mtf-dealing-range-v2']
+    paths: ['research_triggers/smoke_mtf_v2_export_probe.txt']
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  probe-cached-export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout probe
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Read benchmark SHA
+        shell: bash
+        run: |
+          target="$(head -n 1 research_triggers/smoke_mtf_v2_export_probe.txt | tr -d '[:space:]')"
+          test -n "$target"
+          echo "TARGET_SHA=$target" >> "$GITHUB_ENV"
+      - name: Compile probe
+        run: python -m py_compile scripts/probe_smoke_mtf_v2_export_diagnostic.py
+      - name: Analyse benchmark artifact
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OUT_DIR: results/smoke_mtf_v2_export_probe
+        run: python scripts/probe_smoke_mtf_v2_export_diagnostic.py
+      - name: Upload benchmark probe
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-mtf-v2-export-probe
+          path: results/smoke_mtf_v2_export_probe/**
+          if-no-files-found: warn
+          retention-days: 14

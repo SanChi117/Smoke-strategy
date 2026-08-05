@@ -1,0 +1,124 @@
+{
+  "study_id": "SMOKE_MTF_V2_DEVELOPMENT_PROFITABILITY_V2",
+  "status": "PREREGISTERED_NOT_STARTED",
+  "created_before_any_development_pnl": true,
+  "supersedes": {
+    "study_id": "SMOKE_MTF_V2_DEVELOPMENT_PROFITABILITY_V1",
+    "reason": "The frozen event-risk contract requires a point-in-time historical event snapshot. No such causal archive exists in the repository, and current API responses cannot reconstruct what was known historically. V1 is superseded before execution and before any development PnL was viewed."
+  },
+  "recognition_freeze_sha": "492eee9fdba5993b7f518e9a1ff38576e8b14285",
+  "freeze_document": "research/SMOKE_MTF_V2_RECOGNITION_CORE_FREEZE_V1.md",
+  "candidate_count": 1,
+  "candidate": {
+    "strategy_id": "SMOKE_MTF_DEALING_RANGE_V2_FROZEN_CORE_V2",
+    "directions": ["long", "short"],
+    "symbols": ["BTCUSDT", "ETHUSDT", "SOLUSDT", "LINKUSDT", "AAVEUSDT"],
+    "source_market": "Binance USD-M Futures",
+    "base_data": "closed 5m candles",
+    "entry_execution": "next aligned 15m open after the frozen confirmation chain",
+    "minimum_rr": 1.7,
+    "minimum_quality_score": 55.0,
+    "scheduled_event_layer": {
+      "included_in_primary_development": false,
+      "reason": "No causal point-in-time historical event snapshot is available.",
+      "performance_credit_forbidden": true,
+      "future_role": "prospective risk overlay only; it cannot rescue a failed development result"
+    }
+  },
+  "development_data": {
+    "history_start": "2024-07-01T00:00:00Z",
+    "evaluation_start": "2025-01-01T00:00:00Z",
+    "end_exclusive": "2026-07-01T00:00:00Z",
+    "role": "development_only_exposed_period",
+    "external_holdout_eligible": false,
+    "folds": 10,
+    "fold_method": "10 contiguous chronological day-aligned folds; first six contain 55 days and last four contain 54 days",
+    "fold_assignment": "trade belongs to the fold containing its entry timestamp",
+    "closed_candles_only": true
+  },
+  "execution_partition": {
+    "data_jobs": 5,
+    "fold_jobs": 50,
+    "one_symbol_per_data_job": true,
+    "one_symbol_and_one_fold_per_evaluation_job": true,
+    "portfolio_aggregation": "all accepted candidates merged globally by entry time, symbol and side",
+    "same_timestamp_priority": "symbol alphabetical then side",
+    "partitioning_may_not_change_signals": true
+  },
+  "portfolio": {
+    "initial_equity": 10000.0,
+    "risk_per_trade_pct": 0.5,
+    "max_total_open_risk_pct": 2.0,
+    "max_one_position_per_symbol": true,
+    "overlapping_positions_across_symbols": true,
+    "compounding": true,
+    "risk_sizing": "notional = current realized equity * risk fraction / structural stop distance fraction"
+  },
+  "cost_model": {
+    "commission_bps_per_side": 4.0,
+    "slippage_bps_per_side": 1.0,
+    "funding": "timestamped Binance USD-M historical funding rates are mandatory",
+    "funding_source": "official Binance Vision monthly fundingRate archives",
+    "missing_funding_rule": "official verdict becomes INCOMPLETE_FUNDING_DATA and cannot pass",
+    "cost_model_frozen_before_execution": true
+  },
+  "trade_accounting": {
+    "entry": "frozen next aligned 15m open",
+    "stop": "frozen structural invalidation",
+    "target": "frozen timeframe-matched FTA",
+    "intrabar_ambiguity": "stop-first when stop and target are both touched inside the same 5m candle",
+    "unresolved_at_study_end": "close at the final available 5m close before end_exclusive",
+    "no_partial_exits": true,
+    "no_trailing": true,
+    "no_averaging": true,
+    "no_reentry_override": true,
+    "same_symbol_overlap": "later entries rejected while an accepted position on the symbol remains open"
+  },
+  "drawdown": {
+    "primary_method": "conservative realized equity minus all active structural risk at each entry and exit event",
+    "purpose": "do not understate open-position risk",
+    "maximum_pct": 8.0
+  },
+  "primary_metrics": [
+    "pooled_profit_factor",
+    "average_trade_return_after_costs",
+    "accepted_trade_count",
+    "positive_fold_count",
+    "conservative_portfolio_max_drawdown"
+  ],
+  "development_pass_gate": {
+    "minimum_trades": 60,
+    "minimum_pooled_profit_factor": 1.2,
+    "minimum_average_trade_return_strictly_greater_than": 0.0,
+    "minimum_positive_folds": 6,
+    "total_folds": 10,
+    "maximum_portfolio_drawdown_pct": 8.0,
+    "all_conditions_required": true
+  },
+  "decision_rule": {
+    "pass": "All development gates pass for the single frozen candidate and funding coverage is complete.",
+    "fail": "Any performance gate fails; do not tune this candidate from observed PnL.",
+    "insufficient_activity": "Fewer than 60 accepted trades is a development failure.",
+    "selection": "Exactly one candidate exists; no best-of-many selection is permitted."
+  },
+  "after_pass_only": {
+    "freeze_exactly_one_leader": true,
+    "external_holdout_required": true,
+    "holdout_period": "must be selected from data never used for recognition, semantic review or development",
+    "holdout_gate": {
+      "profit_factor_strictly_greater_than": 1.1,
+      "target_profit_factor": 1.2,
+      "minimum_average_trade_return": 0.0,
+      "minimum_positive_fold_fraction": 0.5
+    }
+  },
+  "prohibited_after_result": [
+    "threshold tuning",
+    "symbol or period cherry-picking",
+    "rule changes based on PnL",
+    "adding the event layer to rescue a failure",
+    "external holdout before development PASS",
+    "VPS, paper or live before required gates"
+  ],
+  "execution_gate": "Run only after CI for the implementation and this preregistration is green."
+}

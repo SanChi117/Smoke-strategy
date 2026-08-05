@@ -1,0 +1,14 @@
+{
+  "run_id": 29684829694,
+  "source_head_sha": "431aefe9ca2fce456e4cc19ae351394e833de77a",
+  "status": "failure",
+  "shard_result": "failure",
+  "aggregate_result": "skipped",
+  "execution": "5_symbols_x_7_days_35_shards",
+  "mode": "SMOKE_MTF_V2_REAL_RECOGNITION_RUN_V1",
+  "pnl_used": false,
+  "future_outcomes_used": false,
+  "history_period": "2024-07-01 through 2025-02-08",
+  "scan_period": "2025-02-01 through 2025-02-08",
+  "selection_rule": "first 4 chronologically per symbol, side and setup_state"
+}

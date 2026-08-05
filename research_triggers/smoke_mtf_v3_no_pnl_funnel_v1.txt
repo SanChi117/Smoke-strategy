@@ -1,0 +1,8 @@
+SMOKE_MTF_V3_NO_PNL_FUNNEL_V1
+Preregistration: research/smoke_mtf_v3_no_pnl_funnel_prereg_v1.json
+Source recognition freeze: 492eee9fdba5993b7f518e9a1ff38576e8b14285
+Source V2 development run: 29906237656 (closed FAIL candidate)
+Audit period: 2025-01-01 through 2026-07-01 exclusive
+Five symbols. Ten chronological folds. LONG and SHORT. 100 outcome-blind partitions.
+No PnL, future returns, trade outcomes, TP/SL outcomes, MFE, MAE, PF, net return or drawdown.
+Trigger: 2026-07-23T10:00:00Z

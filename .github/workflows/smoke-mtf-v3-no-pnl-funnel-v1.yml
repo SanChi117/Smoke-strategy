@@ -1,0 +1,153 @@
+name: SMOKE MTF V3 No-PnL Funnel V1
+
+on:
+  push:
+    branches: ['agent/smoke-mtf-dealing-range-v2']
+    paths: ['research_triggers/smoke_mtf_v3_no_pnl_funnel_v1.txt']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  prepare-symbol-data:
+    name: prepare-${{ matrix.symbol }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    steps:
+      - name: Checkout exact audit trigger commit
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install and verify no-PnL runner
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          python -m strategy_lab.mtf_no_pnl_funnel_v1_smoke_test
+          python -m strategy_lab.mtf_recognition_fast_runtime_v2_smoke_test
+      - name: Create one-symbol universe
+        run: printf '%s\n' '${{ matrix.symbol }}' > "$RUNNER_TEMP/symbol.txt"
+      - name: Download official closed 5m history
+        run: |
+          python scripts/download_binance_vision_futures_archives.py \
+            --symbols-file "$RUNNER_TEMP/symbol.txt" \
+            --interval 5m --start-date '2024-07-01' --end-date '2026-06-30' \
+            --out-dir "$RUNNER_TEMP/klines" \
+            --summary-json "$RUNNER_TEMP/kline_download_summary.json" \
+            --workers 6 --retries 2 --timeout 30
+      - name: Merge and verify closed candles
+        run: |
+          mkdir -p "$RUNNER_TEMP/audit-data"
+          python scripts/merge_binance_vision_futures_klines.py \
+            --input-dir "$RUNNER_TEMP/klines" \
+            --out "$RUNNER_TEMP/audit-data/${{ matrix.symbol }}-5m.csv" \
+            --symbols-file "$RUNNER_TEMP/symbol.txt" \
+            --interval 5m --start-date '2024-07-01' --end-date '2026-06-30' \
+            --summary-json "$RUNNER_TEMP/audit-data/kline_merge_summary.json" \
+            --min-coverage 0.95
+          cp "$RUNNER_TEMP/kline_download_summary.json" "$RUNNER_TEMP/audit-data/"
+      - name: Upload immutable audit data
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-mtf-v3-no-pnl-data-${{ matrix.symbol }}
+          path: ${{ runner.temp }}/audit-data/**
+          if-no-files-found: error
+          retention-days: 7
+
+  funnel-part:
+    name: funnel-${{ matrix.fold }}-${{ matrix.symbol }}-${{ matrix.side }}
+    needs: prepare-symbol-data
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+        fold: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        side: [long, short]
+    steps:
+      - name: Checkout exact audit trigger commit
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install and verify frozen recognition audit
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          python -m strategy_lab.mtf_no_pnl_funnel_v1_smoke_test
+          python -m strategy_lab.mtf_recognition_fast_runtime_v2_smoke_test
+      - name: Download immutable symbol data
+        uses: actions/download-artifact@v4
+        with:
+          name: smoke-mtf-v3-no-pnl-data-${{ matrix.symbol }}
+          path: ${{ runner.temp }}/audit-data
+      - name: Run outcome-blind funnel partition
+        run: |
+          CANDLES=$(find "$RUNNER_TEMP/audit-data" -name '*-5m.csv' -print -quit)
+          test -n "$CANDLES"
+          mkdir -p "$RUNNER_TEMP/funnel-part"
+          /usr/bin/time -v -o "$RUNNER_TEMP/funnel-part/performance.txt" \
+            python scripts/run_smoke_mtf_v3_no_pnl_funnel_part.py \
+              --candles "$CANDLES" \
+              --fold '${{ matrix.fold }}' \
+              --side '${{ matrix.side }}' \
+              --out-dir "$RUNNER_TEMP/funnel-part"
+      - name: Upload outcome-blind funnel partition
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-mtf-v3-no-pnl-part-${{ matrix.fold }}-${{ matrix.symbol }}-${{ matrix.side }}
+          path: ${{ runner.temp }}/funnel-part/**
+          if-no-files-found: error
+          retention-days: 30
+
+  aggregate-funnel:
+    name: aggregate-no-pnl-funnel
+    needs: funnel-part
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact audit trigger commit
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install and verify outcome exclusion
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          python -m strategy_lab.mtf_no_pnl_funnel_v1_smoke_test
+      - name: Download all 100 funnel partitions
+        uses: actions/download-artifact@v4
+        with:
+          pattern: smoke-mtf-v3-no-pnl-part-*
+          path: ${{ runner.temp }}/funnel-parts
+          merge-multiple: false
+      - name: Aggregate causal funnel only
+        run: |
+          python scripts/aggregate_smoke_mtf_v3_no_pnl_funnel.py \
+            --parts-root "$RUNNER_TEMP/funnel-parts" \
+            --out-dir "$RUNNER_TEMP/funnel-result" \
+            --expected-parts 100
+      - name: Write visible audit result
+        run: cat "$RUNNER_TEMP/funnel-result/FUNNEL_RESULT.md" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload final no-PnL funnel result
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-mtf-v3-no-pnl-funnel-v1-result
+          path: ${{ runner.temp }}/funnel-result/**
+          if-no-files-found: error
+          retention-days: 90

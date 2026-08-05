@@ -1,0 +1,79 @@
+name: SMOKE MTF V2 Export Diagnostic
+
+on:
+  push:
+    branches: ['agent/smoke-mtf-dealing-range-v2']
+    paths: ['research_triggers/smoke_mtf_v2_export_diagnostic.txt']
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  diagnose-sol-one-day:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout exact diagnostic commit
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install exporter and prove output equivalence
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          python -m py_compile \
+            strategy_lab/mtf_recognition_fast_runtime_v2.py \
+            strategy_lab/mtf_recognition_export_v2.py \
+            scripts/export_smoke_mtf_v2_recognition_candidates.py
+          python -m strategy_lab.mtf_recognition_fast_runtime_v2_smoke_test
+          python -m strategy_lab.mtf_recognition_export_v2_smoke_test
+      - name: Prepare fixed SOL history
+        run: |
+          printf '%s\n' 'SOLUSDT' > "$RUNNER_TEMP/symbol.txt"
+          python scripts/download_binance_vision_futures_archives.py \
+            --symbols-file "$RUNNER_TEMP/symbol.txt" \
+            --interval 5m --start-date '2024-07-01' --end-date '2025-02-08' \
+            --out-dir "$RUNNER_TEMP/binance-sol" \
+            --summary-json "$RUNNER_TEMP/archive_download_summary.json" \
+            --workers 4 --retries 2 --timeout 30
+          python scripts/merge_binance_vision_futures_klines.py \
+            --input-dir "$RUNNER_TEMP/binance-sol" \
+            --out "$RUNNER_TEMP/SOLUSDT-5m.csv" \
+            --symbols-file "$RUNNER_TEMP/symbol.txt" \
+            --interval 5m --start-date '2024-07-01' --end-date '2025-02-08' \
+            --summary-json "$RUNNER_TEMP/archive_merge_summary.json" \
+            --min-coverage 0.95
+      - name: Profile one frozen symbol-day export
+        shell: bash
+        run: |
+          set +e
+          /usr/bin/time -v python scripts/export_smoke_mtf_v2_recognition_candidates.py \
+            --candles "$RUNNER_TEMP/SOLUSDT-5m.csv" \
+            --scan-start '2025-02-01T00:00:00' \
+            --scan-end '2025-02-02T00:00:00' \
+            --per-group 4 --workers 1 \
+            --out-dir "$RUNNER_TEMP/diagnostic-result" \
+            > "$RUNNER_TEMP/export-diagnostic.log" 2>&1
+          status=$?
+          echo "export_exit_code=$status"
+          echo '----- diagnostic tail -----'
+          tail -n 250 "$RUNNER_TEMP/export-diagnostic.log" || true
+          echo '----- end diagnostic tail -----'
+          exit $status
+      - name: Upload diagnostic log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-mtf-v2-export-diagnostic
+          path: |
+            ${{ runner.temp }}/export-diagnostic.log
+            ${{ runner.temp }}/archive_download_summary.json
+            ${{ runner.temp }}/archive_merge_summary.json
+            ${{ runner.temp }}/diagnostic-result/**
+          if-no-files-found: warn
+          retention-days: 7

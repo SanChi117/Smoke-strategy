@@ -1,0 +1,1470 @@
+{
+  "target_sha": "d61ac27048df75e12b007eb05c42881b91096085",
+  "run_found": true,
+  "run": {
+    "id": 29989901783,
+    "name": "SMOKE MTF V3 No-PnL Funnel V1",
+    "status": "queued",
+    "conclusion": null,
+    "run_number": 1,
+    "html_url": "https://github.com/SanChi117/Smoke-strategy/actions/runs/29989901783",
+    "created_at": "2026-07-23T08:00:23Z",
+    "updated_at": "2026-07-23T08:00:23Z",
+    "head_sha": "d61ac27048df75e12b007eb05c42881b91096085"
+  },
+  "jobs": [
+    {
+      "id": 89150103738,
+      "name": "prepare-BTCUSDT",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T08:00:25Z",
+      "completed_at": "2026-07-23T08:00:59Z"
+    },
+    {
+      "id": 89150103752,
+      "name": "prepare-SOLUSDT",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T08:00:26Z",
+      "completed_at": "2026-07-23T08:01:01Z"
+    },
+    {
+      "id": 89150103771,
+      "name": "prepare-LINKUSDT",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T08:00:25Z",
+      "completed_at": "2026-07-23T08:00:58Z"
+    },
+    {
+      "id": 89150103774,
+      "name": "prepare-AAVEUSDT",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T08:00:26Z",
+      "completed_at": "2026-07-23T08:01:00Z"
+    },
+    {
+      "id": 89150103787,
+      "name": "prepare-ETHUSDT",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T08:00:25Z",
+      "completed_at": "2026-07-23T08:00:55Z"
+    },
+    {
+      "id": 89150207050,
+      "name": "funnel-2-BTCUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T08:01:03Z",
+      "completed_at": "2026-07-23T09:35:12Z"
+    },
+    {
+      "id": 89150207051,
+      "name": "funnel-6-BTCUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T09:15:24Z",
+      "completed_at": "2026-07-23T11:51:42Z"
+    },
+    {
+      "id": 89150207060,
+      "name": "funnel-4-BTCUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T08:01:03Z",
+      "completed_at": "2026-07-23T10:06:02Z"
+    },
+    {
+      "id": 89150207062,
+      "name": "funnel-0-BTCUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T08:01:03Z",
+      "completed_at": "2026-07-23T08:50:14Z"
+    },
+    {
+      "id": 89150207067,
+      "name": "funnel-0-BTCUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T08:01:03Z",
+      "completed_at": "2026-07-23T09:03:05Z"
+    },
+    {
+      "id": 89150207069,
+      "name": "funnel-5-BTCUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T09:03:07Z",
+      "completed_at": "2026-07-23T11:20:59Z"
+    },
+    {
+      "id": 89150207073,
+      "name": "funnel-1-BTCUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T08:01:03Z",
+      "completed_at": "2026-07-23T09:15:34Z"
+    },
+    {
+      "id": 89150207079,
+      "name": "funnel-8-BTCUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T09:35:14Z",
+      "completed_at": "2026-07-23T12:01:28Z"
+    },
+    {
+      "id": 89150207080,
+      "name": "funnel-7-BTCUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T09:33:15Z",
+      "completed_at": "2026-07-23T12:24:23Z"
+    },
+    {
+      "id": 89150207085,
+      "name": "funnel-3-BTCUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T08:01:03Z",
+      "completed_at": "2026-07-23T09:33:13Z"
+    },
+    {
+      "id": 89150207096,
+      "name": "funnel-9-BTCUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T10:09:04Z",
+      "completed_at": "2026-07-23T13:29:20Z"
+    },
+    {
+      "id": 89150207098,
+      "name": "funnel-8-BTCUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T09:45:00Z",
+      "completed_at": "2026-07-23T12:21:18Z"
+    },
+    {
+      "id": 89150207099,
+      "name": "funnel-9-BTCUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T10:06:06Z",
+      "completed_at": "2026-07-23T12:55:51Z"
+    },
+    {
+      "id": 89150207101,
+      "name": "funnel-4-BTCUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T08:01:03Z",
+      "completed_at": "2026-07-23T10:09:03Z"
+    },
+    {
+      "id": 89150207102,
+      "name": "funnel-5-BTCUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T08:50:18Z",
+      "completed_at": "2026-07-23T11:12:07Z"
+    },
+    {
+      "id": 89150207104,
+      "name": "funnel-6-BTCUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T09:15:35Z",
+      "completed_at": "2026-07-23T11:52:38Z"
+    },
+    {
+      "id": 89150207112,
+      "name": "funnel-7-BTCUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T09:28:51Z",
+      "completed_at": "2026-07-23T12:23:23Z"
+    },
+    {
+      "id": 89150207115,
+      "name": "funnel-2-BTCUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T08:01:03Z",
+      "completed_at": "2026-07-23T09:28:48Z"
+    },
+    {
+      "id": 89150207120,
+      "name": "funnel-3-BTCUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T08:01:03Z",
+      "completed_at": "2026-07-23T09:44:58Z"
+    },
+    {
+      "id": 89150207140,
+      "name": "funnel-1-BTCUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T08:01:03Z",
+      "completed_at": "2026-07-23T09:15:22Z"
+    },
+    {
+      "id": 89150207654,
+      "name": "funnel-0-ETHUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T11:12:09Z",
+      "completed_at": "2026-07-23T12:01:21Z"
+    },
+    {
+      "id": 89150207687,
+      "name": "funnel-0-ETHUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T11:21:01Z",
+      "completed_at": "2026-07-23T12:13:02Z"
+    },
+    {
+      "id": 89150207705,
+      "name": "funnel-1-ETHUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T11:52:40Z",
+      "completed_at": "2026-07-23T12:40:21Z"
+    },
+    {
+      "id": 89150207715,
+      "name": "funnel-1-ETHUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T11:51:44Z",
+      "completed_at": "2026-07-23T13:03:57Z"
+    },
+    {
+      "id": 89150207733,
+      "name": "funnel-2-ETHUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T12:01:26Z",
+      "completed_at": "2026-07-23T13:32:10Z"
+    },
+    {
+      "id": 89150207753,
+      "name": "funnel-3-ETHUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T12:13:06Z",
+      "completed_at": "2026-07-23T14:04:24Z"
+    },
+    {
+      "id": 89150207757,
+      "name": "funnel-2-ETHUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T12:01:29Z",
+      "completed_at": "2026-07-23T13:28:25Z"
+    },
+    {
+      "id": 89150207779,
+      "name": "funnel-4-ETHUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T12:23:26Z",
+      "completed_at": "2026-07-23T14:18:43Z"
+    },
+    {
+      "id": 89150207808,
+      "name": "funnel-3-ETHUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T12:21:20Z",
+      "completed_at": "2026-07-23T14:11:24Z"
+    },
+    {
+      "id": 89150207871,
+      "name": "funnel-4-ETHUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T12:24:27Z",
+      "completed_at": "2026-07-23T14:18:46Z"
+    },
+    {
+      "id": 89150208358,
+      "name": "funnel-5-ETHUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T12:55:52Z",
+      "completed_at": "2026-07-23T14:30:45Z"
+    },
+    {
+      "id": 89150208388,
+      "name": "funnel-5-ETHUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T12:40:23Z",
+      "completed_at": "2026-07-23T14:11:46Z"
+    },
+    {
+      "id": 89150208399,
+      "name": "funnel-6-ETHUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T13:03:59Z",
+      "completed_at": "2026-07-23T15:42:09Z"
+    },
+    {
+      "id": 89150208457,
+      "name": "funnel-7-ETHUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T13:29:23Z",
+      "completed_at": "2026-07-23T16:13:00Z"
+    },
+    {
+      "id": 89150208458,
+      "name": "funnel-6-ETHUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T13:28:28Z",
+      "completed_at": "2026-07-23T16:00:36Z"
+    },
+    {
+      "id": 89150208492,
+      "name": "funnel-8-ETHUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T14:04:26Z",
+      "completed_at": "2026-07-23T17:06:01Z"
+    },
+    {
+      "id": 89150208497,
+      "name": "funnel-9-ETHUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T14:11:49Z",
+      "completed_at": "2026-07-23T17:30:49Z"
+    },
+    {
+      "id": 89150208505,
+      "name": "funnel-8-ETHUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T14:11:27Z",
+      "completed_at": "2026-07-23T17:07:26Z"
+    },
+    {
+      "id": 89150208530,
+      "name": "funnel-7-ETHUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T13:32:12Z",
+      "completed_at": "2026-07-23T16:32:15Z"
+    },
+    {
+      "id": 89150208580,
+      "name": "funnel-9-ETHUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T14:18:48Z",
+      "completed_at": "2026-07-23T17:05:55Z"
+    },
+    {
+      "id": 89150209156,
+      "name": "funnel-0-SOLUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T14:18:50Z",
+      "completed_at": "2026-07-23T15:17:48Z"
+    },
+    {
+      "id": 89150209236,
+      "name": "funnel-1-SOLUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T15:27:56Z",
+      "completed_at": "2026-07-23T16:41:57Z"
+    },
+    {
+      "id": 89150209252,
+      "name": "funnel-2-SOLUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T15:42:11Z",
+      "completed_at": "2026-07-23T17:09:24Z"
+    },
+    {
+      "id": 89150209298,
+      "name": "funnel-2-SOLUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T16:00:38Z",
+      "completed_at": "2026-07-23T17:33:49Z"
+    },
+    {
+      "id": 89150209327,
+      "name": "funnel-0-SOLUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T14:30:48Z",
+      "completed_at": "2026-07-23T15:27:54Z"
+    },
+    {
+      "id": 89150209328,
+      "name": "funnel-3-SOLUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T16:32:17Z",
+      "completed_at": "2026-07-23T17:57:51Z"
+    },
+    {
+      "id": 89150209339,
+      "name": "funnel-3-SOLUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T16:13:01Z",
+      "completed_at": "2026-07-23T17:58:23Z"
+    },
+    {
+      "id": 89150209345,
+      "name": "funnel-4-SOLUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T16:38:56Z",
+      "completed_at": "2026-07-23T18:36:51Z"
+    },
+    {
+      "id": 89150209356,
+      "name": "funnel-1-SOLUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T15:17:50Z",
+      "completed_at": "2026-07-23T16:38:54Z"
+    },
+    {
+      "id": 89150209518,
+      "name": "funnel-4-SOLUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T16:41:59Z",
+      "completed_at": "2026-07-23T18:21:02Z"
+    },
+    {
+      "id": 89150209912,
+      "name": "funnel-5-SOLUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T17:05:57Z",
+      "completed_at": "2026-07-23T19:27:21Z"
+    },
+    {
+      "id": 89150209926,
+      "name": "funnel-5-SOLUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T17:06:03Z",
+      "completed_at": "2026-07-23T19:20:58Z"
+    },
+    {
+      "id": 89150209943,
+      "name": "funnel-6-SOLUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T17:07:27Z",
+      "completed_at": "2026-07-23T19:41:45Z"
+    },
+    {
+      "id": 89150209987,
+      "name": "funnel-6-SOLUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T17:09:26Z",
+      "completed_at": "2026-07-23T19:39:32Z"
+    },
+    {
+      "id": 89150209999,
+      "name": "funnel-7-SOLUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T17:30:51Z",
+      "completed_at": "2026-07-23T20:26:05Z"
+    },
+    {
+      "id": 89150210030,
+      "name": "funnel-7-SOLUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T17:33:51Z",
+      "completed_at": "2026-07-23T19:24:40Z"
+    },
+    {
+      "id": 89150210073,
+      "name": "funnel-8-SOLUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T17:57:53Z",
+      "completed_at": "2026-07-23T20:49:29Z"
+    },
+    {
+      "id": 89150210185,
+      "name": "funnel-8-SOLUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T17:58:25Z",
+      "completed_at": "2026-07-23T20:56:55Z"
+    },
+    {
+      "id": 89150210201,
+      "name": "funnel-9-SOLUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T18:21:04Z",
+      "completed_at": "2026-07-23T21:43:08Z"
+    },
+    {
+      "id": 89150210241,
+      "name": "funnel-9-SOLUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T18:37:00Z",
+      "completed_at": "2026-07-23T21:23:12Z"
+    },
+    {
+      "id": 89150210618,
+      "name": "funnel-0-LINKUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T19:21:00Z",
+      "completed_at": "2026-07-23T20:20:54Z"
+    },
+    {
+      "id": 89150210726,
+      "name": "funnel-1-LINKUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T19:27:23Z",
+      "completed_at": "2026-07-23T20:38:13Z"
+    },
+    {
+      "id": 89150210745,
+      "name": "funnel-0-LINKUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T19:24:42Z",
+      "completed_at": "2026-07-23T20:10:25Z"
+    },
+    {
+      "id": 89150210807,
+      "name": "funnel-1-LINKUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T19:39:33Z",
+      "completed_at": "2026-07-23T20:49:29Z"
+    },
+    {
+      "id": 89150210853,
+      "name": "funnel-2-LINKUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T19:41:47Z",
+      "completed_at": "2026-07-23T21:09:37Z"
+    },
+    {
+      "id": 89150210900,
+      "name": "funnel-3-LINKUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T20:21:20Z",
+      "completed_at": "2026-07-23T22:01:37Z"
+    },
+    {
+      "id": 89150211031,
+      "name": "funnel-2-LINKUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T20:10:27Z",
+      "completed_at": "2026-07-23T21:36:36Z"
+    },
+    {
+      "id": 89150211100,
+      "name": "funnel-4-LINKUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T20:49:31Z",
+      "completed_at": "2026-07-23T22:28:22Z"
+    },
+    {
+      "id": 89150211104,
+      "name": "funnel-3-LINKUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T20:26:06Z",
+      "completed_at": "2026-07-23T22:10:03Z"
+    },
+    {
+      "id": 89150211116,
+      "name": "funnel-4-LINKUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T20:38:14Z",
+      "completed_at": "2026-07-23T22:38:26Z"
+    },
+    {
+      "id": 89150211456,
+      "name": "funnel-5-LINKUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T20:49:31Z",
+      "completed_at": "2026-07-23T23:04:14Z"
+    },
+    {
+      "id": 89150211515,
+      "name": "funnel-5-LINKUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T20:56:57Z",
+      "completed_at": "2026-07-23T23:15:08Z"
+    },
+    {
+      "id": 89150211599,
+      "name": "funnel-6-LINKUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T21:09:39Z",
+      "completed_at": "2026-07-23T23:15:06Z"
+    },
+    {
+      "id": 89150211642,
+      "name": "funnel-6-LINKUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T21:23:14Z",
+      "completed_at": "2026-07-23T23:56:27Z"
+    },
+    {
+      "id": 89150211686,
+      "name": "funnel-7-LINKUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T21:36:38Z",
+      "completed_at": "2026-07-24T00:16:33Z"
+    },
+    {
+      "id": 89150211714,
+      "name": "funnel-7-LINKUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T21:43:10Z",
+      "completed_at": "2026-07-24T00:39:39Z"
+    },
+    {
+      "id": 89150211902,
+      "name": "funnel-8-LINKUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T22:01:39Z",
+      "completed_at": "2026-07-24T01:01:45Z"
+    },
+    {
+      "id": 89150211917,
+      "name": "funnel-8-LINKUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T22:10:06Z",
+      "completed_at": "2026-07-24T01:04:59Z"
+    },
+    {
+      "id": 89150212041,
+      "name": "funnel-9-LINKUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T22:28:24Z",
+      "completed_at": "2026-07-24T01:36:23Z"
+    },
+    {
+      "id": 89150212053,
+      "name": "funnel-9-LINKUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T22:38:28Z",
+      "completed_at": "2026-07-24T01:45:19Z"
+    },
+    {
+      "id": 89150212466,
+      "name": "funnel-0-AAVEUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T23:04:16Z",
+      "completed_at": "2026-07-24T00:03:09Z"
+    },
+    {
+      "id": 89150212524,
+      "name": "funnel-0-AAVEUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T23:15:08Z",
+      "completed_at": "2026-07-24T00:11:52Z"
+    },
+    {
+      "id": 89150212589,
+      "name": "funnel-1-AAVEUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T23:15:11Z",
+      "completed_at": "2026-07-24T00:26:42Z"
+    },
+    {
+      "id": 89150212631,
+      "name": "funnel-2-AAVEUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T00:03:11Z",
+      "completed_at": "2026-07-24T01:27:26Z"
+    },
+    {
+      "id": 89150212658,
+      "name": "funnel-1-AAVEUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-23T23:56:29Z",
+      "completed_at": "2026-07-24T00:59:10Z"
+    },
+    {
+      "id": 89150212738,
+      "name": "funnel-3-AAVEUSDT-long",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T00:16:35Z",
+      "completed_at": "2026-07-24T01:58:24Z"
+    },
+    {
+      "id": 89150212746,
+      "name": "funnel-2-AAVEUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T00:11:54Z",
+      "completed_at": "2026-07-24T01:39:15Z"
+    },
+    {
+      "id": 89150212799,
+      "name": "funnel-3-AAVEUSDT-short",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-07-24T00:26:44Z",
+      "completed_at": "2026-07-24T01:54:28Z"
+    },
+    {
+      "id": 89150212973,
+      "name": "funnel-4-AAVEUSDT-long",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-24T00:39:40Z",
+      "completed_at": null
+    },
+    {
+      "id": 89150212990,
+      "name": "funnel-4-AAVEUSDT-short",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-24T00:59:13Z",
+      "completed_at": null
+    },
+    {
+      "id": 89150213416,
+      "name": "funnel-5-AAVEUSDT-long",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-24T01:01:47Z",
+      "completed_at": null
+    },
+    {
+      "id": 89150213440,
+      "name": "funnel-5-AAVEUSDT-short",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-24T01:05:01Z",
+      "completed_at": null
+    },
+    {
+      "id": 89150213513,
+      "name": "funnel-6-AAVEUSDT-long",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-24T01:27:28Z",
+      "completed_at": null
+    },
+    {
+      "id": 89150213517,
+      "name": "funnel-6-AAVEUSDT-short",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-24T01:36:25Z",
+      "completed_at": null
+    },
+    {
+      "id": 89150213652,
+      "name": "funnel-7-AAVEUSDT-long",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2026-07-24T01:39:17Z",
+      "completed_at": null
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 8584316621,
+      "name": "smoke-mtf-v3-no-pnl-part-3-AAVEUSDT-long",
+      "size_in_bytes": 23142,
+      "expired": false,
+      "digest": "sha256:b74a454fd627ac7e425344ee8f855123ef891cae78b5246eef528182c367baa3"
+    },
+    {
+      "id": 8584256039,
+      "name": "smoke-mtf-v3-no-pnl-part-3-AAVEUSDT-short",
+      "size_in_bytes": 19853,
+      "expired": false,
+      "digest": "sha256:c83c99b17480b958605fe18f27a944c6bfa78cb45327ddacd540b432c073a693"
+    },
+    {
+      "id": 8584114273,
+      "name": "smoke-mtf-v3-no-pnl-part-9-LINKUSDT-short",
+      "size_in_bytes": 20525,
+      "expired": false,
+      "digest": "sha256:fb73707ef9860ed1159f83cd559cb17d316b36a195f6f3cac5150f4bd3093b4b"
+    },
+    {
+      "id": 8584011026,
+      "name": "smoke-mtf-v3-no-pnl-part-2-AAVEUSDT-short",
+      "size_in_bytes": 21173,
+      "expired": false,
+      "digest": "sha256:ef86c0f869c8f528052682e79dc1368f5b56d870f8eb9d10873f64d17631295b"
+    },
+    {
+      "id": 8583960210,
+      "name": "smoke-mtf-v3-no-pnl-part-9-LINKUSDT-long",
+      "size_in_bytes": 20167,
+      "expired": false,
+      "digest": "sha256:4c7d24e5404595d51dba34f655a77228cba46208f3e070fb529976739d51352c"
+    },
+    {
+      "id": 8583823706,
+      "name": "smoke-mtf-v3-no-pnl-part-2-AAVEUSDT-long",
+      "size_in_bytes": 21421,
+      "expired": false,
+      "digest": "sha256:e37b9ff658d52a1b0cbfcd7eab48e18949f83dd39ccc5253ebc65429aacc276a"
+    },
+    {
+      "id": 8583476015,
+      "name": "smoke-mtf-v3-no-pnl-part-8-LINKUSDT-short",
+      "size_in_bytes": 19408,
+      "expired": false,
+      "digest": "sha256:9ce9a28f02091018e9e5d008c2c1e0ddbf271abcfefc521b48fd89a5602256c7"
+    },
+    {
+      "id": 8583423271,
+      "name": "smoke-mtf-v3-no-pnl-part-8-LINKUSDT-long",
+      "size_in_bytes": 18796,
+      "expired": false,
+      "digest": "sha256:ab27ec0b2a63b5d35fe39a4bfdd2a0dde47008a8c0bdc73c542c090acebc0d4f"
+    },
+    {
+      "id": 8583378263,
+      "name": "smoke-mtf-v3-no-pnl-part-1-AAVEUSDT-short",
+      "size_in_bytes": 22883,
+      "expired": false,
+      "digest": "sha256:d3baa004596bb899c2467b54b04ec6ad8f5d73422713845445fc7202a0b9b625"
+    },
+    {
+      "id": 8583054395,
+      "name": "smoke-mtf-v3-no-pnl-part-7-LINKUSDT-short",
+      "size_in_bytes": 20252,
+      "expired": false,
+      "digest": "sha256:057c3364016091cc9cce6d55ebe9e6e16db6c1756a0cbae69ea55493731b6345"
+    },
+    {
+      "id": 8582833208,
+      "name": "smoke-mtf-v3-no-pnl-part-1-AAVEUSDT-long",
+      "size_in_bytes": 19681,
+      "expired": false,
+      "digest": "sha256:925e599741d3e66380939c38dd247bc006274529b7d72f9a8535c91f05048840"
+    },
+    {
+      "id": 8582660104,
+      "name": "smoke-mtf-v3-no-pnl-part-7-LINKUSDT-long",
+      "size_in_bytes": 18429,
+      "expired": false,
+      "digest": "sha256:206be93c24fe22c8e9e24cd9159622a6f09f352088e3b1cb3b775220716b3c8f"
+    },
+    {
+      "id": 8582581462,
+      "name": "smoke-mtf-v3-no-pnl-part-0-AAVEUSDT-short",
+      "size_in_bytes": 22686,
+      "expired": false,
+      "digest": "sha256:48e2b8d3d9f4430ebd77bc8ce0ad245a4500ff00cd4c7a3b45771e57826dc4ca"
+    },
+    {
+      "id": 8582433826,
+      "name": "smoke-mtf-v3-no-pnl-part-0-AAVEUSDT-long",
+      "size_in_bytes": 21562,
+      "expired": false,
+      "digest": "sha256:be1637e80d235992e86657e4915fccdd4a9ed90675f73dfa4103ae20b55a9142"
+    },
+    {
+      "id": 8582318845,
+      "name": "smoke-mtf-v3-no-pnl-part-6-LINKUSDT-short",
+      "size_in_bytes": 19038,
+      "expired": false,
+      "digest": "sha256:16375d6e92b333131f883f3b44d0fb3b10ad5cb02f44e4ad16aefe3e35bd3abe"
+    },
+    {
+      "id": 8581569323,
+      "name": "smoke-mtf-v3-no-pnl-part-5-LINKUSDT-short",
+      "size_in_bytes": 20707,
+      "expired": false,
+      "digest": "sha256:f5fa14a85c805bee55865df0baef1d994b636cd2faae6c88fa311bc61a447189"
+    },
+    {
+      "id": 8581568142,
+      "name": "smoke-mtf-v3-no-pnl-part-6-LINKUSDT-long",
+      "size_in_bytes": 18764,
+      "expired": false,
+      "digest": "sha256:3ff21a5b45c2d451c38c32ed88b41d58f61460ffa0b1a948866e2978deb4cb09"
+    },
+    {
+      "id": 8581364932,
+      "name": "smoke-mtf-v3-no-pnl-part-5-LINKUSDT-long",
+      "size_in_bytes": 20095,
+      "expired": false,
+      "digest": "sha256:cd22cb12ca9229e430da8dd21c2eacdca7906e4264cd4509e4c040f95de7a0a0"
+    },
+    {
+      "id": 8580836816,
+      "name": "smoke-mtf-v3-no-pnl-part-4-LINKUSDT-long",
+      "size_in_bytes": 21395,
+      "expired": false,
+      "digest": "sha256:0d9929d3543bbacf33506611eaa31f034c182508cc398d4b1e4992897857c2eb"
+    },
+    {
+      "id": 8580615865,
+      "name": "smoke-mtf-v3-no-pnl-part-4-LINKUSDT-short",
+      "size_in_bytes": 21127,
+      "expired": false,
+      "digest": "sha256:7593a949939566009cf1a5e8866fc126d61821f0af90f1ffb036d7cf4b2ee40c"
+    },
+    {
+      "id": 8580219264,
+      "name": "smoke-mtf-v3-no-pnl-part-3-LINKUSDT-short",
+      "size_in_bytes": 20316,
+      "expired": false,
+      "digest": "sha256:c31b26140c1ac39172cf2092eecd590a14715ae0a6220a3031c44272dca80d17"
+    },
+    {
+      "id": 8580031975,
+      "name": "smoke-mtf-v3-no-pnl-part-3-LINKUSDT-long",
+      "size_in_bytes": 19439,
+      "expired": false,
+      "digest": "sha256:de277f7be147647ba6db53abd37be343636e4a451081eb29149a5b832c541439"
+    },
+    {
+      "id": 8579600209,
+      "name": "smoke-mtf-v3-no-pnl-part-9-SOLUSDT-long",
+      "size_in_bytes": 19169,
+      "expired": false,
+      "digest": "sha256:9bdb7a501ff9adb9e1598e44325d1e95032e44603a9b4b6162c52dfc9c5e23f8"
+    },
+    {
+      "id": 8579445890,
+      "name": "smoke-mtf-v3-no-pnl-part-2-LINKUSDT-short",
+      "size_in_bytes": 21893,
+      "expired": false,
+      "digest": "sha256:8134d214e5936e338a3bfb3ffa87e7f735b909296318ed16f0d6bb556f4cfc99"
+    },
+    {
+      "id": 8579108196,
+      "name": "smoke-mtf-v3-no-pnl-part-9-SOLUSDT-short",
+      "size_in_bytes": 19984,
+      "expired": false,
+      "digest": "sha256:9c1f958407be3ca6055939f9bd7a1b116eb6d0618f9bdeb8af059b72ec32827d"
+    },
+    {
+      "id": 8578773070,
+      "name": "smoke-mtf-v3-no-pnl-part-2-LINKUSDT-long",
+      "size_in_bytes": 18130,
+      "expired": false,
+      "digest": "sha256:55f8f8d8f9987e4bb66391544b03a498f697ca435c1c69d54162d9bb826e52a7"
+    },
+    {
+      "id": 8578434239,
+      "name": "smoke-mtf-v3-no-pnl-part-8-SOLUSDT-short",
+      "size_in_bytes": 18426,
+      "expired": false,
+      "digest": "sha256:438998e8eb6215419935da1cb4408ced52fb04c3b65ee65bf2f843115cf91f94"
+    },
+    {
+      "id": 8578237366,
+      "name": "smoke-mtf-v3-no-pnl-part-1-LINKUSDT-short",
+      "size_in_bytes": 21518,
+      "expired": false,
+      "digest": "sha256:b780a2b7db40fe90788e76fc10e4a66f158984b448bf89563712bdc3f0c62d9d"
+    },
+    {
+      "id": 8578236933,
+      "name": "smoke-mtf-v3-no-pnl-part-8-SOLUSDT-long",
+      "size_in_bytes": 19219,
+      "expired": false,
+      "digest": "sha256:fcf40f2548299b30a5234db063c762432a7bdd015e0a53ce8d8ada7a008b703d"
+    },
+    {
+      "id": 8577938274,
+      "name": "smoke-mtf-v3-no-pnl-part-1-LINKUSDT-long",
+      "size_in_bytes": 17708,
+      "expired": false,
+      "digest": "sha256:c47dd84d9e4ac3bcc5c213735640aa561491ec575e61a5553f9c7fe6400948fd"
+    },
+    {
+      "id": 8577605808,
+      "name": "smoke-mtf-v3-no-pnl-part-7-SOLUSDT-long",
+      "size_in_bytes": 20098,
+      "expired": false,
+      "digest": "sha256:9f350f94935ec0c16741e65793c22e5da54d05f17d85a5593c90346a84b7cff8"
+    },
+    {
+      "id": 8577461760,
+      "name": "smoke-mtf-v3-no-pnl-part-0-LINKUSDT-long",
+      "size_in_bytes": 20929,
+      "expired": false,
+      "digest": "sha256:be599b02cbbea81a31277fa3918b4fc0414a0b5bbaa42f1a8c46fcd5914e80fc"
+    },
+    {
+      "id": 8577187482,
+      "name": "smoke-mtf-v3-no-pnl-part-0-LINKUSDT-short",
+      "size_in_bytes": 22806,
+      "expired": false,
+      "digest": "sha256:41d92ff05df36e043535d8a12c7aa9c1c5a079af0a6cd19101dc4d1b9a259eda"
+    },
+    {
+      "id": 8576441451,
+      "name": "smoke-mtf-v3-no-pnl-part-6-SOLUSDT-long",
+      "size_in_bytes": 19449,
+      "expired": false,
+      "digest": "sha256:5bc63dfc492b1bd73d915282d1326f6f91db0b210e28dbfbc095c73223ad3e66"
+    },
+    {
+      "id": 8576382634,
+      "name": "smoke-mtf-v3-no-pnl-part-6-SOLUSDT-short",
+      "size_in_bytes": 18999,
+      "expired": false,
+      "digest": "sha256:6189417be617b71bc5ad164c99fdc5b7dda9295c491076c9ea6be7070c744afd"
+    },
+    {
+      "id": 8576054244,
+      "name": "smoke-mtf-v3-no-pnl-part-5-SOLUSDT-long",
+      "size_in_bytes": 20049,
+      "expired": false,
+      "digest": "sha256:ff231f56200a82fe28459d8e702c138598fe7ed617989c9cd64baeba6923cd47"
+    },
+    {
+      "id": 8575983094,
+      "name": "smoke-mtf-v3-no-pnl-part-7-SOLUSDT-short",
+      "size_in_bytes": 20819,
+      "expired": false,
+      "digest": "sha256:90784061ef07a36cd4d9c007d5125816a076bdf1ac9c41c590d8ae472d29c0c8"
+    },
+    {
+      "id": 8575885538,
+      "name": "smoke-mtf-v3-no-pnl-part-5-SOLUSDT-short",
+      "size_in_bytes": 20228,
+      "expired": false,
+      "digest": "sha256:b3e6273ee29cc06d11ce46bcdfca771f292b2774ef3cf051cc0ede249e34a01a"
+    },
+    {
+      "id": 8574640087,
+      "name": "smoke-mtf-v3-no-pnl-part-4-SOLUSDT-long",
+      "size_in_bytes": 22253,
+      "expired": false,
+      "digest": "sha256:5cb06a472abe2f1cf0bbdf5579e94eca8601eb328ba7ceac862f2c99b7e9b46a"
+    },
+    {
+      "id": 8574185665,
+      "name": "smoke-mtf-v3-no-pnl-part-4-SOLUSDT-short",
+      "size_in_bytes": 18402,
+      "expired": false,
+      "digest": "sha256:82aa95a404c3546a64dcb9965a9bdb3149ff3c2414dc3101ee73b0a95bc96222"
+    },
+    {
+      "id": 8573537161,
+      "name": "smoke-mtf-v3-no-pnl-part-3-SOLUSDT-long",
+      "size_in_bytes": 21754,
+      "expired": false,
+      "digest": "sha256:8d175bd3b52c105e73255844655c5293d581d812c92a9f35cfa6a731ec170804"
+    },
+    {
+      "id": 8573520640,
+      "name": "smoke-mtf-v3-no-pnl-part-3-SOLUSDT-short",
+      "size_in_bytes": 20511,
+      "expired": false,
+      "digest": "sha256:7b85734dfb42c2e1caf0f07e57f29ef0eef6fa226df7b59faa9db6014f66ce5c"
+    },
+    {
+      "id": 8572840953,
+      "name": "smoke-mtf-v3-no-pnl-part-2-SOLUSDT-short",
+      "size_in_bytes": 22993,
+      "expired": false,
+      "digest": "sha256:18b3c5aafab85db2b6f6dbf07765e80de5361f3e64d1a811a6bffd2173e365a0"
+    },
+    {
+      "id": 8572753411,
+      "name": "smoke-mtf-v3-no-pnl-part-9-ETHUSDT-long",
+      "size_in_bytes": 17872,
+      "expired": false,
+      "digest": "sha256:8bb0d1724cb630b815a8a4fc4505085d5ce6a270cd353d10f668768d3da0ca52"
+    },
+    {
+      "id": 8572157730,
+      "name": "smoke-mtf-v3-no-pnl-part-2-SOLUSDT-long",
+      "size_in_bytes": 20015,
+      "expired": false,
+      "digest": "sha256:a72ddd339e97e54ea12dc2d9f280c8733ec01fda7e1facf6154dc070ae266038"
+    },
+    {
+      "id": 8572102051,
+      "name": "smoke-mtf-v3-no-pnl-part-8-ETHUSDT-short",
+      "size_in_bytes": 18090,
+      "expired": false,
+      "digest": "sha256:006bd7fedad199ce404d548f3c84022ffa4987f62c53a62549d1203000f75be4"
+    },
+    {
+      "id": 8572061882,
+      "name": "smoke-mtf-v3-no-pnl-part-8-ETHUSDT-long",
+      "size_in_bytes": 16387,
+      "expired": false,
+      "digest": "sha256:59cce32dcc8e609286da84505c47e7700c97ee39522cf057c38fbc3dfeb576ed"
+    },
+    {
+      "id": 8572059319,
+      "name": "smoke-mtf-v3-no-pnl-part-9-ETHUSDT-short",
+      "size_in_bytes": 20304,
+      "expired": false,
+      "digest": "sha256:83944415233197ef8d191093ec3305f1a37d11ce92fedffbd12da12281535ce3"
+    },
+    {
+      "id": 8571359355,
+      "name": "smoke-mtf-v3-no-pnl-part-1-SOLUSDT-short",
+      "size_in_bytes": 21471,
+      "expired": false,
+      "digest": "sha256:30288ab893681be725c9cfbc5f1967c46fa9ca5bedae4caa022fb133057611ec"
+    },
+    {
+      "id": 8571270134,
+      "name": "smoke-mtf-v3-no-pnl-part-1-SOLUSDT-long",
+      "size_in_bytes": 20596,
+      "expired": false,
+      "digest": "sha256:0780431bb7db10f8e43b30dc542e4066704abd6fcbd964dff3f98a49ddf59362"
+    },
+    {
+      "id": 8571069744,
+      "name": "smoke-mtf-v3-no-pnl-part-7-ETHUSDT-short",
+      "size_in_bytes": 20094,
+      "expired": false,
+      "digest": "sha256:5b5a0fae778d2203a7167f95aeb30df8c5eb829951049a52fde9e2e81ea7cdff"
+    },
+    {
+      "id": 8570501551,
+      "name": "smoke-mtf-v3-no-pnl-part-7-ETHUSDT-long",
+      "size_in_bytes": 17344,
+      "expired": false,
+      "digest": "sha256:3002cceeba713a55e278a7fbfdba1cbf1f20493a42c51fabf14f081677fb3405"
+    },
+    {
+      "id": 8570118459,
+      "name": "smoke-mtf-v3-no-pnl-part-6-ETHUSDT-short",
+      "size_in_bytes": 18338,
+      "expired": false,
+      "digest": "sha256:9e6e897739b1bf7f46017794090d17308e6a17895e004186bd6b350c415507b9"
+    },
+    {
+      "id": 8569542270,
+      "name": "smoke-mtf-v3-no-pnl-part-6-ETHUSDT-long",
+      "size_in_bytes": 17899,
+      "expired": false,
+      "digest": "sha256:2da28c01a686dc7b593e4d6694d4bc2bf87aa931ccce03b7d27612852a84592a"
+    },
+    {
+      "id": 8569080839,
+      "name": "smoke-mtf-v3-no-pnl-part-0-SOLUSDT-short",
+      "size_in_bytes": 20581,
+      "expired": false,
+      "digest": "sha256:117f6cdc659fbd3b80f6631cd43a64740cb72b4f4acffc0a86613357383d9f3c"
+    },
+    {
+      "id": 8568744851,
+      "name": "smoke-mtf-v3-no-pnl-part-0-SOLUSDT-long",
+      "size_in_bytes": 21970,
+      "expired": false,
+      "digest": "sha256:745a70f6806771faf3b08db3622b29a9fb35026d026ec82e6025aa333b119b61"
+    },
+    {
+      "id": 8567193775,
+      "name": "smoke-mtf-v3-no-pnl-part-5-ETHUSDT-short",
+      "size_in_bytes": 20128,
+      "expired": false,
+      "digest": "sha256:39b852a36b8764d9d3e1a68284e8a536be86f2e3a8148f2d6bf6546811882d93"
+    },
+    {
+      "id": 8566801660,
+      "name": "smoke-mtf-v3-no-pnl-part-4-ETHUSDT-short",
+      "size_in_bytes": 19402,
+      "expired": false,
+      "digest": "sha256:43b015350d54983eb47821d167109b60e96ad3bcff7361b9943d44a484368ed8"
+    },
+    {
+      "id": 8566799941,
+      "name": "smoke-mtf-v3-no-pnl-part-4-ETHUSDT-long",
+      "size_in_bytes": 20918,
+      "expired": false,
+      "digest": "sha256:2296d5abc69954e82380970a68286d593605caf9fb21300695e751fba6b659e2"
+    },
+    {
+      "id": 8566549732,
+      "name": "smoke-mtf-v3-no-pnl-part-5-ETHUSDT-long",
+      "size_in_bytes": 21705,
+      "expired": false,
+      "digest": "sha256:04f07f5b1cad51853783a475718abdc973dca73cc629baf39033819945869aba"
+    },
+    {
+      "id": 8566537426,
+      "name": "smoke-mtf-v3-no-pnl-part-3-ETHUSDT-short",
+      "size_in_bytes": 20066,
+      "expired": false,
+      "digest": "sha256:ee99fbe05be412813792c6b7c943c3c960d1ab5bd73e0f40e1cff5b2f9b3581e"
+    },
+    {
+      "id": 8566309457,
+      "name": "smoke-mtf-v3-no-pnl-part-3-ETHUSDT-long",
+      "size_in_bytes": 20371,
+      "expired": false,
+      "digest": "sha256:6edd2bee7b8eb6b35a5b6ef8705d4f78f6f973db8d225af84f6ef5565f9d015f"
+    },
+    {
+      "id": 8565283583,
+      "name": "smoke-mtf-v3-no-pnl-part-2-ETHUSDT-long",
+      "size_in_bytes": 20015,
+      "expired": false,
+      "digest": "sha256:4678bbf2ed5405f46607220a7fdfbde7cd463b0336e5e0067ac58db00e97ad71"
+    },
+    {
+      "id": 8565198992,
+      "name": "smoke-mtf-v3-no-pnl-part-9-BTCUSDT-short",
+      "size_in_bytes": 20748,
+      "expired": false,
+      "digest": "sha256:159539b6433ff0a9a113351c1d1cbff68742cebf468ed2fe695e025c31d5435e"
+    },
+    {
+      "id": 8565172873,
+      "name": "smoke-mtf-v3-no-pnl-part-2-ETHUSDT-short",
+      "size_in_bytes": 19424,
+      "expired": false,
+      "digest": "sha256:b8a35f87b59a213adebdc3f3446453af2c6e1f23af30bdbe04fc65011a95afd0"
+    },
+    {
+      "id": 8564453607,
+      "name": "smoke-mtf-v3-no-pnl-part-1-ETHUSDT-long",
+      "size_in_bytes": 20674,
+      "expired": false,
+      "digest": "sha256:8b5ac7fd90109a7a066b3a916f804d0e537d98f59c40c472031fd40f091103b1"
+    },
+    {
+      "id": 8564218581,
+      "name": "smoke-mtf-v3-no-pnl-part-9-BTCUSDT-long",
+      "size_in_bytes": 17567,
+      "expired": false,
+      "digest": "sha256:edf8c611a62bb9c32332cfb06dd00c8de3c8b876e2ab2fe6dfa3fdc35caa3c40"
+    },
+    {
+      "id": 8563769039,
+      "name": "smoke-mtf-v3-no-pnl-part-1-ETHUSDT-short",
+      "size_in_bytes": 21796,
+      "expired": false,
+      "digest": "sha256:b7a6d477ce786917d39b63961e0e56105cec7c1dc4d013a34c45ae6d94450885"
+    },
+    {
+      "id": 8563337706,
+      "name": "smoke-mtf-v3-no-pnl-part-7-BTCUSDT-short",
+      "size_in_bytes": 21248,
+      "expired": false,
+      "digest": "sha256:68b964df62f4dba1b6bd99acc5a0bf3e09b18428f38a59c47b142935177c3156"
+    },
+    {
+      "id": 8563311248,
+      "name": "smoke-mtf-v3-no-pnl-part-7-BTCUSDT-long",
+      "size_in_bytes": 20851,
+      "expired": false,
+      "digest": "sha256:49f6760bdc22106ea2f2632bc112d4bba84920d363900bc805e0fe6339661487"
+    },
+    {
+      "id": 8563255529,
+      "name": "smoke-mtf-v3-no-pnl-part-8-BTCUSDT-short",
+      "size_in_bytes": 19801,
+      "expired": false,
+      "digest": "sha256:7ff73afc4b33a63e54ea65d76d0cd7df3db54fb45996481dc2118ca447608c6c"
+    },
+    {
+      "id": 8563034613,
+      "name": "smoke-mtf-v3-no-pnl-part-0-ETHUSDT-short",
+      "size_in_bytes": 19545,
+      "expired": false,
+      "digest": "sha256:e18c5ee0af4b8049a995e7deeaeae7c61e8b3cd1b5300767c6ada6719073b160"
+    },
+    {
+      "id": 8562721689,
+      "name": "smoke-mtf-v3-no-pnl-part-8-BTCUSDT-long",
+      "size_in_bytes": 17916,
+      "expired": false,
+      "digest": "sha256:895b655b458615b3e05dff2ee4867b085a6723772e6a673e1a4a4dd367e0c45e"
+    },
+    {
+      "id": 8562718827,
+      "name": "smoke-mtf-v3-no-pnl-part-0-ETHUSDT-long",
+      "size_in_bytes": 20604,
+      "expired": false,
+      "digest": "sha256:57786ee05629e60dc33715a9e30757f68466d188b031790e67404f6a88431746"
+    },
+    {
+      "id": 8562498485,
+      "name": "smoke-mtf-v3-no-pnl-part-6-BTCUSDT-short",
+      "size_in_bytes": 20271,
+      "expired": false,
+      "digest": "sha256:b1de167ac3528f4c62fda451aa72096bbf243e1ca793c446015bad04185b53f6"
+    },
+    {
+      "id": 8562474711,
+      "name": "smoke-mtf-v3-no-pnl-part-6-BTCUSDT-long",
+      "size_in_bytes": 19116,
+      "expired": false,
+      "digest": "sha256:f06e3f302966ea8c47da1c8257116d5624935a18edde0f897753656d48bd341a"
+    },
+    {
+      "id": 8561684785,
+      "name": "smoke-mtf-v3-no-pnl-part-5-BTCUSDT-short",
+      "size_in_bytes": 21119,
+      "expired": false,
+      "digest": "sha256:9941e467b713de222e5f727019c4da1130962f82e57cf929631337931b624b23"
+    },
+    {
+      "id": 8561450580,
+      "name": "smoke-mtf-v3-no-pnl-part-5-BTCUSDT-long",
+      "size_in_bytes": 20930,
+      "expired": false,
+      "digest": "sha256:2dab32ed2f082717eb8fed00ce60ec2e6d88e203123ef5f59d9a56806ec7c6a3"
+    },
+    {
+      "id": 8559837690,
+      "name": "smoke-mtf-v3-no-pnl-part-4-BTCUSDT-short",
+      "size_in_bytes": 23569,
+      "expired": false,
+      "digest": "sha256:a53b7cd596d3bf479852ea07f6e3a5b6613e5d71ce871e70db1b6fd59fe905f1"
+    },
+    {
+      "id": 8559759244,
+      "name": "smoke-mtf-v3-no-pnl-part-4-BTCUSDT-long",
+      "size_in_bytes": 22251,
+      "expired": false,
+      "digest": "sha256:af6ca1317e14d23c033b287c8e846cda7bccd6afe451fbf629bdcfe8ce6e5b74"
+    },
+    {
+      "id": 8559194663,
+      "name": "smoke-mtf-v3-no-pnl-part-3-BTCUSDT-short",
+      "size_in_bytes": 22612,
+      "expired": false,
+      "digest": "sha256:7f5c1bee48e20d889f49fd17b423907f455bd96c9b0499e3b8ee93629e743cef"
+    },
+    {
+      "id": 8558930631,
+      "name": "smoke-mtf-v3-no-pnl-part-2-BTCUSDT-short",
+      "size_in_bytes": 21453,
+      "expired": false,
+      "digest": "sha256:868f2b694766e8caf581a58a817afd740d870beefb296651e17179c023bacbea"
+    },
+    {
+      "id": 8558876988,
+      "name": "smoke-mtf-v3-no-pnl-part-3-BTCUSDT-long",
+      "size_in_bytes": 23076,
+      "expired": false,
+      "digest": "sha256:9b27855e117d80136e16174a3d2b6f497baa661df9a2a6d92f0099a955da7fa5"
+    },
+    {
+      "id": 8558756847,
+      "name": "smoke-mtf-v3-no-pnl-part-2-BTCUSDT-long",
+      "size_in_bytes": 22035,
+      "expired": false,
+      "digest": "sha256:89a5f885a3713a068fa170f7a5b19b5b79f7c8bead3a437d7f0aec0e74ddcc44"
+    },
+    {
+      "id": 8558384612,
+      "name": "smoke-mtf-v3-no-pnl-part-1-BTCUSDT-long",
+      "size_in_bytes": 17567,
+      "expired": false,
+      "digest": "sha256:91d5fdc66cd7a64d699b80bcc95f94c5b366928f29dd744fc28d1d1ee2ea32c3"
+    },
+    {
+      "id": 8558378742,
+      "name": "smoke-mtf-v3-no-pnl-part-1-BTCUSDT-short",
+      "size_in_bytes": 21937,
+      "expired": false,
+      "digest": "sha256:c090b7f707fd807c5e44c2f53a5b86ce20be46475cef99d5c5f9cb877653c0b3"
+    },
+    {
+      "id": 8558019198,
+      "name": "smoke-mtf-v3-no-pnl-part-0-BTCUSDT-long",
+      "size_in_bytes": 21095,
+      "expired": false,
+      "digest": "sha256:e3cb630529040e396d4aca86020563399a508f5f2e8d70e2bce0f18fff3af164"
+    },
+    {
+      "id": 8557611758,
+      "name": "smoke-mtf-v3-no-pnl-part-0-BTCUSDT-short",
+      "size_in_bytes": 20037,
+      "expired": false,
+      "digest": "sha256:a7158c503c42bd0f31c7f455c8199b0c405ec607ef607570902ae8f6d0a88acc"
+    },
+    {
+      "id": 8556616166,
+      "name": "smoke-mtf-v3-no-pnl-data-SOLUSDT",
+      "size_in_bytes": 3366621,
+      "expired": false,
+      "digest": "sha256:569b1be99f0d707a1628fde93b945370e2f402ec662d0f2a4274e8f9cb9c8849"
+    },
+    {
+      "id": 8556615811,
+      "name": "smoke-mtf-v3-no-pnl-data-AAVEUSDT",
+      "size_in_bytes": 3170100,
+      "expired": false,
+      "digest": "sha256:f4114698aef11edc1753144bdfc697cc27b5c06e0842cc50f599bc2fc8e27755"
+    },
+    {
+      "id": 8556615797,
+      "name": "smoke-mtf-v3-no-pnl-data-LINKUSDT",
+      "size_in_bytes": 3413283,
+      "expired": false,
+      "digest": "sha256:b7bb8f4e3ef4253d3e061d3120cc02cd6501c07f8a090d408c0726d9136ebc81"
+    },
+    {
+      "id": 8556615761,
+      "name": "smoke-mtf-v3-no-pnl-data-BTCUSDT",
+      "size_in_bytes": 4024210,
+      "expired": false,
+      "digest": "sha256:73fc6e3cc2f63fa5b46c02aae10fb9f123872c6fa09bfab73be2a96f6a0b5d48"
+    },
+    {
+      "id": 8556614511,
+      "name": "smoke-mtf-v3-no-pnl-data-ETHUSDT",
+      "size_in_bytes": 4056345,
+      "expired": false,
+      "digest": "sha256:e735376af38c89cb9d6b091b4b66c2cd6a54a587f8d57722a8c6f3698375c258"
+    }
+  ]
+}

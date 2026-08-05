@@ -1,0 +1,199 @@
+{
+  "study_id": "SMOKE_MTF_V2_REFERENCE_SCENARIOS",
+  "status": "FROZEN_SEMANTIC_REFERENCE_SET",
+  "purpose": "Validate the recognition and state-machine meaning before any PnL-based development screen.",
+  "pnl_usage_forbidden": true,
+  "sources": [
+    {
+      "drive_file_id": "1wwGRmEo-3sNd9EHqmyKCVdevusQc-2SO",
+      "title": "4. Entry By BOS.txt",
+      "concepts": ["fresh HTF liquidity raid", "3-5m BOS after raid", "target on raid timeframe", "stop behind swept liquidity"]
+    },
+    {
+      "drive_file_id": "19SW5tv2CdeaYeP9jCO6WOCs5bpYSjVrs",
+      "title": "3. Entry by Inducement [IDM].txt",
+      "concepts": ["Daily/4H POI", "4H or 1H raid", "VC POI", "lower-timeframe entry", "4H FTA target"]
+    },
+    {
+      "drive_file_id": "1hkKKwy60-VIoqEsVYAq12mnPZA7ySXFQ",
+      "title": "2. Entry by IMB & SNR.txt",
+      "concepts": ["H1 VC creates a new POI", "the new H1 POI must be tested", "15m synchronization", "5m confirmation"]
+    },
+    {
+      "drive_file_id": "1lvPRbhfM6ZjfW7UP-30y9uND1R6VC13t",
+      "title": "Strong High & Low.txt",
+      "concepts": ["protected structural extreme", "stop behind Strong High/Low", "order-flow objective"]
+    },
+    {
+      "drive_file_id": "1v1RXSWnwBVwe50spGTwSO7G1SRf9xEo6",
+      "title": "Стратегия на основе видео.txt",
+      "concepts": ["1M/1W/1D/4H context", "FVG/IMB", "confirmed pivots", "closed bars", "POI nesting"]
+    }
+  ],
+  "canonical_stage_order": [
+    "MACRO_CONTEXT",
+    "DAILY_DEALING_RANGE",
+    "H4_DEALING_RANGE",
+    "HTF_POI",
+    "H1_VC_OR_RAID",
+    "M15_VC_ZONE_TEST",
+    "M5_CONFIRMED_BOS",
+    "M15_NEXT_OPEN",
+    "STRUCTURAL_STOP",
+    "HTF_TARGET"
+  ],
+  "scenarios": [
+    {
+      "id": "REF_BOS_SHORT_1H_RAID_TO_5M_BOS",
+      "direction": "short",
+      "entry_path": "raid",
+      "source_model": "downward context -> fresh 1H BSL raid -> 3-5m bearish BOS below raid -> target 1H EQL",
+      "required_stages": [
+        "MACRO_CONTEXT",
+        "DAILY_DEALING_RANGE",
+        "H4_DEALING_RANGE",
+        "HTF_POI",
+        "H1_VC_OR_RAID",
+        "M5_CONFIRMED_BOS",
+        "M15_NEXT_OPEN",
+        "STRUCTURAL_STOP",
+        "HTF_TARGET"
+      ],
+      "required_context": ["daily_or_h4_bearish", "price_at_premium_or_bearish_poi"],
+      "required_trigger": ["closed_fresh_h1_bsl_raid", "closed_5m_bos_below_raid_and_confirmed_pivot", "5m_displacement_or_imbalance"],
+      "stop_anchor": "swept_fresh_h1_bsl_or_strong_high_invalidation",
+      "target_anchor": "nearest_valid_1h_eql_ssl_or_weak_low",
+      "expected_entry_timeframe": "15m",
+      "expected_execution": "next_open"
+    },
+    {
+      "id": "REF_BOS_LONG_1H_RAID_TO_5M_BOS",
+      "direction": "long",
+      "entry_path": "raid",
+      "source_model": "upward context -> fresh 1H SSL raid -> 3-5m bullish BOS above raid -> target 1H EQH",
+      "required_stages": [
+        "MACRO_CONTEXT",
+        "DAILY_DEALING_RANGE",
+        "H4_DEALING_RANGE",
+        "HTF_POI",
+        "H1_VC_OR_RAID",
+        "M5_CONFIRMED_BOS",
+        "M15_NEXT_OPEN",
+        "STRUCTURAL_STOP",
+        "HTF_TARGET"
+      ],
+      "required_context": ["daily_or_h4_bullish", "price_at_discount_or_bullish_poi"],
+      "required_trigger": ["closed_fresh_h1_ssl_raid", "closed_5m_bos_above_raid_and_confirmed_pivot", "5m_displacement_or_imbalance"],
+      "stop_anchor": "swept_fresh_h1_ssl_or_strong_low_invalidation",
+      "target_anchor": "nearest_valid_1h_eqh_bsl_or_weak_high",
+      "expected_entry_timeframe": "15m",
+      "expected_execution": "next_open"
+    },
+    {
+      "id": "REF_IDM_SHORT_DAILY_RB_4H_RAID_SNR",
+      "direction": "short",
+      "entry_path": "vc",
+      "source_model": "Daily RB -> 4H BSL raid -> H1 SNR/IMB VC creates POI -> closed 15m POI test -> 5m BOS -> 4H EQL",
+      "required_stages": [
+        "MACRO_CONTEXT",
+        "DAILY_DEALING_RANGE",
+        "H4_DEALING_RANGE",
+        "HTF_POI",
+        "H1_VC_OR_RAID",
+        "M15_VC_ZONE_TEST",
+        "M5_CONFIRMED_BOS",
+        "M15_NEXT_OPEN",
+        "STRUCTURAL_STOP",
+        "HTF_TARGET"
+      ],
+      "required_context": ["daily_bearish_rb_or_supply", "4h_bsl_raid_or_bearish_poi", "h1_snr_or_imbalance_vc"],
+      "required_trigger": ["closed_h1_vc_after_htf_poi_contact", "closed_15m_vc_zone_test", "closed_5m_bos_after_vc_zone_test"],
+      "stop_anchor": "strong_high_or_h1_vc_poi_invalidation",
+      "target_anchor": "4h_eql_ssl_or_weak_low",
+      "expected_entry_timeframe": "15m",
+      "expected_execution": "next_open"
+    },
+    {
+      "id": "REF_IDM_LONG_DAILY_IMB_4H_RAID_RB",
+      "direction": "long",
+      "entry_path": "vc",
+      "source_model": "Daily IMB -> 4H SSL raid -> H1 RB/IMB VC creates POI -> closed 15m POI test -> 5m BOS -> 4H FTA",
+      "required_stages": [
+        "MACRO_CONTEXT",
+        "DAILY_DEALING_RANGE",
+        "H4_DEALING_RANGE",
+        "HTF_POI",
+        "H1_VC_OR_RAID",
+        "M15_VC_ZONE_TEST",
+        "M5_CONFIRMED_BOS",
+        "M15_NEXT_OPEN",
+        "STRUCTURAL_STOP",
+        "HTF_TARGET"
+      ],
+      "required_context": ["daily_bullish_imbalance_or_demand", "4h_ssl_raid_or_bullish_poi", "h1_rb_or_imbalance_vc"],
+      "required_trigger": ["closed_h1_vc_after_htf_poi_contact", "closed_15m_vc_zone_test", "closed_5m_bos_after_vc_zone_test"],
+      "stop_anchor": "strong_low_or_h1_vc_poi_invalidation",
+      "target_anchor": "4h_fta_eqh_bsl_or_weak_high",
+      "expected_entry_timeframe": "15m",
+      "expected_execution": "next_open"
+    },
+    {
+      "id": "REF_BLOCK_MIDDLE_OF_RANGE",
+      "direction": "none",
+      "source_model": "no POI and no premium/discount or strong-trend first-inefficiency advantage",
+      "required_stages": ["MACRO_CONTEXT", "DAILY_DEALING_RANGE", "H4_DEALING_RANGE"],
+      "block_reason": "no_active_htf_poi",
+      "expected_allowed": false
+    },
+    {
+      "id": "REF_BLOCK_TRANSITION_CONTEXT",
+      "direction": "none",
+      "source_model": "protected side is unresolved or Daily and 4H conflict",
+      "required_stages": ["MACRO_CONTEXT", "DAILY_DEALING_RANGE", "H4_DEALING_RANGE"],
+      "block_reason": "transition_or_conflicting_context",
+      "expected_allowed": false
+    },
+    {
+      "id": "REF_BLOCK_WICK_ONLY_BREAK",
+      "direction": "none",
+      "source_model": "5m wick crosses structure but candle body closes back inside",
+      "required_stages": ["HTF_POI", "H1_VC_OR_RAID"],
+      "block_reason": "no_closed_5m_bos",
+      "expected_allowed": false
+    },
+    {
+      "id": "REF_BLOCK_UNTESTED_H1_VC_ZONE",
+      "direction": "none",
+      "source_model": "H1 VC creates a new POI but no later closed 15m test occurs",
+      "required_stages": ["HTF_POI", "H1_VC_OR_RAID"],
+      "block_reason": "h1_vc_zone_not_tested_on_closed_15m",
+      "expected_allowed": false
+    },
+    {
+      "id": "REF_BLOCK_HIGH_IMPACT_EVENT",
+      "direction": "none",
+      "source_model": "otherwise valid setup inside a point-in-time high-impact event blackout",
+      "required_stages": [
+        "MACRO_CONTEXT",
+        "DAILY_DEALING_RANGE",
+        "H4_DEALING_RANGE",
+        "HTF_POI",
+        "H1_VC_OR_RAID",
+        "M5_CONFIRMED_BOS"
+      ],
+      "block_reason": "high_impact_event_blackout",
+      "expected_allowed": false
+    }
+  ],
+  "forbidden_shortcuts": [
+    "HTF POI cannot open a trade without either a closed fresh H1 raid or a closed H1 VC.",
+    "An H1 VC-created POI cannot proceed to 5m BOS until a later closed 15m candle tests and rejects the VC zone.",
+    "A simple H1 reaction candle cannot replace a fresh raid or a valid VC path.",
+    "A strong level cannot replace the lower-timeframe trigger.",
+    "A wick beyond a pivot is not BOS without a body close.",
+    "A pivot cannot be used before all right-side confirmation bars close.",
+    "5m BOS cannot execute on a 5m open; execution is the next aligned 15m open.",
+    "A calendar response fetched today cannot reconstruct historical knowledge without an acquisition timestamp.",
+    "No scenario may be edited because of later PnL."
+  ]
+}

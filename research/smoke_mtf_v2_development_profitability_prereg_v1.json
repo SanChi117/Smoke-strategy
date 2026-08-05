@@ -1,0 +1,96 @@
+{
+  "study_id": "SMOKE_MTF_V2_DEVELOPMENT_PROFITABILITY_V1",
+  "status": "PREREGISTERED_NOT_STARTED",
+  "recognition_freeze_sha": "492eee9fdba5993b7f518e9a1ff38576e8b14285",
+  "freeze_document": "research/SMOKE_MTF_V2_RECOGNITION_CORE_FREEZE_V1.md",
+  "candidate_count": 1,
+  "candidate": {
+    "strategy_id": "SMOKE_MTF_DEALING_RANGE_V2_FROZEN_V1",
+    "directions": ["long", "short"],
+    "symbols": ["BTCUSDT", "ETHUSDT", "SOLUSDT", "LINKUSDT", "AAVEUSDT"],
+    "source_market": "Binance USD-M Futures",
+    "base_data": "closed 5m candles",
+    "entry_execution": "next aligned 15m open after the frozen confirmation chain",
+    "minimum_rr": 1.7,
+    "minimum_quality_score": 55.0
+  },
+  "development_data": {
+    "start": "2025-01-01T00:00:00Z",
+    "end_exclusive": "2026-07-01T00:00:00Z",
+    "role": "development_only_exposed_period",
+    "external_holdout_eligible": false,
+    "folds": 10,
+    "fold_method": "chronological contiguous walk-forward OOS folds with pooled reporting",
+    "embargo": "one complete 15m execution bar between adjacent train/evaluation boundaries",
+    "closed_candles_only": true
+  },
+  "portfolio": {
+    "initial_equity": 10000.0,
+    "risk_per_trade_pct": 0.5,
+    "max_total_open_risk_pct": 2.0,
+    "max_one_position_per_symbol": true,
+    "overlapping_positions_across_symbols": true,
+    "same_timestamp_priority": "symbol alphabetical order for deterministic simulation",
+    "compounding": true
+  },
+  "cost_model": {
+    "commission_bps_per_side": 4.0,
+    "slippage_bps_per_side": 1.0,
+    "round_trip_cost_bps_before_funding": 10.0,
+    "funding": "apply timestamped historical funding when available; otherwise report a separate conservative no-funding sensitivity and do not upgrade a failure",
+    "cost_model_frozen_before_execution": true
+  },
+  "trade_accounting": {
+    "entry": "frozen next aligned 15m open",
+    "stop": "frozen structural invalidation",
+    "target": "frozen timeframe-matched FTA",
+    "intrabar_ambiguity": "stop-first when stop and target are both touched inside the same source candle",
+    "no_partial_exits": true,
+    "no_trailing": true,
+    "no_averaging": true,
+    "no_reentry_override": true
+  },
+  "primary_metrics": [
+    "pooled_profit_factor",
+    "average_trade_return_after_costs",
+    "trade_count",
+    "positive_fold_count",
+    "portfolio_max_drawdown"
+  ],
+  "development_pass_gate": {
+    "minimum_trades": 60,
+    "minimum_pooled_profit_factor": 1.2,
+    "minimum_average_trade_return": 0.0,
+    "minimum_positive_folds": 6,
+    "total_folds": 10,
+    "maximum_portfolio_drawdown_pct": 8.0,
+    "all_conditions_required": true
+  },
+  "decision_rule": {
+    "pass": "All development gates pass for the single frozen candidate.",
+    "fail": "Any gate fails; do not tune this candidate from the observed PnL.",
+    "insufficient_activity": "Fewer than 60 trades is a development failure, not permission to loosen recognition rules.",
+    "selection": "Exactly one candidate exists; no best-of-many selection is permitted."
+  },
+  "after_pass_only": {
+    "freeze_exactly_one_leader": true,
+    "external_holdout_required": true,
+    "holdout_period": "must be selected from data never used for recognition, semantic review or development",
+    "holdout_gate": {
+      "profit_factor_strictly_greater_than": 1.1,
+      "target_profit_factor": 1.2,
+      "minimum_average_trade_return": 0.0,
+      "minimum_positive_fold_fraction": 0.5
+    }
+  },
+  "prohibited_before_development_pass": [
+    "external holdout",
+    "VPS deployment",
+    "paper promotion",
+    "live trading",
+    "threshold tuning",
+    "symbol or period cherry-picking",
+    "rule changes based on PnL"
+  ],
+  "execution_gate": "Do not execute this study until the CI checks for the commit containing this preregistration and freeze document are green."
+}
