@@ -1,0 +1,48 @@
+name: SMOKE Terminal V3
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/smoke_control_server_v3.py'
+      - 'strategy_lab/terminal_chart_data.py'
+      - 'strategy_lab/terminal_chart_data_smoke_test.py'
+      - 'web/smoke_terminal_v3.html'
+      - 'deployment/smoke-control.service.example'
+      - 'docs/SMOKE_TERMINAL_V3_RU.md'
+      - '.github/workflows/smoke-terminal-v3.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  terminal-v3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install package
+        run: python -m pip install -e .
+      - name: Compile terminal transport
+        run: |
+          python -m py_compile \
+            scripts/smoke_control_server_v3.py \
+            strategy_lab/terminal_chart_data.py \
+            strategy_lab/terminal_chart_data_smoke_test.py
+      - name: Chart transport semantic tests
+        run: python -u strategy_lab/terminal_chart_data_smoke_test.py
+      - name: Verify interactive terminal contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s web/smoke_terminal_v3.html
+          grep -q 'lightweight-charts@4.2.2' web/smoke_terminal_v3.html
+          grep -q '/api/chart' web/smoke_terminal_v3.html
+          grep -q 'subscribeCrosshairMove' web/smoke_terminal_v3.html
+          grep -q 'subscribeClick' web/smoke_terminal_v3.html
+          grep -q 'createPriceLine' web/smoke_terminal_v3.html
+          grep -q 'requestFullscreen' web/smoke_terminal_v3.html
+          grep -q 'smoke_control_server_v3.py' deployment/smoke-control.service.example
