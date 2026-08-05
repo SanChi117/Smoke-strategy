@@ -43,7 +43,6 @@ jobs:
       - name: Compile P8 and frozen P7 transports
         run: |
           python -m py_compile \
-            strategy_lab/p7_binance_vision_acquisition_v1.py \
             strategy_lab/p7_partition_shards_v1.py \
             strategy_lab/p7_partitioned_recognition_v1.py \
             strategy_lab/p8_semantic_replay_freeze_v1.py \
@@ -51,17 +50,26 @@ jobs:
             strategy_lab/p8_semantic_replay_freeze_v1_smoke_test.py
       - name: P8 focused semantic tests
         run: python -u strategy_lab/p8_semantic_replay_freeze_v1_smoke_test.py
-      - name: Acquire exact locked Binance Vision dataset
-        run: python -u strategy_lab/p7_binance_vision_acquisition_v1.py
-      - name: Verify fixed acquisition contract
+      - name: Download authoritative locked P7 dataset
+        uses: actions/download-artifact@v4
+        with:
+          name: p7-full-recognition-data-v1
+          path: research_outputs/p7_full_recognition_data_v1
+          repository: SanChi117/Smoke-strategy
+          run-id: '30899050584'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify immutable P7 dataset contract
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
+          import hashlib
           import json
           from pathlib import Path
           root = Path('research_outputs/p7_full_recognition_data_v1')
-          manifest = json.loads((root / 'p7_full_recognition_data_manifest_v1.json').read_text())
+          manifest_path = root / 'p7_full_recognition_data_manifest_v1.json'
+          assert hashlib.sha256(manifest_path.read_bytes()).hexdigest() == 'f87c38951bd1564b687411c2d7a956c6f6ff2a63afbce719f029344f8af2568b'
+          manifest = json.loads(manifest_path.read_text())
           assert manifest['recognition_id'] == 'SMOKE_CORE_P7_FULL_RECOGNITION_FIXED_V1'
           assert manifest['archive_count'] == 30
           assert manifest['symbols'] == ['BTCUSDT','ETHUSDT','SOLUSDT','LINKUSDT','AAVEUSDT']
@@ -69,6 +77,9 @@ jobs:
           assert manifest['start_inclusive'] == '2024-01-01T00:00:00+00:00'
           assert manifest['end_inclusive'] == '2024-06-30T23:55:00+00:00'
           assert len(manifest['archives']) == 30
+          assert len(manifest['canonical_files']) == 5
+          for row in manifest['canonical_files'].values():
+              assert (root / row['filename']).is_file()
           PY
       - name: Upload locked replay dataset
         uses: actions/upload-artifact@v4
@@ -117,7 +128,7 @@ jobs:
               for fold in range(10)
           }
           assert {row['recognition_id'] for row in payloads} == {'SMOKE_CORE_P7_FULL_RECOGNITION_FIXED_V1'}
-          assert len({row['data_manifest_sha256'] for row in payloads}) == 1
+          assert {row['data_manifest_sha256'] for row in payloads} == {'f87c38951bd1564b687411c2d7a956c6f6ff2a63afbce719f029344f8af2568b'}
           levels = sorted(Path('research_outputs/p7_levels').rglob('p7_levels_*.pkl'))
           assert len(levels) == 5, [str(path) for path in levels]
           PY
