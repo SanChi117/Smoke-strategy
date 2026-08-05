@@ -7,12 +7,18 @@ on:
     paths:
       - 'research/SMOKE_CORE_P8_SEMANTIC_REPLAY_FREEZE_PREREG_V1.md'
       - 'strategy_lab/p8_semantic_replay_freeze_v1.py'
+      - 'strategy_lab/p8_partition_replay_compare_v1.py'
       - 'strategy_lab/p8_semantic_replay_freeze_v1_smoke_test.py'
       - '.github/workflows/smoke-core-p8-semantic-freeze.yml'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: read
+  actions: read
 
 jobs:
   acquire-fixed-data:
@@ -34,12 +40,14 @@ jobs:
           grep -q 'mismatch_count = 0' research/SMOKE_CORE_P8_SEMANTIC_REPLAY_FREEZE_PREREG_V1.md
           grep -q 'b749be2578251a3b447a78a79009ff3d45cffc57' research/SMOKE_CORE_P8_SEMANTIC_REPLAY_FREEZE_PREREG_V1.md
           grep -q '2620' research/SMOKE_CORE_P8_SEMANTIC_REPLAY_FREEZE_PREREG_V1.md
-      - name: Compile P8 replay and frozen P7 acquisition
+      - name: Compile P8 and frozen P7 transports
         run: |
           python -m py_compile \
             strategy_lab/p7_binance_vision_acquisition_v1.py \
-            strategy_lab/p7_full_recognition_runner_v1.py \
+            strategy_lab/p7_partition_shards_v1.py \
+            strategy_lab/p7_partitioned_recognition_v1.py \
             strategy_lab/p8_semantic_replay_freeze_v1.py \
+            strategy_lab/p8_partition_replay_compare_v1.py \
             strategy_lab/p8_semantic_replay_freeze_v1_smoke_test.py
       - name: P8 focused semantic tests
         run: python -u strategy_lab/p8_semantic_replay_freeze_v1_smoke_test.py
@@ -70,10 +78,75 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-  exact-replay-freeze:
-    needs: acquire-fixed-data
+  acquire-authoritative-p7-reference:
     runs-on: ubuntu-latest
-    timeout-minutes: 300
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download authoritative P7 symbol-fold partitions
+        uses: actions/download-artifact@v4
+        with:
+          pattern: p7-full-recognition-partition-*
+          path: research_outputs/p8_causal_partitions
+          merge-multiple: true
+          repository: SanChi117/Smoke-strategy
+          run-id: '30899050584'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download authoritative P7 precomputed levels
+        uses: actions/download-artifact@v4
+        with:
+          pattern: p7-full-recognition-levels-*
+          path: research_outputs/p7_levels
+          merge-multiple: true
+          repository: SanChi117/Smoke-strategy
+          run-id: '30899050584'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify immutable P7 reference transport
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          partitions = sorted(Path('research_outputs/p8_causal_partitions').rglob('p7_partition_*.json'))
+          assert len(partitions) == 50, len(partitions)
+          payloads = [json.loads(path.read_text()) for path in partitions]
+          assert {(row['symbol'], int(row['fold'])) for row in payloads} == {
+              (symbol, fold)
+              for symbol in ['BTCUSDT','ETHUSDT','SOLUSDT','LINKUSDT','AAVEUSDT']
+              for fold in range(10)
+          }
+          assert {row['recognition_id'] for row in payloads} == {'SMOKE_CORE_P7_FULL_RECOGNITION_FIXED_V1'}
+          assert len({row['data_manifest_sha256'] for row in payloads}) == 1
+          levels = sorted(Path('research_outputs/p7_levels').rglob('p7_levels_*.pkl'))
+          assert len(levels) == 5, [str(path) for path in levels]
+          PY
+      - name: Upload consolidated causal reference
+        uses: actions/upload-artifact@v4
+        with:
+          name: p8-authoritative-p7-partitions-v1
+          path: research_outputs/p8_causal_partitions/
+          if-no-files-found: error
+          retention-days: 90
+      - name: Upload consolidated frozen levels
+        uses: actions/upload-artifact@v4
+        with:
+          name: p8-authoritative-p7-levels-v1
+          path: research_outputs/p7_levels/
+          if-no-files-found: error
+          retention-days: 90
+
+  fast-replay-partition-shard:
+    needs: [acquire-fixed-data, acquire-authoritative-p7-reference]
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+        fold: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        shard: [0, 1, 2, 3]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -86,8 +159,94 @@ jobs:
         with:
           name: p8-locked-recognition-data-v1
           path: research_outputs/p7_full_recognition_data_v1
-      - name: Execute exact causal-vs-fast semantic replay
-        run: python -u strategy_lab/p8_semantic_replay_freeze_v1.py
+      - name: Download frozen authoritative levels
+        uses: actions/download-artifact@v4
+        with:
+          name: p8-authoritative-p7-levels-v1
+          path: research_outputs/p7_levels
+      - name: Execute exact contiguous replay shard
+        env:
+          P7_LEVELS_FILE: research_outputs/p7_levels/p7_levels_${{ matrix.symbol }}.pkl
+          P7_LEVELS_SYMBOL: ${{ matrix.symbol }}
+        run: |
+          python -u strategy_lab/p7_partition_shards_v1.py scan \
+            --symbol '${{ matrix.symbol }}' \
+            --fold '${{ matrix.fold }}' \
+            --shard-index '${{ matrix.shard }}' \
+            --shard-count '4' \
+            --output 'research_outputs/p8_fast_shards/p7_partition_shard_${{ matrix.symbol }}_${{ matrix.fold }}_${{ matrix.shard }}.json'
+      - name: Upload exact fast replay shard
+        uses: actions/upload-artifact@v4
+        with:
+          name: p8-fast-replay-shard-${{ matrix.symbol }}-${{ matrix.fold }}-${{ matrix.shard }}
+          path: research_outputs/p8_fast_shards/p7_partition_shard_${{ matrix.symbol }}_${{ matrix.fold }}_${{ matrix.shard }}.json
+          if-no-files-found: error
+          retention-days: 90
+
+  merge-fast-replay-partitions:
+    needs: fast-replay-partition-shard
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+        fold: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install package
+        run: python -m pip install -e .
+      - name: Download exact fast replay shards
+        uses: actions/download-artifact@v4
+        with:
+          pattern: p8-fast-replay-shard-${{ matrix.symbol }}-${{ matrix.fold }}-*
+          path: research_outputs/p8_fast_shards
+      - name: Merge into original exact symbol-fold partition
+        run: |
+          python -u strategy_lab/p7_partition_shards_v1.py merge \
+            --input-dir research_outputs/p8_fast_shards \
+            --symbol '${{ matrix.symbol }}' \
+            --fold '${{ matrix.fold }}' \
+            --output 'research_outputs/p8_fast_partitions/p7_partition_${{ matrix.symbol }}_${{ matrix.fold }}.json'
+      - name: Upload exact fast replay partition
+        uses: actions/upload-artifact@v4
+        with:
+          name: p8-fast-replay-partition-${{ matrix.symbol }}-${{ matrix.fold }}
+          path: research_outputs/p8_fast_partitions/p7_partition_${{ matrix.symbol }}_${{ matrix.fold }}.json
+          if-no-files-found: error
+          retention-days: 90
+
+  exact-replay-freeze:
+    needs: [acquire-authoritative-p7-reference, merge-fast-replay-partitions]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install package
+        run: python -m pip install -e .
+      - name: Download authoritative causal partitions
+        uses: actions/download-artifact@v4
+        with:
+          name: p8-authoritative-p7-partitions-v1
+          path: research_outputs/p8_causal_partitions
+      - name: Download all fresh fast replay partitions
+        uses: actions/download-artifact@v4
+        with:
+          pattern: p8-fast-replay-partition-*
+          path: research_outputs/p8_fast_partitions
+          merge-multiple: true
+      - name: Compare exact causal and fast decision streams
+        run: |
+          python -u strategy_lab/p8_partition_replay_compare_v1.py \
+            --causal-dir research_outputs/p8_causal_partitions \
+            --fast-dir research_outputs/p8_fast_partitions
       - name: Verify exact zero-mismatch freeze report
         shell: bash
         run: |
@@ -106,6 +265,8 @@ jobs:
           assert report['contract']['symbols'] == ['BTCUSDT','ETHUSDT','SOLUSDT','LINKUSDT','AAVEUSDT']
           assert report['contract']['directions'] == ['LONG','SHORT']
           assert report['contract']['global_fingerprint_dedupe'] is True
+          assert report['authoritative_p7_reference']['run_id'] == 30899050584
+          assert report['authoritative_p7_reference']['head_sha'] == 'b749be2578251a3b447a78a79009ff3d45cffc57'
           assert freeze['missing_files'] == []
           assert freeze['hashed_file_count'] == freeze['required_file_count']
           forbidden = ('pnl','profit_factor','future_return','trade_outcome','mfe','mae','drawdown','equity','target_hit','stop_hit')
@@ -144,7 +305,9 @@ jobs:
             strategy_lab/scenario_fusion_v1.py \
             strategy_lab/outcome_blind_recognition_v1.py \
             strategy_lab/p7_full_recognition_runner_v1.py \
-            strategy_lab/p8_semantic_replay_freeze_v1.py
+            strategy_lab/p7_partition_shards_v1.py \
+            strategy_lab/p8_semantic_replay_freeze_v1.py \
+            strategy_lab/p8_partition_replay_compare_v1.py
       - name: Causal primitive regressions
         run: |
           python -u strategy_lab/mtf_dealing_range_v2_smoke_test.py
@@ -155,6 +318,7 @@ jobs:
         run: |
           python -u strategy_lab/outcome_blind_recognition_v1_smoke_test.py
           python -u strategy_lab/p7_full_recognition_runner_v1_smoke_test.py
+          python -u strategy_lab/p7_partition_shards_v1_smoke_test.py
       - name: P6 regression tests
         run: python -u strategy_lab/scenario_fusion_v1_smoke_test.py
       - name: P5 regression tests
