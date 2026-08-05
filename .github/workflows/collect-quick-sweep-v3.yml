@@ -1,0 +1,263 @@
+name: Collect Quick Sweep V3
+
+on:
+  push:
+    branches:
+      - 'agent/live-paper-hardening'
+    paths:
+      - 'research_triggers/collect_quick_sweep_v3.txt'
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN_ID: '29410024555'
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/live-paper-hardening
+          fetch-depth: 0
+
+      - name: Download completed quick sweep
+        id: download
+        continue-on-error: true
+        run: |
+          rm -rf collected
+          mkdir -p collected
+          gh run download "$SOURCE_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name smoke-causal-quick-sweep-v1 \
+            --dir collected
+
+      - name: Save workflow log
+        if: always()
+        run: |
+          gh run view "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --log > collected/run.log
+
+      - name: Build compact result
+        if: always()
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import csv
+          import json
+          import re
+          from pathlib import Path
+
+          root = Path('collected')
+          out = Path('results/causal_quick_sweep_status_v3')
+          out.mkdir(parents=True, exist_ok=True)
+
+          def find(name: str):
+              matches = list(root.rglob(name)) if root.exists() else []
+              return matches[0] if matches else None
+
+          def load_json(name: str):
+              path = find(name)
+              if not path or path.stat().st_size == 0:
+                  return {}, None
+              try:
+                  return json.loads(path.read_text(encoding='utf-8')), path
+              except Exception:
+                  return {}, path
+
+          def read_csv_rows(name: str):
+              path = find(name)
+              if not path or path.stat().st_size == 0:
+                  return [], None
+              with path.open(newline='', encoding='utf-8') as f:
+                  return list(csv.DictReader(f)), path
+
+          def num(value, default=0.0):
+              try:
+                  return float(value)
+              except Exception:
+                  return default
+
+          best, best_path = load_json('tagged_multi_wfo_best.json')
+          summary_rows, summary_path = read_csv_rows('tagged_multi_wfo_summary.csv')
+          matrix_rows, matrix_path = read_csv_rows('matrix_summary.csv')
+          log_path = root / 'run.log'
+          log_text = log_path.read_text(encoding='utf-8', errors='replace') if log_path.exists() else ''
+
+          messages = []
+          for raw in log_text.splitlines():
+              parts = raw.split('\t', 2)
+              msg = parts[2] if len(parts) == 3 else raw
+              if 'Z ' in msg:
+                  msg = msg.split('Z ', 1)[1]
+              messages.append(msg.lstrip('\ufeff').strip())
+
+          parsed_matrix = []
+          matrix_re = re.compile(
+              r'^(TAGGED_[A-Z0-9_]+): ret=([-0-9.]+)% dd=([-0-9.]+)% '
+              r'pf=([-0-9.]+) executed=(\d+) sanity=([A-Z]+) score=([-0-9.]+)$'
+          )
+          for msg in messages:
+              match = matrix_re.match(msg)
+              if match:
+                  parsed_matrix.append({
+                      'name': match.group(1),
+                      'ret_pct': float(match.group(2)),
+                      'max_dd_pct': float(match.group(3)),
+                      'pf': float(match.group(4)),
+                      'executed_trades': int(match.group(5)),
+                      'sanity_status': match.group(6),
+                      'score': float(match.group(7)),
+                  })
+
+          parsed_wfo = []
+          current = None
+          for msg in messages:
+              if msg == '# Binance Walk-Forward Summary':
+                  if current and current.get('name'):
+                      parsed_wfo.append(current)
+                  current = {}
+                  continue
+              if current is None:
+                  continue
+              patterns = [
+                  ('verdict', r'^Verdict: \*\*(.+)\*\*$'),
+                  ('name', r'^- Name: (.+)$'),
+                  ('valid', r'^- Valid folds: (\d+) / (\d+)$'),
+                  ('positive', r'^- Positive folds: (\d+) \('),
+                  ('trades', r'^- Total executed trades: (\d+)$'),
+                  ('ret', r'^- Average return pct: ([-0-9.]+)%$'),
+                  ('pf', r'^- Average PF: ([-0-9.]+)$'),
+                  ('dd', r'^- Worst max DD pct: ([-0-9.]+)%$'),
+              ]
+              for key, pattern in patterns:
+                  match = re.match(pattern, msg)
+                  if not match:
+                      continue
+                  if key == 'valid':
+                      current['valid_folds'] = int(match.group(1))
+                      current['total_folds'] = int(match.group(2))
+                  elif key in {'positive', 'trades'}:
+                      current['positive_folds' if key == 'positive' else 'total_trades'] = int(match.group(1))
+                  elif key in {'ret', 'pf', 'dd'}:
+                      current[{'ret': 'avg_return_pct', 'pf': 'avg_pf', 'dd': 'worst_dd_pct'}[key]] = float(match.group(1))
+                  else:
+                      current[key] = match.group(1)
+                  break
+          if current and current.get('name'):
+              parsed_wfo.append(current)
+
+          # Deduplicate any repeated log blocks, preserving the final complete block.
+          by_name = {}
+          for row in parsed_wfo:
+              by_name[row.get('name', '')] = row
+          parsed_wfo = [by_name[name] for name in sorted(by_name)]
+
+          matrix_by_name = {row.get('name', ''): row for row in (matrix_rows or parsed_matrix)}
+          for row in parsed_wfo:
+              matrix = matrix_by_name.get(row.get('name', ''), {})
+              row['matrix_return_pct'] = num(matrix.get('ret_pct'))
+              row['matrix_pf'] = num(matrix.get('pf'))
+              row['matrix_trades'] = int(num(matrix.get('executed_trades')))
+
+          verdict_rank = {
+              'PASS_WALK_FORWARD_REVIEW': 4,
+              'WATCH_REVIEWABLE_BUT_UNSTABLE': 3,
+              'WATCH_TOO_SPARSE': 2,
+              'WATCH_UNSTABLE': 1,
+          }
+          ranked_from_log = sorted(
+              parsed_wfo,
+              key=lambda row: (
+                  verdict_rank.get(row.get('verdict', ''), 0),
+                  row.get('positive_folds', 0),
+                  row.get('avg_return_pct', -999.0),
+                  row.get('avg_pf', 0.0),
+                  row.get('total_trades', 0),
+              ),
+              reverse=True,
+          )
+
+          if not best and ranked_from_log:
+              top = ranked_from_log[0]
+              best = {
+                  'name': top.get('name', ''),
+                  'wfo_verdict': top.get('verdict', ''),
+                  'positive_folds': top.get('positive_folds', 0),
+                  'valid_folds': top.get('valid_folds', 0),
+                  'wfo_total_trades': top.get('total_trades', 0),
+                  'wfo_avg_ret_pct': top.get('avg_return_pct', 0.0),
+                  'wfo_avg_pf': top.get('avg_pf', 0.0),
+                  'wfo_worst_dd_pct': top.get('worst_dd_pct', 0.0),
+                  'matrix_ret_pct': top.get('matrix_return_pct', 0.0),
+                  'matrix_pf': top.get('matrix_pf', 0.0),
+                  'matrix_executed_trades': top.get('matrix_trades', 0),
+              }
+
+          result = {
+              'source_run_id': int('29410024555'),
+              'download_outcome': '${{ steps.download.outcome }}',
+              'artifact_found': bool(best_path),
+              'candidate': best.get('name', ''),
+              'wfo_verdict': best.get('wfo_verdict', ''),
+              'positive_folds': best.get('positive_folds', ''),
+              'valid_folds': best.get('valid_folds', best.get('total_folds', '')),
+              'total_trades': best.get('wfo_total_trades', ''),
+              'avg_return_pct': best.get('wfo_avg_ret_pct', ''),
+              'avg_pf': best.get('wfo_avg_pf', ''),
+              'worst_dd_pct': best.get('wfo_worst_dd_pct', ''),
+              'matrix_return_pct': best.get('matrix_ret_pct', ''),
+              'matrix_pf': best.get('matrix_pf', ''),
+              'matrix_trades': best.get('matrix_executed_trades', ''),
+              'wfo_candidates': ranked_from_log,
+              'ranked_candidates': summary_rows,
+              'matrix_candidates': matrix_rows or parsed_matrix,
+              'files_found': {
+                  'best': str(best_path or ''),
+                  'summary': str(summary_path or ''),
+                  'matrix': str(matrix_path or ''),
+                  'log': str(log_path if log_path.exists() else ''),
+              },
+              'log_tail': '\n'.join(log_text.splitlines()[-80:]),
+          }
+          (out / 'result.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          lines = [
+              '# Causal quick sweep v3 result',
+              '',
+              f"- Source run: `{result['source_run_id']}`",
+              f"- Artifact found: **{result['artifact_found']}**",
+              f"- Screening leader: **{result['candidate'] or 'not recovered'}**",
+              f"- WFO verdict: **{result['wfo_verdict'] or 'not recovered'}**",
+              f"- Positive folds: `{result['positive_folds']}/{result['valid_folds']}`",
+              f"- Trades: `{result['total_trades']}`",
+              f"- Average return: `{result['avg_return_pct']}`",
+              f"- Average PF: `{result['avg_pf']}`",
+              f"- Worst DD: `{result['worst_dd_pct']}`",
+              '',
+              '## All WFO candidates',
+          ]
+          for row in ranked_from_log:
+              lines.append(
+                  f"- {row.get('name')}: verdict={row.get('verdict')}, folds={row.get('positive_folds', 0)}/{row.get('valid_folds', 0)}, "
+                  f"trades={row.get('total_trades', 0)}, ret={row.get('avg_return_pct', 0.0)}%, "
+                  f"PF={row.get('avg_pf', 0.0)}, DD={row.get('worst_dd_pct', 0.0)}%"
+              )
+          (out / 'result.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit compact result
+        if: always()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase origin agent/live-paper-hardening
+          git add results/causal_quick_sweep_status_v3/result.json results/causal_quick_sweep_status_v3/result.md
+          if git diff --cached --quiet; then
+            echo 'No result changes'
+            exit 0
+          fi
+          git commit -m 'Record parsed causal quick sweep v3 result'
+          git push origin HEAD:agent/live-paper-hardening

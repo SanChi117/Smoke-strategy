@@ -1,0 +1,47 @@
+{
+  "mode": "FLAT_V72_CAUSAL_SCREENING_V1",
+  "status": "predeclared_development_screen",
+  "source": "recovered Flat v7.2 project rules; original full Pine source not located",
+  "recovered_rules": {
+    "timeframe": "15m",
+    "direction": "long_only",
+    "donchian_length": 50,
+    "atr_touch_buffer": 0.3,
+    "center_ban": [0.33, 0.67],
+    "minimum_range_width_pct": 2.0,
+    "dynamic_volume_multipliers": [1.6, 1.8, 2.0],
+    "target": "swing high minus ATR*0.4",
+    "minimum_rr": 1.7,
+    "rr_caps": [2.2, 2.8],
+    "cooldown_bars": 4,
+    "trend_filter": "60m EMA50>EMA200 and 15m close>EMA200"
+  },
+  "explicit_research_assumptions": {
+    "narrow_width_boundary_pct": 3.0,
+    "wide_width_boundary_pct": 5.0,
+    "fractal_lookback": 7,
+    "normal_stop_atr_reserve": 0.45,
+    "wide_stop_atr_reserve": 0.65,
+    "strong_impulse": "bullish body >= 0.6 ATR and volume ratio >= 2.0",
+    "maximum_holding_bars": 96,
+    "entry_execution": "next 15m bar open after signal candle closes"
+  },
+  "variants": [
+    "FLAT72_RECOVERED_BASE_RAW",
+    "FLAT72_RECOVERED_BASE_SOFT",
+    "FLAT72_NO_60M_FILTER_RAW",
+    "FLAT72_FIXED_VOLUME_18_RAW",
+    "FLAT72_FIXED_RR17_RAW",
+    "FLAT72_RANGE_ONLY_RAW"
+  ],
+  "rules": [
+    "strict chronological OOS",
+    "warm-up excluded from PnL",
+    "official Binance USD-M Futures archives",
+    "closed 15m and completed 60m candles only",
+    "pooled PF",
+    "same fees and portfolio profile for every variant",
+    "no external holdout used in this screen",
+    "no promotion from this run alone"
+  ]
+}

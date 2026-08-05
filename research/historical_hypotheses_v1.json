@@ -1,0 +1,225 @@
+{
+  "version": 1,
+  "created_at": "2026-07-16",
+  "mode": "RESEARCH_ONLY",
+  "promotion_allowed": false,
+  "methodology": {
+    "required": [
+      "closed Binance Futures candles",
+      "completed higher-timeframe context",
+      "exit_time not later than decision time for learned history",
+      "strict OOS accounting",
+      "pooled profit factor",
+      "frozen external holdout"
+    ],
+    "forbidden": [
+      "live orders",
+      "manual winner-only symbol selection",
+      "global sparse history hard veto",
+      "holdout retuning",
+      "high leverage used to manufacture return"
+    ]
+  },
+  "hypotheses": [
+    {
+      "id": "H01_ROLLING_SYMBOL_STRENGTH",
+      "idea": "Rolling Symbol Strength / TRUE Symbol Strength",
+      "origin": "SMOKE v2.4 and Selective FE",
+      "old_status": "historically strong",
+      "old_test_validity": "invalid_for_edge_claim",
+      "decision": "RETEST_NOW",
+      "priority": 1,
+      "test_plan": "Compare no rolling, top-5 and top-8 using only completed causal trade history; use ranking as soft context and gate in separate candidates."
+    },
+    {
+      "id": "H02_QUALITY_SCORE",
+      "idea": "Trade Quality Score as connecting metric",
+      "origin": "early SMOKE quality layer",
+      "old_status": "implemented with strong historical reports",
+      "old_test_validity": "lookahead_contaminated",
+      "decision": "RETEST_NOW",
+      "priority": 1,
+      "test_plan": "Compare standard hard thresholds with causal soft WATCH/risk mode; no global veto before relevant history exists."
+    },
+    {
+      "id": "H03_STRUCTURE_LEARNING",
+      "idea": "Exact/fallback Structure Learning",
+      "origin": "early SMOKE structure layer",
+      "old_status": "implemented",
+      "old_test_validity": "lookahead_and_scope_contaminated",
+      "decision": "RETEST_NOW",
+      "priority": 1,
+      "test_plan": "Exact/fallback may block after sufficient samples; loose/global may reduce risk but cannot hard-block an unseen setup."
+    },
+    {
+      "id": "H04_REGIME_ROUTER",
+      "idea": "Regime to Setup to Trigger to Risk router",
+      "origin": "pre-SMOKE architecture and regime-aware generator",
+      "old_status": "partially replaced by global allow/block lists",
+      "old_test_validity": "insufficient",
+      "decision": "RETEST_NOW",
+      "priority": 1,
+      "test_plan": "Compare all setup families, trend-family router and reversal/range router on identical folds."
+    },
+    {
+      "id": "H05_PULLBACK",
+      "idea": "Trend pullback",
+      "origin": "regime generator and recent causal calibration",
+      "old_status": "most tested family but unstable externally",
+      "old_test_validity": "mixed",
+      "decision": "RETEST_AS_ONE_FAMILY",
+      "priority": 1,
+      "test_plan": "Do not use as the whole strategy; compare legacy pullback and resumption subtypes inside trend regimes."
+    },
+    {
+      "id": "H06_IGNITION",
+      "idea": "Ignition / impulse continuation",
+      "origin": "regime-aware setup generator",
+      "old_status": "alternately allowed and blocked",
+      "old_test_validity": "invalid_after_causal_repair",
+      "decision": "RETEST_NOW",
+      "priority": 1,
+      "test_plan": "Isolated family and trend-router component, with volume and completed HTF context."
+    },
+    {
+      "id": "H07_BREAKOUT",
+      "idea": "Breakout / breakdown continuation",
+      "origin": "regime-aware setup generator",
+      "old_status": "commonly blocked",
+      "old_test_validity": "insufficient",
+      "decision": "RETEST_NOW",
+      "priority": 1,
+      "test_plan": "Isolated causal family; do not globally block high volatility when breakout conditions explicitly require expansion."
+    },
+    {
+      "id": "H08_RANGE_ROTATION",
+      "idea": "Range rotation",
+      "origin": "regime-aware setup generator and Flat lineage",
+      "old_status": "blocked after weakness in one diagnostic fold",
+      "old_test_validity": "insufficient",
+      "decision": "RETEST_NOW",
+      "priority": 1,
+      "test_plan": "Isolated test at range edges; later compare with Python Flat v7.2 implementation."
+    },
+    {
+      "id": "H09_LIQUIDITY_RECLAIM",
+      "idea": "Liquidity sweep/reclaim",
+      "origin": "Cleanshot/SMC and regime-aware generator",
+      "old_status": "blocked by final old baseline",
+      "old_test_validity": "insufficient",
+      "decision": "RETEST_NOW",
+      "priority": 1,
+      "test_plan": "Test low sweep reclaim and high sweep rejection/reclaim separately without a global liquidity-state block."
+    },
+    {
+      "id": "H10_DYNAMIC_TARGETS",
+      "idea": "Trend-wide, countertrend-compressed and range-boundary targets",
+      "origin": "Quality/Structure target policies and user requirements",
+      "old_status": "policy labels existed but exits were not fully routed by them",
+      "old_test_validity": "not_tested",
+      "decision": "IMPLEMENT_NEXT",
+      "priority": 1,
+      "test_plan": "After family screening, rebuild TP simulation by regime while keeping structural SL unchanged."
+    },
+    {
+      "id": "H11_FLAT_V72",
+      "idea": "Flat v7.2 Donchian/ATR range strategy",
+      "origin": "Pine strategy lineage",
+      "old_status": "reference strategy, not ported to SMOKE",
+      "old_test_validity": "not_tested_in_smoke",
+      "decision": "PORT_AND_TEST",
+      "priority": 2,
+      "test_plan": "Implement as independent range setup with dynamic volume, center ban, range width, fractal SL and swing TP."
+    },
+    {
+      "id": "H12_5M_TIMING",
+      "idea": "5m micro confirmation / precise entry",
+      "origin": "Pine logic and MTF 5m A/B",
+      "old_status": "hard gate rejected due sparse trades",
+      "old_test_validity": "hard_gate_only",
+      "decision": "RETEST_LATER_AS_OVERLAY",
+      "priority": 2,
+      "test_plan": "Use 5m as timing, entry-price or risk modifier; never as an automatic full veto without new evidence."
+    },
+    {
+      "id": "H13_SECTOR_ROTATION",
+      "idea": "Dynamic sector rotation",
+      "origin": "sector cycle architecture",
+      "old_status": "implemented but not proven",
+      "old_test_validity": "insufficient",
+      "decision": "RETEST_AFTER_FAMILIES",
+      "priority": 2,
+      "test_plan": "Use sector strength as rank/context and compare against no-sector control; no permanent sector allowlist."
+    },
+    {
+      "id": "H14_LONG_SHORT_SPLIT",
+      "idea": "Independent LONG and SHORT models",
+      "origin": "user requirement and recent dual-direction diagnostics",
+      "old_status": "combined baselines were regime-dependent",
+      "old_test_validity": "confirmed_need_for_split",
+      "decision": "KEEP",
+      "priority": 1,
+      "test_plan": "Report and calibrate sides independently, then combine only through a portfolio router."
+    },
+    {
+      "id": "H15_CLEANSHOT_SMC_COMPONENTS",
+      "idea": "FVG, OB, fractals, RSI divergence, volume profile and liquidity raids",
+      "origin": "Cleanshot / Smart Money lineage",
+      "old_status": "deprioritized",
+      "old_test_validity": "not_disproved",
+      "decision": "FORMALIZE_ONE_BY_ONE",
+      "priority": 3,
+      "test_plan": "No bundled SMC score. Define one objective feature at a time and require incremental OOS improvement."
+    },
+    {
+      "id": "H16_LIQUIDITY_RAID_VC_TRIGGER",
+      "idea": "Daily liquidity raid plus 4H VC/RB plus 1H/15m trigger",
+      "origin": "user diagrams and trading notes",
+      "old_status": "not implemented",
+      "old_test_validity": "not_tested",
+      "decision": "FORMALIZE_AND_TEST",
+      "priority": 3,
+      "test_plan": "Translate visual concepts into deterministic closed-candle rules before simulation."
+    },
+    {
+      "id": "H17_SNIPER_POPRYGUNCHIK_DYNPA",
+      "idea": "Sniper Pro+, Poprygunchik and DynPA Router",
+      "origin": "pre-SMOKE Pine lineage",
+      "old_status": "rules not preserved in one causal runner",
+      "old_test_validity": "unknown",
+      "decision": "RECOVER_RULES_THEN_TEST",
+      "priority": 3,
+      "test_plan": "Locate exact source/rules; do not reconstruct from names alone."
+    },
+    {
+      "id": "H18_AUTOMATIC_FEATURE_ENGINEERING",
+      "idea": "Automatic Feature Engineering",
+      "origin": "pre-SMOKE robustness cycles",
+      "old_status": "workflows unstable and selection unclear",
+      "old_test_validity": "insufficient",
+      "decision": "DEFER",
+      "priority": 4,
+      "test_plan": "Use only after a clean hypothesis library and nested validation exist; prohibit black-box holdout optimization."
+    },
+    {
+      "id": "H19_FIXED_CORE",
+      "idea": "Fixed hand-picked core",
+      "origin": "early tactical tests",
+      "old_status": "strong historical performance",
+      "old_test_validity": "selection_biased",
+      "decision": "CONTROL_ONLY",
+      "priority": 4,
+      "test_plan": "May be a reference cohort but cannot define production universe."
+    },
+    {
+      "id": "H20_LIVE_AI_AND_HIGH_LEVERAGE",
+      "idea": "AI veto, live execution, aggressive leverage/reinvestment",
+      "origin": "early project goals",
+      "old_status": "removed from current research scope",
+      "old_test_validity": "not_applicable",
+      "decision": "DO_NOT_RETURN_DURING_EDGE_RESEARCH",
+      "priority": 99,
+      "test_plan": "Remain disabled until external holdout and paper-review establish edge."
+    }
+  ]
+}

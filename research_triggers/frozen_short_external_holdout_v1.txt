@@ -1,0 +1,3 @@
+run one frozen external holdout for FROZEN_DUAL_SHORT_NO_NEUTRAL_V1
+period: 2025-01-01 through 2025-06-30
+windows: 6

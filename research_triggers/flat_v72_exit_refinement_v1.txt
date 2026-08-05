@@ -1,0 +1,5 @@
+Trigger FLAT_V72_EXIT_REFINEMENT_V1.
+
+The recovered Flat v7.2 entry family failed its first causal development screen. This cycle changes exit policy and holding time only. Entry logic, universe, chronological folds, costs, portfolio profile, next-bar-open execution, and closed-candle rules remain frozen.
+
+No external holdout. No paper or live promotion. If every candidate blocks, do not add more exit variants on the same development period; proceed to the separately predeclared 5m soft timing/risk cycle.

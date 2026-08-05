@@ -1,0 +1,52 @@
+{
+  "mode": "FLAT_V72_EXIT_REFINEMENT_V1",
+  "status": "predeclared_development_cycle",
+  "purpose": "Test whether the failed recovered Flat v7.2 entry family was mainly harmed by mismatched target and holding-time policy.",
+  "development_period": ["2025-01-01", "2026-06-30"],
+  "frozen_dimensions": [
+    "Flat v7.2 entry logic",
+    "research universe",
+    "ten chronological OOS folds",
+    "next-bar-open execution",
+    "fees and slippage",
+    "portfolio profile research_500",
+    "closed 15m and completed 60m candles"
+  ],
+  "changed_dimensions": [
+    "maximum holding time",
+    "fixed versus structural target",
+    "minimum RR",
+    "RR caps"
+  ],
+  "variants": [
+    "FLAT72_EXIT_SOFT_STRUCT_24H_CONTROL",
+    "FLAT72_EXIT_SOFT_STRUCT_8H",
+    "FLAT72_EXIT_SOFT_STRUCT_12H",
+    "FLAT72_EXIT_SOFT_STRUCT_16H",
+    "FLAT72_EXIT_SOFT_FIXED_RR10_8H",
+    "FLAT72_EXIT_SOFT_FIXED_RR12_12H",
+    "FLAT72_EXIT_SOFT_COMPRESSED_STRUCT_12H",
+    "FLAT72_EXIT_SOFT_COMPRESSED_STRUCT_16H"
+  ],
+  "development_pass": {
+    "minimum_trades": 60,
+    "minimum_positive_fold_share": 0.60,
+    "minimum_pooled_pf": 1.20,
+    "positive_average_return": true,
+    "worst_fold_return_above_pct": -2.5,
+    "maximum_drawdown_pct": 8.0
+  },
+  "watch_gate": {
+    "minimum_trades": 30,
+    "minimum_positive_fold_share": 0.50,
+    "minimum_pooled_pf": 1.05,
+    "positive_average_return": true,
+    "maximum_drawdown_pct": 10.0
+  },
+  "prohibitions": [
+    "no external holdout in this cycle",
+    "no symbol cherry-pick after results",
+    "no new exit variants after viewing this cycle on the same development period",
+    "no paper or live promotion from development alone"
+  ]
+}

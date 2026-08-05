@@ -1,0 +1,115 @@
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	﻿2026-07-15T19:23:49.7176682Z ##[group]Run python scripts/run_twelve_month_dual_direction_screening.py \
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:23:49.7177563Z ^[[36;1mpython scripts/run_twelve_month_dual_direction_screening.py \^[[0m
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:23:49.7178271Z ^[[36;1m  --candles "$RUNNER_TEMP/smoke-dev12-usdm-15m.csv" \^[[0m
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:23:49.7178884Z ^[[36;1m  --out-dir results/twelve_month_dual_screening_v1 \^[[0m
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:23:49.7179370Z ^[[36;1m  --windows 8 \^[[0m
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:23:49.7179952Z ^[[36;1m  --lookback-days 30 \^[[0m
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:23:49.7180376Z ^[[36;1m  --profile research_500 \^[[0m
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:23:49.7180772Z ^[[36;1m  --pool-min-confidence 40^[[0m
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:23:49.7230932Z shell: /usr/bin/bash -e {0}
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:23:49.7231322Z env:
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:23:49.7231643Z   PYTHONUNBUFFERED: 1
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:23:49.7232119Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.15/x64
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:23:49.7232819Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib/pkgconfig
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:23:49.7233520Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:23:49.7234201Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:23:49.7234812Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:23:49.7235412Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:23:49.7235912Z ##[endgroup]
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:25:25.2868404Z DEV12_MOD_SHORT_CONTEXT fold_01: trades=2 ret=-0.41
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:25:27.8434476Z DEV12_MOD_LONG_CONTEXT fold_01: trades=12 ret=-1.21
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:25:30.4248675Z DEV12_MOD_DUAL_BASIC fold_01: trades=21 ret=-0.47
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:25:33.0122078Z DEV12_MOD_DUAL_CONTEXT fold_01: trades=14 ret=-1.62
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:25:35.5928636Z DEV12_MOD_DUAL_SYM_IMPULSE fold_01: trades=16 ret=0.07
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:25:38.1568101Z DEV12_MOD_DUAL_FULL fold_01: trades=10 ret=-0.6
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:26:36.6321690Z DEV12_EXP_DUAL_BASIC fold_01: trades=21 ret=-0.47
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:26:39.1036060Z DEV12_EXP_DUAL_CONTEXT fold_01: trades=14 ret=-1.62
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:26:41.6337123Z DEV12_EXP_DUAL_FULL fold_01: trades=10 ret=-0.6
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:26:44.1809923Z DEV12_EXP_DUAL_ALL_CONTEXT fold_01: trades=13 ret=-1.47
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:26:46.7852616Z DEV12_EXP_DUAL_RESUMPTION_ONLY fold_01: trades=2 ret=-0.41
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:28:13.2462885Z DEV12_MOD_SHORT_CONTEXT fold_02: trades=4 ret=-1.11
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:28:15.6171723Z DEV12_MOD_LONG_CONTEXT fold_02: trades=6 ret=0.2
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:28:18.0441701Z DEV12_MOD_DUAL_BASIC fold_02: trades=14 ret=-1.44
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:28:20.4635289Z DEV12_MOD_DUAL_CONTEXT fold_02: trades=10 ret=-0.91
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:28:23.3284608Z DEV12_MOD_DUAL_SYM_IMPULSE fold_02: trades=12 ret=-1.26
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:28:25.7883926Z DEV12_MOD_DUAL_FULL fold_02: trades=10 ret=-0.91
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:29:19.5819851Z DEV12_EXP_DUAL_BASIC fold_02: trades=16 ret=-2.11
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:29:21.9602878Z DEV12_EXP_DUAL_CONTEXT fold_02: trades=12 ret=-1.58
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:29:24.3349867Z DEV12_EXP_DUAL_FULL fold_02: trades=12 ret=-1.58
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:29:26.7102316Z DEV12_EXP_DUAL_ALL_CONTEXT fold_02: trades=12 ret=-1.58
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:29:29.0770403Z DEV12_EXP_DUAL_RESUMPTION_ONLY fold_02: trades=2 ret=-0.84
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:30:52.1509261Z DEV12_MOD_SHORT_CONTEXT fold_03: trades=2 ret=0.39
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:30:54.4127216Z DEV12_MOD_LONG_CONTEXT fold_03: trades=0 ret=0.0
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:30:56.7826648Z DEV12_MOD_DUAL_BASIC fold_03: trades=3 ret=0.42
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:30:59.1523079Z DEV12_MOD_DUAL_CONTEXT fold_03: trades=2 ret=0.39
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:31:01.4905606Z DEV12_MOD_DUAL_SYM_IMPULSE fold_03: trades=3 ret=0.22
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:31:03.8457579Z DEV12_MOD_DUAL_FULL fold_03: trades=2 ret=0.18
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:31:55.3434296Z DEV12_EXP_DUAL_BASIC fold_03: trades=3 ret=0.42
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:31:57.6222861Z DEV12_EXP_DUAL_CONTEXT fold_03: trades=2 ret=0.39
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:31:59.9728610Z DEV12_EXP_DUAL_FULL fold_03: trades=2 ret=0.18
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:32:02.2916351Z DEV12_EXP_DUAL_ALL_CONTEXT fold_03: trades=2 ret=0.39
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:32:04.6312933Z DEV12_EXP_DUAL_RESUMPTION_ONLY fold_03: trades=2 ret=0.04
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:33:22.1037550Z DEV12_MOD_SHORT_CONTEXT fold_04: trades=4 ret=0.7
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:33:24.3005835Z DEV12_MOD_LONG_CONTEXT fold_04: trades=18 ret=-0.0
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:33:26.5385441Z DEV12_MOD_DUAL_BASIC fold_04: trades=28 ret=-0.68
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:33:28.7344421Z DEV12_MOD_DUAL_CONTEXT fold_04: trades=22 ret=0.69
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:33:30.9318791Z DEV12_MOD_DUAL_SYM_IMPULSE fold_04: trades=23 ret=0.42
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:33:33.1613484Z DEV12_MOD_DUAL_FULL fold_04: trades=18 ret=2.02
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:34:22.6545566Z DEV12_EXP_DUAL_BASIC fold_04: trades=28 ret=-0.68
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:34:24.8818319Z DEV12_EXP_DUAL_CONTEXT fold_04: trades=22 ret=0.69
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:34:27.1046997Z DEV12_EXP_DUAL_FULL fold_04: trades=18 ret=2.02
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:34:29.3287260Z DEV12_EXP_DUAL_ALL_CONTEXT fold_04: trades=22 ret=0.69
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:34:31.5468789Z DEV12_EXP_DUAL_RESUMPTION_ONLY fold_04: trades=2 ret=0.63
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:35:54.5501410Z DEV12_MOD_SHORT_CONTEXT fold_05: trades=4 ret=0.96
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:35:56.7923418Z DEV12_MOD_LONG_CONTEXT fold_05: trades=1 ret=-0.4
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:35:59.0807266Z DEV12_MOD_DUAL_BASIC fold_05: trades=11 ret=-0.3
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:36:01.3619560Z DEV12_MOD_DUAL_CONTEXT fold_05: trades=5 ret=0.56
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:36:03.6603457Z DEV12_MOD_DUAL_SYM_IMPULSE fold_05: trades=9 ret=0.46
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:36:05.9469263Z DEV12_MOD_DUAL_FULL fold_05: trades=5 ret=0.56
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:36:56.6387821Z DEV12_EXP_DUAL_BASIC fold_05: trades=11 ret=-0.3
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:36:58.8692793Z DEV12_EXP_DUAL_CONTEXT fold_05: trades=5 ret=0.56
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:37:01.1399263Z DEV12_EXP_DUAL_FULL fold_05: trades=5 ret=0.56
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:37:03.4333174Z DEV12_EXP_DUAL_ALL_CONTEXT fold_05: trades=3 ret=1.17
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:37:05.7866445Z DEV12_EXP_DUAL_RESUMPTION_ONLY fold_05: trades=3 ret=0.17
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:38:27.0003607Z DEV12_MOD_SHORT_CONTEXT fold_06: trades=3 ret=-0.45
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:38:29.2989985Z DEV12_MOD_LONG_CONTEXT fold_06: trades=16 ret=0.86
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:38:31.5908004Z DEV12_MOD_DUAL_BASIC fold_06: trades=26 ret=3.16
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:38:33.8758801Z DEV12_MOD_DUAL_CONTEXT fold_06: trades=19 ret=0.41
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:38:36.1705415Z DEV12_MOD_DUAL_SYM_IMPULSE fold_06: trades=24 ret=1.92
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:38:38.4399429Z DEV12_MOD_DUAL_FULL fold_06: trades=18 ret=0.07
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:39:26.7433079Z DEV12_EXP_DUAL_BASIC fold_06: trades=27 ret=2.91
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:39:28.9573929Z DEV12_EXP_DUAL_CONTEXT fold_06: trades=20 ret=0.16
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:39:31.2270069Z DEV12_EXP_DUAL_FULL fold_06: trades=19 ret=-0.19
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:39:33.4913222Z DEV12_EXP_DUAL_ALL_CONTEXT fold_06: trades=19 ret=0.06
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:39:35.7996232Z DEV12_EXP_DUAL_RESUMPTION_ONLY fold_06: trades=2 ret=-0.46
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:40:52.7755679Z DEV12_MOD_SHORT_CONTEXT fold_07: trades=9 ret=-1.52
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:40:55.0544706Z DEV12_MOD_LONG_CONTEXT fold_07: trades=5 ret=0.78
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:40:57.3902303Z DEV12_MOD_DUAL_BASIC fold_07: trades=24 ret=-1.16
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:40:59.7357796Z DEV12_MOD_DUAL_CONTEXT fold_07: trades=14 ret=-0.75
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:41:02.1081056Z DEV12_MOD_DUAL_SYM_IMPULSE fold_07: trades=22 ret=-0.83
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:41:04.4519803Z DEV12_MOD_DUAL_FULL fold_07: trades=12 ret=-0.42
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:41:49.3943837Z DEV12_EXP_DUAL_BASIC fold_07: trades=27 ret=-0.78
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:41:51.7606452Z DEV12_EXP_DUAL_CONTEXT fold_07: trades=15 ret=-0.36
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:41:54.1040765Z DEV12_EXP_DUAL_FULL fold_07: trades=12 ret=-0.37
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:41:56.4406620Z DEV12_EXP_DUAL_ALL_CONTEXT fold_07: trades=14 ret=-0.25
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:41:58.7758538Z DEV12_EXP_DUAL_RESUMPTION_ONLY fold_07: trades=1 ret=-0.11
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:43:14.8991705Z DEV12_MOD_SHORT_CONTEXT fold_08: trades=6 ret=0.65
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:43:17.0938121Z DEV12_MOD_LONG_CONTEXT fold_08: trades=1 ret=0.44
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:43:19.2903265Z DEV12_MOD_DUAL_BASIC fold_08: trades=9 ret=0.34
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:43:21.4805337Z DEV12_MOD_DUAL_CONTEXT fold_08: trades=7 ret=1.09
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:43:23.6709116Z DEV12_MOD_DUAL_SYM_IMPULSE fold_08: trades=8 ret=-0.09
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:43:25.8690334Z DEV12_MOD_DUAL_FULL fold_08: trades=6 ret=0.65
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:44:10.5980691Z DEV12_EXP_DUAL_BASIC fold_08: trades=9 ret=0.34
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:44:12.7301670Z DEV12_EXP_DUAL_CONTEXT fold_08: trades=7 ret=1.09
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:44:14.9172537Z DEV12_EXP_DUAL_FULL fold_08: trades=6 ret=0.65
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:44:17.0936246Z DEV12_EXP_DUAL_ALL_CONTEXT fold_08: trades=7 ret=1.09
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:44:19.2923396Z DEV12_EXP_DUAL_RESUMPTION_ONLY fold_08: trades=4 ret=1.77
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:44:19.3375796Z Traceback (most recent call last):
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:44:19.3387523Z   File "/home/runner/work/Smoke-strategy/Smoke-strategy/scripts/run_twelve_month_dual_direction_screening.py", line 318, in <module>
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:44:19.3400657Z     raise SystemExit(main())
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:44:19.3450792Z                      ^^^^^^
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:44:19.3451839Z   File "/home/runner/work/Smoke-strategy/Smoke-strategy/scripts/run_twelve_month_dual_direction_screening.py", line 305, in main
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:44:19.3452702Z     "promotion_allowed": false,
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:44:19.3453047Z                          ^^^^^
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:44:19.3453457Z NameError: name 'false' is not defined. Did you mean: 'base'?
+twelve-month-dual-direction-causal-screen	Run twelve-month dual-direction screen	2026-07-15T19:44:19.6803555Z ##[error]Process completed with exit code 1.

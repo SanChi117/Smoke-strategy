@@ -1,0 +1,55 @@
+name: Discover Long History Sweep
+
+on:
+  push:
+    branches:
+      - 'agent/live-paper-hardening'
+    paths:
+      - 'research_triggers/discover_long_history_sweep_v1.txt'
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TARGET_SHA: 1b157e91d3fbeb1d9718ee4a4dd4d4279f6d6321
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/live-paper-hardening
+          fetch-depth: 0
+
+      - name: Find long WFO run
+        run: |
+          RUN_ID="$(gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow causal-long-history-sweep.yml \
+            --event push \
+            --branch agent/live-paper-hardening \
+            --limit 20 \
+            --json databaseId,headSha \
+            --jq '.[] | select(.headSha == env.TARGET_SHA) | .databaseId' \
+            | head -n 1)"
+          test -n "$RUN_ID"
+          mkdir -p results/causal_long_history_status_v1
+          python - <<PY
+          import json
+          from pathlib import Path
+          Path('results/causal_long_history_status_v1/monitor.json').write_text(
+              json.dumps({'source_head_sha':'$TARGET_SHA','run_id':int('$RUN_ID')}, indent=2) + '\n',
+              encoding='utf-8',
+          )
+          PY
+
+      - name: Commit run id
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase origin agent/live-paper-hardening
+          git add results/causal_long_history_status_v1/monitor.json
+          git commit -m 'Record Binance Vision six-month WFO run id' || exit 0
+          git push origin HEAD:agent/live-paper-hardening

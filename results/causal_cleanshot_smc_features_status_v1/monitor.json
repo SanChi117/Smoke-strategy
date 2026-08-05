@@ -1,0 +1,7 @@
+{
+  "run_id": 29653479760,
+  "source_head_sha": "2e50facd31e43714a0ec1c2ef99178cd11ee2a51",
+  "status": "success",
+  "period": "2025-01-01 through 2026-06-30",
+  "mode": "CAUSAL_CLEANSHOT_SMC_FEATURES_V1"
+}

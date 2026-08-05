@@ -1,0 +1,7 @@
+fold,validation_start,validation_end,status,profile,initial_cash,leverage,base_risk_pct,max_risk_pct,candidates,allowed_candidates,executed_trades,skipped,skipped_no_risk,skipped_max_positions,skipped_symbol_limit,skipped_cash,skipped_daily_halt,skipped_weekly_halt,final_cash,ret_pct,max_dd_pct,pf,winrate,max_loss_streak,symbols_traded,symbols_positive,total_fees,avg_risk_pct
+fold_01,2026-01-16T00:00:00,2026-02-14T23:57:30,OK,research_500,500.0,20.0,0.005,0.005,10264,3,3,0,0,0,0,0,0,0,505.06,1.01,2.0,3.0771,66.67,1,2,2,0.8717,0.005
+fold_02,2026-02-14T23:57:30,2026-03-16T23:55:00,OK,research_500,500.0,20.0,0.005,0.005,10056,10,3,7,0,0,7,0,0,0,503.72,0.74,1.46,41.0368,66.67,1,2,2,0.8716,0.005
+fold_03,2026-03-16T23:55:00,2026-04-15T23:52:30,OK,research_500,500.0,20.0,0.005,0.005,10339,1,1,0,0,0,0,0,0,0,500.52,0.1,1.43,99.0,100.0,0,1,1,0.2906,0.005
+fold_04,2026-04-15T23:52:30,2026-05-15T23:50:00,OK,research_500,500.0,20.0,0.005,0.005,10970,4,3,1,0,0,1,0,0,0,499.79,-0.04,1.73,1.1751,33.33,2,2,1,0.8717,0.005
+fold_05,2026-05-15T23:50:00,2026-06-14T23:47:30,OK,research_500,500.0,20.0,0.005,0.005,9960,3,3,0,0,0,0,0,0,0,510.43,2.09,2.82,99.0,100.0,0,3,3,0.8717,0.005
+fold_06,2026-06-14T23:47:30,2026-07-14T23:45:00,OK,research_500,500.0,20.0,0.005,0.005,9334,11,7,4,0,2,2,0,0,0,490.29,-1.94,3.65,0.2285,28.57,5,3,1,2.0106,0.005

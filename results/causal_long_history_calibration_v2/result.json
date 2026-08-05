@@ -1,0 +1,91 @@
+{
+  "mode": "CACHED_STRICT_OOS_PULLBACK_CALIBRATION_V2",
+  "source": "results/causal_long_history_sweep_v1",
+  "folds": 6,
+  "leader": {
+    "name": "CAL2_ADAPTIVE_SOFT_V1",
+    "verdict": "WATCH_TOO_SPARSE",
+    "valid_folds": 6,
+    "positive_folds": 4,
+    "positive_pct": 66.67,
+    "total_trades": 25,
+    "avg_return_pct": 0.16,
+    "avg_pf": 40.4566,
+    "worst_dd_pct": 3.65,
+    "score": 9.9183
+  },
+  "candidates": [
+    {
+      "name": "CAL2_ADAPTIVE_SOFT_V1",
+      "verdict": "WATCH_TOO_SPARSE",
+      "valid_folds": 6,
+      "positive_folds": 4,
+      "positive_pct": 66.67,
+      "total_trades": 25,
+      "avg_return_pct": 0.16,
+      "avg_pf": 40.4566,
+      "worst_dd_pct": 3.65,
+      "score": 9.9183
+    },
+    {
+      "name": "CAL2_STRUCTURE_SOFT_V1",
+      "verdict": "WATCH_TOO_SPARSE",
+      "valid_folds": 6,
+      "positive_folds": 4,
+      "positive_pct": 66.67,
+      "total_trades": 23,
+      "avg_return_pct": -0.0583,
+      "avg_pf": 40.1987,
+      "worst_dd_pct": 3.65,
+      "score": 9.4
+    },
+    {
+      "name": "CAL2_CONF40_VR060_V1",
+      "verdict": "WATCH_TOO_SPARSE",
+      "valid_folds": 6,
+      "positive_folds": 4,
+      "positive_pct": 66.67,
+      "total_trades": 20,
+      "avg_return_pct": 0.3267,
+      "avg_pf": 40.5862,
+      "worst_dd_pct": 3.65,
+      "score": 9.335
+    },
+    {
+      "name": "CAL2_NEUTRAL_DIRECTION_V1",
+      "verdict": "WATCH_TOO_SPARSE",
+      "valid_folds": 6,
+      "positive_folds": 4,
+      "positive_pct": 66.67,
+      "total_trades": 20,
+      "avg_return_pct": 0.3267,
+      "avg_pf": 40.5862,
+      "worst_dd_pct": 3.65,
+      "score": 9.335
+    },
+    {
+      "name": "CAL2_CONTROL_V1",
+      "verdict": "WATCH_TOO_SPARSE",
+      "valid_folds": 6,
+      "positive_folds": 4,
+      "positive_pct": 66.67,
+      "total_trades": 18,
+      "avg_return_pct": 0.1083,
+      "avg_pf": 40.3284,
+      "worst_dd_pct": 3.65,
+      "score": 8.8166
+    },
+    {
+      "name": "CAL2_QUALITY_SOFT_V1",
+      "verdict": "WATCH_TOO_SPARSE",
+      "valid_folds": 6,
+      "positive_folds": 4,
+      "positive_pct": 66.67,
+      "total_trades": 18,
+      "avg_return_pct": 0.1083,
+      "avg_pf": 40.3284,
+      "worst_dd_pct": 3.65,
+      "score": 8.8166
+    }
+  ]
+}

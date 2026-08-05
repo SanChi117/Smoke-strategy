@@ -1,0 +1,40 @@
+name: Discover Source Export
+
+on:
+  push:
+    branches:
+      - 'agent/live-paper-hardening'
+    paths:
+      - 'research_triggers/discover_source_export.txt'
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TARGET_SHA: 0192ca570378c90f6410741c208f90a6f640b26b
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/live-paper-hardening
+          fetch-depth: 0
+      - name: Find source export
+        run: |
+          RUN_ID="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow export-research-source.yml --event push --branch agent/live-paper-hardening --limit 30 --json databaseId,headSha --jq '.[] | select(.headSha == env.TARGET_SHA) | .databaseId' | head -n 1)"
+          test -n "$RUN_ID"
+          mkdir -p results/source_export_status
+          python - <<PY
+          import json
+          from pathlib import Path
+          Path('results/source_export_status/monitor.json').write_text(json.dumps({'source_head_sha':'$TARGET_SHA','run_id':int('$RUN_ID')}, indent=2)+'\n', encoding='utf-8')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin agent/live-paper-hardening
+          git add results/source_export_status/monitor.json
+          git commit -m "Record latest research source export run id" || exit 0
+          git push origin HEAD:agent/live-paper-hardening

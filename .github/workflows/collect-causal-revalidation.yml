@@ -1,0 +1,177 @@
+name: Collect Causal Revalidation
+
+on:
+  push:
+    branches:
+      - 'agent/live-paper-hardening'
+    paths:
+      - 'research_triggers/collect_causal_revalidation.txt'
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: collect-causal-revalidation
+  cancel-in-progress: true
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TARGET_SHA: 28e29ea252a65601895e8eb5996949c088a04615
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/live-paper-hardening
+          fetch-depth: 0
+
+      - name: Find full validation run
+        id: find
+        run: |
+          RUN_ID="$(gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow live-paper-hardening.yml \
+            --event push \
+            --branch agent/live-paper-hardening \
+            --limit 20 \
+            --json databaseId,headSha \
+            --jq '.[] | select(.headSha == env.TARGET_SHA) | .databaseId' \
+            | head -n 1)"
+          if [ -z "$RUN_ID" ]; then
+            echo "Full causal validation run not found for $TARGET_SHA" >&2
+            exit 1
+          fi
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          echo "Found run $RUN_ID"
+
+      - name: Publish validation monitor marker
+        run: |
+          mkdir -p results/causal_revalidation_status
+          cat > results/causal_revalidation_status/monitor.json <<EOF
+          {
+            "source_run_id": "${{ steps.find.outputs.run_id }}",
+            "source_head_sha": "${TARGET_SHA}",
+            "status": "running"
+          }
+          EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin agent/live-paper-hardening
+          git add results/causal_revalidation_status/monitor.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Record running causal validation id"
+            git push origin HEAD:agent/live-paper-hardening
+          fi
+
+      - name: Follow validation to completion
+        id: watch
+        continue-on-error: true
+        run: gh run watch "${{ steps.find.outputs.run_id }}" --repo "$GITHUB_REPOSITORY" --exit-status
+
+      - name: Download validation artifact
+        continue-on-error: true
+        run: |
+          rm -rf collected
+          mkdir -p collected
+          gh run download "${{ steps.find.outputs.run_id }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name smoke-causal-tagged-revalidation \
+            --dir collected
+
+      - name: Build compact result
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import json
+          from pathlib import Path
+
+          root = Path('collected')
+          out = Path('results/causal_revalidation_status')
+          out.mkdir(parents=True, exist_ok=True)
+
+          def find(name: str):
+              matches = list(root.rglob(name)) if root.exists() else []
+              return matches[0] if matches else None
+
+          def load(name: str):
+              path = find(name)
+              if not path or not path.exists() or path.stat().st_size == 0:
+                  return {}, None
+              try:
+                  return json.loads(path.read_text(encoding='utf-8')), path
+              except Exception:
+                  return {}, path
+
+          tagged, tagged_path = load('tagged_research_decision.json')
+          deep, deep_path = load('deep_validation_summary.json')
+          multi, multi_path = load('tagged_multi_wfo_best.json')
+          plan, plan_path = load('paper_review_plan.json')
+
+          deep_stats = deep.get('deep_validation') if isinstance(deep.get('deep_validation'), dict) else deep
+          result = {
+              'source_run_id': '${{ steps.find.outputs.run_id }}',
+              'source_head_sha': '28e29ea252a65601895e8eb5996949c088a04615',
+              'workflow_watch_outcome': '${{ steps.watch.outcome }}',
+              'tagged_decision': tagged.get('decision', ''),
+              'candidate': tagged.get('candidate', '') or deep.get('candidate', '') or multi.get('name', ''),
+              'multi_wfo_verdict': multi.get('wfo_verdict', ''),
+              'multi_positive_folds': multi.get('positive_folds', ''),
+              'multi_valid_folds': multi.get('valid_folds', multi.get('folds', '')),
+              'deep_decision': deep.get('decision', ''),
+              'deep_positive_folds': deep_stats.get('positive_folds', ''),
+              'deep_valid_folds': deep_stats.get('valid_folds', deep_stats.get('folds', '')),
+              'deep_avg_return_pct': deep_stats.get('avg_ret_pct', ''),
+              'deep_avg_pf': deep_stats.get('avg_pf', ''),
+              'deep_worst_dd_pct': deep_stats.get('worst_max_dd_pct', ''),
+              'deep_total_trades': deep_stats.get('total_executed_trades', ''),
+              'paper_review_status': plan.get('status', ''),
+              'files_found': {
+                  'tagged': str(tagged_path or ''),
+                  'deep': str(deep_path or ''),
+                  'multi': str(multi_path or ''),
+                  'paper': str(plan_path or ''),
+              },
+          }
+          (out / 'result.json').write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          (out / 'monitor.json').write_text(json.dumps({
+              'source_run_id': result['source_run_id'],
+              'source_head_sha': result['source_head_sha'],
+              'status': 'completed' if result['workflow_watch_outcome'] == 'success' else 'failed',
+          }, indent=2) + '\n', encoding='utf-8')
+          lines = [
+              '# Causal revalidation result',
+              '',
+              f"- Source head: `{result['source_head_sha']}`",
+              f"- GitHub run: `{result['source_run_id']}`",
+              f"- Workflow outcome: **{result['workflow_watch_outcome']}**",
+              f"- Candidate: **{result['candidate'] or 'not produced'}**",
+              f"- Tagged decision: **{result['tagged_decision'] or 'not produced'}**",
+              f"- Multi-WFO: **{result['multi_wfo_verdict'] or 'not produced'}** ({result['multi_positive_folds']}/{result['multi_valid_folds']} positive folds)",
+              f"- Deep decision: **{result['deep_decision'] or 'not produced'}** ({result['deep_positive_folds']}/{result['deep_valid_folds']} positive folds)",
+              f"- Deep average return: `{result['deep_avg_return_pct']}`",
+              f"- Deep average PF: `{result['deep_avg_pf']}`",
+              f"- Deep worst DD: `{result['deep_worst_dd_pct']}`",
+              f"- Deep trades: `{result['deep_total_trades']}`",
+              f"- Paper-review status: **{result['paper_review_status'] or 'not produced'}**",
+              '',
+              'This result was produced after causal-history and completed-HTF fixes.',
+          ]
+          (out / 'result.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          PY
+
+      - name: Commit compact result to branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin agent/live-paper-hardening
+          git add results/causal_revalidation_status/monitor.json results/causal_revalidation_status/result.json results/causal_revalidation_status/result.md
+          if git diff --cached --quiet; then
+            echo "No result changes to commit"
+            exit 0
+          fi
+          git commit -m "Record non-cancelling frozen causal revalidation result"
+          git push origin HEAD:agent/live-paper-hardening

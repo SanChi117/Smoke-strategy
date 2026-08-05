@@ -1,0 +1,56 @@
+name: Discover Strategy Tuning
+
+on:
+  push:
+    branches:
+      - 'agent/live-paper-hardening'
+    paths:
+      - 'research_triggers/discover_strategy_tuning_v1.txt'
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TARGET_SHA: 248c3d829a61164ee29024d85dd5311afe7773a6
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/live-paper-hardening
+          fetch-depth: 0
+
+      - name: Find and record tuning run
+        run: |
+          RUN_ID="$(gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow causal-strategy-tuning.yml \
+            --event push \
+            --branch agent/live-paper-hardening \
+            --limit 20 \
+            --json databaseId,headSha,status,conclusion \
+            --jq '.[] | select(.headSha == env.TARGET_SHA) | .databaseId' \
+            | head -n 1)"
+          if [ -z "$RUN_ID" ]; then
+            echo "Tuning run not found for $TARGET_SHA" >&2
+            exit 1
+          fi
+          mkdir -p results/causal_strategy_tuning_status_v1
+          python - <<PY
+          import json
+          from pathlib import Path
+          Path('results/causal_strategy_tuning_status_v1/monitor.json').write_text(
+              json.dumps({'source_head_sha': '$TARGET_SHA', 'run_id': int('$RUN_ID')}, indent=2) + '\n',
+              encoding='utf-8',
+          )
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin agent/live-paper-hardening
+          git add results/causal_strategy_tuning_status_v1/monitor.json
+          git commit -m "Record causal strategy tuning run id" || exit 0
+          git push origin HEAD:agent/live-paper-hardening

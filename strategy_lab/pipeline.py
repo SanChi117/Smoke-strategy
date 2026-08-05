@@ -154,6 +154,8 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
     blocked_candles = norm_set(cfg.blocked_candle_types)
     allowed_dirs = norm_set(cfg.allowed_direction_contexts)
     blocked_dirs = norm_set(cfg.blocked_direction_contexts)
+    allowed_alignments = norm_set(cfg.allowed_context_alignments)
+    blocked_alignments = norm_set(cfg.blocked_context_alignments)
 
     decisions: list[PipelineDecision] = []
     allowed_trades = []
@@ -170,6 +172,7 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
         liquidity_state = extract_reason_value(reason_text, "liq")
         candle_type = extract_reason_value(reason_text, "candle")
         direction_context = extract_reason_value(reason_text, "dir")
+        context_alignment = extract_reason_value(reason_text, "ctx_align")
         volume_ratio = extract_reason_float(reason_text, "vr", 0.0)
 
         symbol_whitelist_ok = not cfg_allowed_symbols or trade.symbol in cfg_allowed_symbols
@@ -185,6 +188,7 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
         liquidity_ok = (not allowed_liq or liquidity_state in allowed_liq) and liquidity_state not in blocked_liq
         candle_ok = (not allowed_candles or candle_type in allowed_candles) and candle_type not in blocked_candles
         direction_ok = (not allowed_dirs or direction_context in allowed_dirs) and direction_context not in blocked_dirs
+        alignment_ok = (not allowed_alignments or context_alignment in allowed_alignments) and context_alignment not in blocked_alignments
         volume_ratio_ok = volume_ratio >= cfg.min_volume_ratio
         allowed = (
             in_universe
@@ -197,6 +201,7 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
             and liquidity_ok
             and candle_ok
             and direction_ok
+            and alignment_ok
             and volume_ratio_ok
         )
 
@@ -224,6 +229,8 @@ def run_pipeline(input_csv: str | Path, out_dir: str | Path = "results", cfg: Pi
             reason = "candle_type_filtered"
         elif not direction_ok:
             reason = "direction_context_filtered"
+        elif not alignment_ok:
+            reason = "context_alignment_filtered"
         elif not volume_ratio_ok:
             reason = "volume_ratio_filtered"
         else:

@@ -1,0 +1,87 @@
+{
+  "parent_registry": "research/historical_hypotheses_v1.json",
+  "recovered_from": "ROADMAP, Cleanshot history, Pine rules, tactical commits and trading-assistant requirements",
+  "hypotheses": [
+    {
+      "id": "H21_BTC_ETH_MARKET_CONTEXT",
+      "idea": "BTC/ETH market regime as cross-symbol context",
+      "old_status": "planned and historically discussed, not isolated in causal A/B",
+      "old_test_validity": "not_tested",
+      "decision": "RETEST_AFTER_FAMILY_SCREEN",
+      "priority": 2,
+      "test_plan": "Add only closed BTC/ETH 4H/1D regime features; compare against an otherwise identical no-market-context control."
+    },
+    {
+      "id": "H22_MARKET_SESSION_CONTEXT",
+      "idea": "Market session and time-of-week context",
+      "old_status": "planned; session existed in early Structure keys but was not independently validated",
+      "old_test_validity": "insufficient",
+      "decision": "RETEST_AFTER_FAMILY_SCREEN",
+      "priority": 2,
+      "test_plan": "Measure setup-family performance by UTC session and weekday first; only then test a soft risk modifier, never post-hoc hard blocks."
+    },
+    {
+      "id": "H23_SETUP_SPECIFIC_TIME_STOP",
+      "idea": "Different maximum holding time for breakout, pullback, range and liquidity setups",
+      "old_status": "planned; current risk model uses one global maximum holding period",
+      "old_test_validity": "not_tested",
+      "decision": "IMPLEMENT_WITH_DYNAMIC_EXITS",
+      "priority": 1,
+      "test_plan": "Estimate causal MFE/MAE and time-to-target per setup family, then compare family-specific time stops against the global time-stop control."
+    },
+    {
+      "id": "H24_SYMBOL_BEHAVIOR_CLASS",
+      "idea": "trend_friendly, volatile_clean, watch_only, chaotic_avoid and insufficient_history symbol classes",
+      "old_status": "documented but not proven as a causal production gate",
+      "old_test_validity": "insufficient",
+      "decision": "RETEST_AS_SOFT_RANK",
+      "priority": 2,
+      "test_plan": "Build classes from completed rolling history only; compare soft risk/ranking against no-class control before any hard exclusion."
+    },
+    {
+      "id": "H25_DERIVATIVES_MICROSTRUCTURE_DATA",
+      "idea": "Open interest, funding, liquidation maps, order book and cluster context",
+      "old_status": "discussed in Cleanshot and later market-scanner requirements; not integrated into SMOKE history",
+      "old_test_validity": "no_point_in_time_dataset",
+      "decision": "DATASET_FIRST",
+      "priority": 3,
+      "test_plan": "Acquire timestamped historical derivatives data with known publication time, coverage and survivorship rules; test each feature as an overlay against a candle-only control."
+    },
+    {
+      "id": "H26_TACTICAL_MICRO_CONTEXT",
+      "idea": "Liquidity state, candle type, direction and minimum volume-ratio tactical filters",
+      "old_status": "historical candidates used high_sweep_reject, bear_rejection, direction-up and volume-ratio filters",
+      "old_test_validity": "post_hoc_and_core_biased",
+      "decision": "RETEST_AFTER_FAMILY_SCREEN",
+      "priority": 2,
+      "test_plan": "For surviving setup families, run a predeclared A/B: no micro filter, each filter alone, and combined filter; use the full universe and frozen folds."
+    },
+    {
+      "id": "H27_MTF_CONTEXT_ROUTING",
+      "idea": "1D narrative plus completed 4H context plus 15M entry, with optional 5M timing",
+      "old_status": "became the old final baseline but causal validation later failed",
+      "old_test_validity": "architecture_not_disproved_but_old_edge_invalid",
+      "decision": "RETEST_AS_CONTEXT_AB",
+      "priority": 1,
+      "test_plan": "Compare entry-only, 4H-only, 1D+4H aligned, conflict-as-risk-reduction and conflict-as-hard-block variants on identical setup families."
+    },
+    {
+      "id": "H28_STRUCTURAL_STOP_WITH_ATR_BUFFER",
+      "idea": "Stop beyond swing, fractal, Donchian boundary or POI with ATR reserve",
+      "old_status": "central Pine/user rule but replaced in SMOKE by fixed setup stop percentages",
+      "old_test_validity": "not_tested_in_current_causal_pipeline",
+      "decision": "IMPLEMENT_NEXT",
+      "priority": 1,
+      "test_plan": "Build causal structural stop candidates from information available at entry; compare against current fixed-percent stops while holding entries and targets constant."
+    },
+    {
+      "id": "H29_RISK_GRADE_PREDICTIVENESS",
+      "idea": "Risk grade and confidence should predict realised outcomes",
+      "old_status": "risk grades drive labels and risk but were not independently proven",
+      "old_test_validity": "insufficient",
+      "decision": "DIAGNOSTIC_FIRST",
+      "priority": 2,
+      "test_plan": "Measure OOS calibration by grade: sample count, hit rate, average R, PF, MFE/MAE and monotonicity before using grade as a hard gate."
+    }
+  ]
+}

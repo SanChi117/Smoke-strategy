@@ -1,0 +1,5 @@
+run full SMOKE historical hypothesis recheck v1
+period: 2025-01-01 through 2026-06-30
+windows: 10
+setup families: pullback, breakout, ignition, range_rotation, liquidity_reclaim
+architectures: hard/soft learning, regime routers, rolling top-5/top-8

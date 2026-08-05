@@ -1,0 +1,188 @@
+name: Causal Long History Sweep
+
+on:
+  push:
+    branches:
+      - 'agent/live-paper-hardening'
+    paths:
+      - 'research_triggers/causal_long_history_sweep_v1.txt'
+
+permissions:
+  contents: write
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  long-wfo:
+    name: six-month-true-futures-causal-wfo
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/live-paper-hardening
+          fetch-depth: 0
+
+      - name: Record running WFO id
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase origin agent/live-paper-hardening
+          mkdir -p results/causal_long_history_status_v1
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          Path('results/causal_long_history_status_v1/monitor.json').write_text(
+              json.dumps({
+                  'source_head_sha': os.environ['GITHUB_SHA'],
+                  'run_id': int(os.environ['GITHUB_RUN_ID']),
+                  'status': 'running',
+                  'data_source': 'BINANCE_VISION_USDM_FUTURES_ARCHIVE',
+              }, indent=2) + '\n',
+              encoding='utf-8',
+          )
+          PY
+          git add results/causal_long_history_status_v1/monitor.json
+          git commit -m 'Record running Binance Vision causal WFO id' || true
+          git push origin HEAD:agent/live-paper-hardening
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Verify causal and archive invariants
+        run: |
+          python -m strategy_lab.causal_history_fast_smoke_test
+          python -m strategy_lab.closed_context_smoke_test
+          python -m strategy_lab.context_alignment_gate_smoke_test
+          python -m strategy_lab.binance_vision_download_smoke_test
+          python -m strategy_lab.binance_vision_archive_smoke_test
+          python -m strategy_lab.walk_forward_boundary_smoke_test
+          python -m strategy_lab.walk_forward_funnel_smoke_test
+
+      - name: Build dynamic research universe
+        run: |
+          python scripts/build_strategy_universe_layer.py \
+            --top-n-per-group 3 \
+            --out-dir results/causal_long_history_universe_v1
+
+      - name: Resolve closed historical period
+        id: dates
+        shell: bash
+        run: |
+          START_DATE="$(date -u -d '210 days ago' +%F)"
+          END_DATE="$(date -u -d '1 day ago' +%F)"
+          echo "start_date=$START_DATE" >> "$GITHUB_OUTPUT"
+          echo "end_date=$END_DATE" >> "$GITHUB_OUTPUT"
+          echo "Historical period: $START_DATE -> $END_DATE"
+
+      - name: Download official Binance Vision USD-M Futures archives
+        run: |
+          python scripts/download_binance_vision_futures_archives.py \
+            --symbols-file results/causal_long_history_universe_v1/combined_symbols.txt \
+            --interval 15m \
+            --start-date '${{ steps.dates.outputs.start_date }}' \
+            --end-date '${{ steps.dates.outputs.end_date }}' \
+            --out-dir "$RUNNER_TEMP/binance-vision-usdm" \
+            --summary-json results/causal_long_history_sweep_v1/archive_download_summary.json \
+            --workers 8 \
+            --retries 2 \
+            --timeout 30
+
+      - name: Merge and verify closed futures candles
+        run: |
+          python scripts/merge_binance_vision_futures_klines.py \
+            --input-dir "$RUNNER_TEMP/binance-vision-usdm" \
+            --out "$RUNNER_TEMP/smoke-usdm-15m.csv" \
+            --symbols-file results/causal_long_history_universe_v1/combined_symbols.txt \
+            --interval 15m \
+            --start-date '${{ steps.dates.outputs.start_date }}' \
+            --end-date '${{ steps.dates.outputs.end_date }}' \
+            --summary-json results/causal_long_history_sweep_v1/archive_merge_summary.json \
+            --min-coverage 0.75
+
+      - name: Run six-month cached causal WFO
+        env:
+          SMOKE_LONG_CANDLES_SOURCE: ${{ runner.temp }}/smoke-usdm-15m.csv
+        run: |
+          python scripts/run_causal_long_history_sweep_cached.py \
+            --symbols-file results/causal_long_history_universe_v1/combined_symbols.txt \
+            --out-dir results/causal_long_history_sweep_v1 \
+            --interval 15m \
+            --limit 18000 \
+            --windows 6 \
+            --lookback-days 30 \
+            --profile research_500 \
+            --pool-min-confidence 40 \
+            --sleep-sec 0
+
+      - name: Prepare compact audit result
+        if: always()
+        run: |
+          rm -rf compact-long-wfo
+          mkdir -p compact-long-wfo/results/causal_long_history_sweep_v1
+          mkdir -p compact-long-wfo/results/causal_long_history_universe_v1
+          for file in \
+            result.json result.md long_wfo_summary.csv fold_index.csv \
+            market_data_summary.json archive_download_summary.json archive_merge_summary.json; do
+            cp -f "results/causal_long_history_sweep_v1/$file" \
+              compact-long-wfo/results/causal_long_history_sweep_v1/ 2>/dev/null || true
+          done
+          cp -R results/causal_long_history_sweep_v1/candidate_folds \
+            compact-long-wfo/results/causal_long_history_sweep_v1/ 2>/dev/null || true
+          cp -f results/causal_long_history_universe_v1/combined_symbols.txt \
+            compact-long-wfo/results/causal_long_history_universe_v1/ 2>/dev/null || true
+          find results/causal_long_history_sweep_v1/folds -type f \
+            \( -name 'walk_forward_layer_funnel.json' -o -name 'pipeline_summary.csv' -o -name 'summary.json' \) \
+            -print0 2>/dev/null | while IFS= read -r -d '' file; do
+              destination="compact-long-wfo/$file"
+              mkdir -p "$(dirname "$destination")"
+              cp "$file" "$destination"
+            done
+
+      - name: Upload compact long WFO audit
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-causal-long-history-sweep-v1
+          path: compact-long-wfo/**
+          if-no-files-found: warn
+
+      - name: Commit compact result and final status
+        if: always()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase origin agent/live-paper-hardening
+          mkdir -p results/causal_long_history_status_v1
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          Path('results/causal_long_history_status_v1/monitor.json').write_text(
+              json.dumps({
+                  'source_head_sha': os.environ['GITHUB_SHA'],
+                  'run_id': int(os.environ['GITHUB_RUN_ID']),
+                  'status': '${{ job.status }}',
+                  'data_source': 'BINANCE_VISION_USDM_FUTURES_ARCHIVE',
+              }, indent=2) + '\n',
+              encoding='utf-8',
+          )
+          PY
+          if [ -f compact-long-wfo/results/causal_long_history_sweep_v1/result.json ]; then
+            mkdir -p results
+            cp -R compact-long-wfo/results/* results/
+            git add results/causal_long_history_sweep_v1 results/causal_long_history_universe_v1
+          fi
+          git add results/causal_long_history_status_v1/monitor.json
+          git commit -m 'Record Binance Vision six-month causal WFO result' || exit 0
+          git push origin HEAD:agent/live-paper-hardening

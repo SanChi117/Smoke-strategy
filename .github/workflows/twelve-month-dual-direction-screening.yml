@@ -1,0 +1,154 @@
+name: Twelve Month Dual Direction Screening
+
+on:
+  push:
+    branches:
+      - 'agent/live-paper-hardening'
+    paths:
+      - 'research_triggers/twelve_month_dual_screening_v1.txt'
+
+permissions:
+  actions: read
+  contents: write
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  development-screen:
+    name: twelve-month-dual-direction-causal-screen
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/live-paper-hardening
+          fetch-depth: 0
+
+      - name: Record running screen id
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase origin agent/live-paper-hardening
+          mkdir -p results/twelve_month_dual_screening_status_v1
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          Path('results/twelve_month_dual_screening_status_v1/monitor.json').write_text(
+              json.dumps({
+                  'run_id': int(os.environ['GITHUB_RUN_ID']),
+                  'source_head_sha': os.environ['GITHUB_SHA'],
+                  'status': 'running',
+                  'period': '2025-07-01 through 2026-07-14',
+                  'mode': 'DUAL_DIRECTION_DEVELOPMENT',
+              }, indent=2) + '\n',
+              encoding='utf-8',
+          )
+          PY
+          git add results/twelve_month_dual_screening_status_v1/monitor.json
+          git commit -m 'Record running twelve-month dual screen id' || true
+          git push origin HEAD:agent/live-paper-hardening
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Verify causal invariants
+        run: |
+          python -m strategy_lab.causal_history_fast_smoke_test
+          python -m strategy_lab.closed_context_smoke_test
+          python -m strategy_lab.walk_forward_boundary_smoke_test
+          python -m strategy_lab.research_metrics_smoke_test
+
+      - name: Build fixed development universe
+        run: |
+          python scripts/build_strategy_universe_layer.py \
+            --top-n-per-group 3 \
+            --out-dir results/twelve_month_dual_screening_universe_v1
+
+      - name: Download official twelve-month futures archives
+        run: |
+          python scripts/download_binance_vision_futures_archives.py \
+            --symbols-file results/twelve_month_dual_screening_universe_v1/combined_symbols.txt \
+            --interval 15m \
+            --start-date '2025-07-01' \
+            --end-date '2026-07-14' \
+            --out-dir "$RUNNER_TEMP/binance-vision-dev12-usdm" \
+            --summary-json results/twelve_month_dual_screening_v1/archive_download_summary.json \
+            --workers 8 \
+            --retries 2 \
+            --timeout 30
+
+      - name: Merge and verify development candles
+        run: |
+          python scripts/merge_binance_vision_futures_klines.py \
+            --input-dir "$RUNNER_TEMP/binance-vision-dev12-usdm" \
+            --out "$RUNNER_TEMP/smoke-dev12-usdm-15m.csv" \
+            --symbols-file results/twelve_month_dual_screening_universe_v1/combined_symbols.txt \
+            --interval 15m \
+            --start-date '2025-07-01' \
+            --end-date '2026-07-14' \
+            --summary-json results/twelve_month_dual_screening_v1/archive_merge_summary.json \
+            --min-coverage 0.70
+
+      - name: Run twelve-month dual-direction screen
+        run: |
+          python scripts/run_twelve_month_dual_direction_screening.py \
+            --candles "$RUNNER_TEMP/smoke-dev12-usdm-15m.csv" \
+            --out-dir results/twelve_month_dual_screening_v1 \
+            --windows 8 \
+            --lookback-days 30 \
+            --profile research_500 \
+            --pool-min-confidence 40
+
+      - name: Upload compact development audit
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-twelve-month-dual-screening-v1
+          path: |
+            results/twelve_month_dual_screening_v1/result.json
+            results/twelve_month_dual_screening_v1/candidate_summary.csv
+            results/twelve_month_dual_screening_v1/candidate_folds/*.csv
+            results/twelve_month_dual_screening_v1/archive_download_summary.json
+            results/twelve_month_dual_screening_v1/archive_merge_summary.json
+            results/twelve_month_dual_screening_universe_v1/combined_symbols.txt
+
+      - name: Commit compact screen result
+        if: always()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase origin agent/live-paper-hardening
+          mkdir -p results/twelve_month_dual_screening_status_v1
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          Path('results/twelve_month_dual_screening_status_v1/monitor.json').write_text(
+              json.dumps({
+                  'run_id': int(os.environ['GITHUB_RUN_ID']),
+                  'source_head_sha': os.environ['GITHUB_SHA'],
+                  'status': '${{ job.status }}',
+                  'period': '2025-07-01 through 2026-07-14',
+                  'mode': 'DUAL_DIRECTION_DEVELOPMENT',
+              }, indent=2) + '\n',
+              encoding='utf-8',
+          )
+          PY
+          git add results/twelve_month_dual_screening_status_v1/monitor.json
+          for file in result.json candidate_summary.csv archive_download_summary.json archive_merge_summary.json; do
+            test -f "results/twelve_month_dual_screening_v1/$file" && git add "results/twelve_month_dual_screening_v1/$file"
+          done
+          test -d results/twelve_month_dual_screening_v1/candidate_folds && git add results/twelve_month_dual_screening_v1/candidate_folds
+          test -f results/twelve_month_dual_screening_universe_v1/combined_symbols.txt && git add results/twelve_month_dual_screening_universe_v1/combined_symbols.txt
+          git commit -m 'Record twelve-month dual-direction causal screen result' || exit 0
+          git push origin HEAD:agent/live-paper-hardening

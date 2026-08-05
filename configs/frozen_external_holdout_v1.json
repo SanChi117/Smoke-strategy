@@ -1,0 +1,44 @@
+{
+  "name": "SMOKE_PULLBACK_FROZEN_EXTERNAL_V1",
+  "frozen_from_screening": "CAL4_EXP_LEGACY_CONTEXT_CD12",
+  "screening_period": "2026-01-16 through 2026-07-14",
+  "screening_commit": "fc7d3ec99c9b5b5b5a9b3d3a10af6e9f04454dc2",
+  "min_confidence": 40.0,
+  "quality_take_threshold": 55.0,
+  "quality_watch_threshold": 42.0,
+  "structure_take_threshold": 54.0,
+  "structure_watch_threshold": 42.0,
+  "min_volume_ratio": 0.45,
+  "rolling_top_n": 8,
+  "require_rolling_top": false,
+  "require_universe_gate": false,
+  "allowed_setup_types": [
+    "pullback",
+    "pullback_resumption",
+    "pullback_resumption_strict"
+  ],
+  "blocked_setup_types": [
+    "breakout",
+    "range_rotation",
+    "watch_impulse",
+    "liquidity_reclaim",
+    "ignition"
+  ],
+  "blocked_volatility_regimes": [
+    "high"
+  ],
+  "blocked_liquidity_states": [
+    "high_sweep_reject"
+  ],
+  "blocked_candle_types": [
+    "bear_rejection"
+  ],
+  "allowed_direction_contexts": [
+    "down"
+  ],
+  "guard": "legacy_strong_context",
+  "cooldown_hours": 12.0,
+  "risk_profile": "research_500",
+  "research_only": true,
+  "live_orders_allowed": false
+}

@@ -29,6 +29,8 @@ FILTER_COLUMNS = [
     "blocked_candle_types_filter",
     "allowed_direction_contexts_filter",
     "blocked_direction_contexts_filter",
+    "allowed_context_alignments_filter",
+    "blocked_context_alignments_filter",
 ]
 
 REQUIRED_COLUMNS = [
@@ -162,6 +164,8 @@ def write_markdown(path: Path, candidate: dict[str, object], all_rows: list[dict
         f"- Blocked candle types: {list_value(candidate, 'blocked_candle_types')}",
         f"- Allowed direction contexts: {list_value(candidate, 'allowed_direction_contexts')}",
         f"- Blocked direction contexts: {list_value(candidate, 'blocked_direction_contexts')}",
+        f"- Allowed context alignments: {list_value(candidate, 'allowed_context_alignments')}",
+        f"- Blocked context alignments: {list_value(candidate, 'blocked_context_alignments')}",
         "",
         "## Performance snapshot",
         f"- Generated trades: {candidate['generated_trades']}",

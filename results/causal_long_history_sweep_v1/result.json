@@ -1,0 +1,98 @@
+{
+  "mode": "STRICT_OOS_TRUE_BINANCE_FUTURES",
+  "market": {
+    "symbols_requested": 36,
+    "symbols_loaded": 32,
+    "candles": 645120,
+    "interval": "15m",
+    "status": "OK"
+  },
+  "windows": 6,
+  "lookback_days": 30,
+  "screening_leader": {
+    "name": "LONGHIST_PULLBACK_SHORT_CONTROL_V1",
+    "verdict": "WATCH_TOO_SPARSE",
+    "valid_folds": 6,
+    "positive_folds": 4,
+    "positive_pct": 66.67,
+    "total_trades": 18,
+    "avg_return_pct": 0.1083,
+    "avg_pf": 40.3284,
+    "worst_dd_pct": 3.65,
+    "score": 8.8166
+  },
+  "candidates": [
+    {
+      "name": "LONGHIST_PULLBACK_SHORT_CONTROL_V1",
+      "verdict": "WATCH_TOO_SPARSE",
+      "valid_folds": 6,
+      "positive_folds": 4,
+      "positive_pct": 66.67,
+      "total_trades": 18,
+      "avg_return_pct": 0.1083,
+      "avg_pf": 40.3284,
+      "worst_dd_pct": 3.65,
+      "score": 8.8166
+    },
+    {
+      "name": "LONGHIST_RESUMPTION_BALANCED_V1",
+      "verdict": "WATCH_TOO_SPARSE",
+      "valid_folds": 6,
+      "positive_folds": 3,
+      "positive_pct": 50.0,
+      "total_trades": 6,
+      "avg_return_pct": 0.3317,
+      "avg_pf": 49.5,
+      "worst_dd_pct": 1.45,
+      "score": 7.5067
+    },
+    {
+      "name": "LONGHIST_RESUMPTION_HTF_V1",
+      "verdict": "WATCH_TOO_SPARSE",
+      "valid_folds": 6,
+      "positive_folds": 3,
+      "positive_pct": 50.0,
+      "total_trades": 4,
+      "avg_return_pct": 0.3783,
+      "avg_pf": 49.5,
+      "worst_dd_pct": 1.45,
+      "score": 7.2533
+    },
+    {
+      "name": "LONGHIST_RESUMPTION_VR09_V1",
+      "verdict": "WATCH_TOO_SPARSE",
+      "valid_folds": 6,
+      "positive_folds": 1,
+      "positive_pct": 16.67,
+      "total_trades": 2,
+      "avg_return_pct": 0.0917,
+      "avg_pf": 16.5,
+      "worst_dd_pct": 1.44,
+      "score": 5.005
+    },
+    {
+      "name": "LONGHIST_RESUMPTION_HTF_VR09_V1",
+      "verdict": "WATCH_TOO_SPARSE",
+      "valid_folds": 6,
+      "positive_folds": 1,
+      "positive_pct": 16.67,
+      "total_trades": 1,
+      "avg_return_pct": 0.13,
+      "avg_pf": 16.5,
+      "worst_dd_pct": 1.42,
+      "score": 4.9033
+    },
+    {
+      "name": "LONGHIST_RESUMPTION_NEUTRAL_V1",
+      "verdict": "WATCH_TOO_SPARSE",
+      "valid_folds": 6,
+      "positive_folds": 1,
+      "positive_pct": 16.67,
+      "total_trades": 1,
+      "avg_return_pct": 0.03,
+      "avg_pf": 16.5,
+      "worst_dd_pct": 1.43,
+      "score": 4.7983
+    }
+  ]
+}

@@ -1,5 +1,18 @@
 """Smoke Strategy Lab package."""
 
+# Import and patch the adaptive layers before other modules consume them. This
+# keeps one public API while enforcing causal/no-lookahead history everywhere.
+from strategy_lab import rolling_symbol_strength as _rolling_symbol_strength
+from strategy_lab import structure_learning as _structure_learning
+from strategy_lab import trade_quality_score as _trade_quality_score
+from strategy_lab.causal_history import apply_causal_patches as _apply_causal_patches
+from strategy_lab.closed_context import apply_closed_context_patch as _apply_closed_context_patch
+from strategy_lab.resumption_compat import apply_resumption_compatibility as _apply_resumption_compatibility
+
+_apply_causal_patches()
+_apply_closed_context_patch()
+_apply_resumption_compatibility()
+
 __all__ = [
     "config",
     "schemas",
@@ -36,6 +49,11 @@ __all__ = [
     "rolling_symbol_strength",
     "trade_quality_score",
     "structure_learning",
+    "causal_history",
+    "closed_context",
+    "resumption_compat",
+    "decision_engine",
+    "live_market",
     "strategy_assembly",
     "universe_selector",
     "portfolio_simulator",

@@ -1,0 +1,28 @@
+name: Export Research Source
+
+on:
+  push:
+    branches:
+      - 'agent/live-paper-hardening'
+    paths:
+      - 'research_triggers/export_research_source.txt'
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Upload current research source
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-research-source
+          path: |
+            pyproject.toml
+            README.md
+            strategy_lab/**
+            scripts/**
+            deployment/**
+            docs/**

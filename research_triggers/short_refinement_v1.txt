@@ -1,0 +1,3 @@
+run causal SHORT refinement with frozen LONG rules
+period: 2025-07-01 through 2026-07-14
+windows: 8

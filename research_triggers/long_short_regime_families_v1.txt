@@ -1,0 +1,7 @@
+LONG_SHORT_REGIME_FAMILIES_V1
+preregistered: research/long_short_regime_families_v1.json
+fixed development: 2025-01-01 through 2026-06-30
+strict OOS folds: 10
+closed candles only: true
+external holdout: forbidden until one development pass
+triggered: 2026-07-18

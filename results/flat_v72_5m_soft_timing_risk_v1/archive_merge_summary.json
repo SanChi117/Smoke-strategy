@@ -1,0 +1,23 @@
+{
+  "source": "BINANCE_VISION_USDM_FUTURES_ARCHIVE",
+  "input_dir": "/home/runner/work/_temp/binance-vision-flat-v72-5m",
+  "interval": "5m",
+  "start_date": "2025-01-01",
+  "end_date": "2026-06-30",
+  "archives_scanned": 576,
+  "archives_used": 576,
+  "csv_members_read": 576,
+  "malformed_rows": 0,
+  "duplicate_rows": 0,
+  "symbols_requested": 34,
+  "symbols_loaded": 32,
+  "missing_symbols": [
+    "PEPEUSDT",
+    "SHIBUSDT"
+  ],
+  "rows_written": 5031936,
+  "first_candle": "2025-01-01T00:00:00",
+  "last_candle": "2026-06-30T23:55:00",
+  "coverage_pct": 94.1176,
+  "status": "OK"
+}

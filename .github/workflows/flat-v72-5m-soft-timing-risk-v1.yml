@@ -1,0 +1,134 @@
+name: Flat v7.2 5m Soft Timing Risk V1
+
+on:
+  push:
+    branches:
+      - 'agent/live-paper-hardening'
+    paths:
+      - 'research_triggers/flat_v72_5m_soft_timing_risk_v1.txt'
+
+permissions:
+  contents: write
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  five-minute-soft-overlay:
+    name: flat-v72-5m-soft-overlay-development
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Checkout research branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/live-paper-hardening
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Verify causal and 5m invariants
+        run: |
+          python -m strategy_lab.causal_history_fast_smoke_test
+          python -m strategy_lab.closed_context_smoke_test
+          python -m strategy_lab.walk_forward_boundary_smoke_test
+          python -m strategy_lab.research_metrics_smoke_test
+          python -m strategy_lab.flat_v72_smoke_test
+          python -m strategy_lab.flat_v72_5m_smoke_test
+
+      - name: Build frozen research universe
+        run: |
+          python scripts/build_strategy_universe_layer.py \
+            --top-n-per-group 3 \
+            --out-dir results/flat_v72_5m_soft_timing_risk_universe_v1
+
+      - name: Download fixed Binance Futures 5m development history
+        run: |
+          python scripts/download_binance_vision_futures_archives.py \
+            --symbols-file results/flat_v72_5m_soft_timing_risk_universe_v1/combined_symbols.txt \
+            --interval 5m \
+            --start-date '2025-01-01' \
+            --end-date '2026-06-30' \
+            --out-dir "$RUNNER_TEMP/binance-vision-flat-v72-5m" \
+            --summary-json results/flat_v72_5m_soft_timing_risk_v1/archive_download_summary.json \
+            --workers 8 --retries 2 --timeout 30
+
+      - name: Merge closed 5m development candles
+        run: |
+          python scripts/merge_binance_vision_futures_klines.py \
+            --input-dir "$RUNNER_TEMP/binance-vision-flat-v72-5m" \
+            --out "$RUNNER_TEMP/smoke-flat-v72-5m.csv" \
+            --symbols-file results/flat_v72_5m_soft_timing_risk_universe_v1/combined_symbols.txt \
+            --interval 5m \
+            --start-date '2025-01-01' \
+            --end-date '2026-06-30' \
+            --summary-json results/flat_v72_5m_soft_timing_risk_v1/archive_merge_summary.json \
+            --min-coverage 0.70
+
+      - name: Run strict-OOS 5m soft overlay study
+        run: |
+          python scripts/run_flat_v72_5m_soft_timing_risk_v1.py \
+            --candles-5m "$RUNNER_TEMP/smoke-flat-v72-5m.csv" \
+            --out-dir results/flat_v72_5m_soft_timing_risk_v1 \
+            --windows 10 \
+            --lookback-days 30 \
+            --profile research_500
+
+      - name: Upload full research audit
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-flat-v72-5m-soft-timing-risk-v1
+          path: |
+            results/flat_v72_5m_soft_timing_risk_v1/result.json
+            results/flat_v72_5m_soft_timing_risk_v1/candidate_summary.csv
+            results/flat_v72_5m_soft_timing_risk_v1/fold_summary.csv
+            results/flat_v72_5m_soft_timing_risk_v1/overlay_summary.csv
+            results/flat_v72_5m_soft_timing_risk_v1/candidate_folds/**
+            results/flat_v72_5m_soft_timing_risk_v1/archive_*_summary.json
+            results/flat_v72_5m_soft_timing_risk_universe_v1/**
+            research/flat_v72_5m_soft_timing_risk_v1.json
+          if-no-files-found: warn
+
+      - name: Commit compact result and status
+        if: always()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git pull --rebase origin agent/live-paper-hardening
+          mkdir -p results/flat_v72_5m_soft_timing_risk_status_v1
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          payload = {
+              'source_head_sha': os.environ['GITHUB_SHA'],
+              'run_id': int(os.environ['GITHUB_RUN_ID']),
+              'status': '${{ job.status }}',
+              'mode': 'FLAT_V72_5M_SOFT_TIMING_RISK_V1',
+              'period': '2025-01-01 through 2026-06-30',
+          }
+          Path('results/flat_v72_5m_soft_timing_risk_status_v1/monitor.json').write_text(
+              json.dumps(payload, indent=2) + '\n', encoding='utf-8'
+          )
+          PY
+          git add results/flat_v72_5m_soft_timing_risk_status_v1/monitor.json
+          if [ -f results/flat_v72_5m_soft_timing_risk_v1/result.json ]; then
+            git add \
+              results/flat_v72_5m_soft_timing_risk_v1/result.json \
+              results/flat_v72_5m_soft_timing_risk_v1/candidate_summary.csv \
+              results/flat_v72_5m_soft_timing_risk_v1/fold_summary.csv \
+              results/flat_v72_5m_soft_timing_risk_v1/overlay_summary.csv \
+              results/flat_v72_5m_soft_timing_risk_v1/archive_download_summary.json \
+              results/flat_v72_5m_soft_timing_risk_v1/archive_merge_summary.json \
+              results/flat_v72_5m_soft_timing_risk_universe_v1
+          fi
+          git commit -m 'Record Flat v7.2 5m soft overlay result' || exit 0
+          git push origin HEAD:agent/live-paper-hardening

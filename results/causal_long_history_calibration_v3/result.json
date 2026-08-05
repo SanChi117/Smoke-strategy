@@ -1,0 +1,356 @@
+{
+  "mode": "CACHED_STRICT_OOS_PULLBACK_CALIBRATION_V3_POOLED_PF",
+  "source": "results/causal_long_history_sweep_v1",
+  "folds": 6,
+  "leader": {
+    "name": "CAL3_MEDIUM_CD12H",
+    "verdict": "WATCH_TOO_SPARSE",
+    "valid_folds": 6,
+    "positive_folds": 4,
+    "positive_pct": 66.67,
+    "total_trades": 24,
+    "avg_return_pct": 0.2817,
+    "median_return_pct": 0.42,
+    "worst_fold_return_pct": -1.39,
+    "pooled_pf": 1.6727,
+    "gross_profit": 29.663418,
+    "gross_loss": 17.733577,
+    "net_pnl": 11.929841,
+    "worst_dd_pct": 3.11,
+    "score": 6.6582
+  },
+  "candidates": [
+    {
+      "name": "CAL3_MEDIUM_CD12H",
+      "verdict": "WATCH_TOO_SPARSE",
+      "valid_folds": 6,
+      "positive_folds": 4,
+      "positive_pct": 66.67,
+      "total_trades": 24,
+      "avg_return_pct": 0.2817,
+      "median_return_pct": 0.42,
+      "worst_fold_return_pct": -1.39,
+      "pooled_pf": 1.6727,
+      "gross_profit": 29.663418,
+      "gross_loss": 17.733577,
+      "net_pnl": 11.929841,
+      "worst_dd_pct": 3.11,
+      "score": 6.6582
+    },
+    {
+      "name": "CAL3_AGGRESSIVE_CD12H",
+      "verdict": "WATCH_PROMISING",
+      "valid_folds": 6,
+      "positive_folds": 4,
+      "positive_pct": 66.67,
+      "total_trades": 30,
+      "avg_return_pct": 0.1367,
+      "median_return_pct": 0.42,
+      "worst_fold_return_pct": -1.39,
+      "pooled_pf": 1.3816,
+      "gross_profit": 30.676168,
+      "gross_loss": 22.20269,
+      "net_pnl": 8.473478,
+      "worst_dd_pct": 3.46,
+      "score": 6.4849
+    },
+    {
+      "name": "CAL3_MEDIUM_NO_COOLDOWN",
+      "verdict": "WATCH_TOO_SPARSE",
+      "valid_folds": 6,
+      "positive_folds": 4,
+      "positive_pct": 66.67,
+      "total_trades": 26,
+      "avg_return_pct": 0.1717,
+      "median_return_pct": 0.42,
+      "worst_fold_return_pct": -1.94,
+      "pooled_pf": 1.4291,
+      "gross_profit": 29.648947,
+      "gross_loss": 20.745929,
+      "net_pnl": 8.903018,
+      "worst_dd_pct": 3.65,
+      "score": 5.8874
+    },
+    {
+      "name": "CAL3_MEDIUM_CD8H",
+      "verdict": "WATCH_TOO_SPARSE",
+      "valid_folds": 6,
+      "positive_folds": 4,
+      "positive_pct": 66.67,
+      "total_trades": 26,
+      "avg_return_pct": 0.1717,
+      "median_return_pct": 0.42,
+      "worst_fold_return_pct": -1.94,
+      "pooled_pf": 1.4291,
+      "gross_profit": 29.648947,
+      "gross_loss": 20.745929,
+      "net_pnl": 8.903018,
+      "worst_dd_pct": 3.65,
+      "score": 5.8874
+    },
+    {
+      "name": "CAL3_AGGRESSIVE_CD8H",
+      "verdict": "WATCH_PROMISING",
+      "valid_folds": 6,
+      "positive_folds": 4,
+      "positive_pct": 66.67,
+      "total_trades": 32,
+      "avg_return_pct": 0.025,
+      "median_return_pct": 0.42,
+      "worst_fold_return_pct": -1.94,
+      "pooled_pf": 1.2161,
+      "gross_profit": 30.661697,
+      "gross_loss": 25.212707,
+      "net_pnl": 5.44899,
+      "worst_dd_pct": 3.65,
+      "score": 5.8217
+    },
+    {
+      "name": "CAL3_MEDIUM_CD4H",
+      "verdict": "WATCH_TOO_SPARSE",
+      "valid_folds": 6,
+      "positive_folds": 4,
+      "positive_pct": 66.67,
+      "total_trades": 26,
+      "avg_return_pct": 0.1517,
+      "median_return_pct": 0.42,
+      "worst_fold_return_pct": -1.94,
+      "pooled_pf": 1.3897,
+      "gross_profit": 29.648947,
+      "gross_loss": 21.334358,
+      "net_pnl": 8.314589,
+      "worst_dd_pct": 3.65,
+      "score": 5.7492
+    },
+    {
+      "name": "CAL3_BASE_V2_LEADER",
+      "verdict": "WATCH_TOO_SPARSE",
+      "valid_folds": 6,
+      "positive_folds": 4,
+      "positive_pct": 66.67,
+      "total_trades": 25,
+      "avg_return_pct": 0.16,
+      "median_return_pct": 0.42,
+      "worst_fold_return_pct": -1.94,
+      "pooled_pf": 1.406,
+      "gross_profit": 29.165773,
+      "gross_loss": 20.743741,
+      "net_pnl": 8.422031,
+      "worst_dd_pct": 3.65,
+      "score": 5.6363
+    },
+    {
+      "name": "CAL3_MEDIUM_CD24H",
+      "verdict": "WATCH_TOO_SPARSE",
+      "valid_folds": 6,
+      "positive_folds": 3,
+      "positive_pct": 50.0,
+      "total_trades": 22,
+      "avg_return_pct": 0.185,
+      "median_return_pct": 0.03,
+      "worst_fold_return_pct": -1.39,
+      "pooled_pf": 1.5151,
+      "gross_profit": 25.598801,
+      "gross_loss": 16.896025,
+      "net_pnl": 8.702776,
+      "worst_dd_pct": 3.11,
+      "score": 4.9152
+    }
+  ],
+  "leader_diagnostics": {
+    "symbol": [
+      {
+        "value": "POLUSDT",
+        "trades": 1,
+        "wins": 0,
+        "losses": 1,
+        "net_pnl": -2.645291
+      },
+      {
+        "value": "BNBUSDT",
+        "trades": 4,
+        "wins": 2,
+        "losses": 2,
+        "net_pnl": -1.316167
+      },
+      {
+        "value": "BTCUSDT",
+        "trades": 8,
+        "wins": 3,
+        "losses": 5,
+        "net_pnl": 0.094274
+      },
+      {
+        "value": "XRPUSDT",
+        "trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "net_pnl": 0.482372
+      },
+      {
+        "value": "BCHUSDT",
+        "trades": 2,
+        "wins": 2,
+        "losses": 0,
+        "net_pnl": 1.175536
+      },
+      {
+        "value": "RENDERUSDT",
+        "trades": 1,
+        "wins": 1,
+        "losses": 0,
+        "net_pnl": 1.564974
+      },
+      {
+        "value": "TONUSDT",
+        "trades": 3,
+        "wins": 2,
+        "losses": 1,
+        "net_pnl": 1.613951
+      },
+      {
+        "value": "LTCUSDT",
+        "trades": 2,
+        "wins": 1,
+        "losses": 1,
+        "net_pnl": 2.82048
+      },
+      {
+        "value": "ETHUSDT",
+        "trades": 2,
+        "wins": 2,
+        "losses": 0,
+        "net_pnl": 8.139712
+      }
+    ],
+    "setup_type": [
+      {
+        "value": "pullback",
+        "trades": 15,
+        "wins": 7,
+        "losses": 8,
+        "net_pnl": -3.509121
+      },
+      {
+        "value": "pullback_resumption_strict",
+        "trades": 4,
+        "wins": 3,
+        "losses": 1,
+        "net_pnl": 3.651633
+      },
+      {
+        "value": "pullback_resumption",
+        "trades": 5,
+        "wins": 4,
+        "losses": 1,
+        "net_pnl": 11.78733
+      }
+    ],
+    "candle_type": [
+      {
+        "value": "bull_impulse",
+        "trades": 4,
+        "wins": 1,
+        "losses": 3,
+        "net_pnl": -3.841315
+      },
+      {
+        "value": "indecision",
+        "trades": 2,
+        "wins": 1,
+        "losses": 1,
+        "net_pnl": -1.059989
+      },
+      {
+        "value": "neutral",
+        "trades": 7,
+        "wins": 5,
+        "losses": 2,
+        "net_pnl": 3.546334
+      },
+      {
+        "value": "bear_impulse",
+        "trades": 11,
+        "wins": 7,
+        "losses": 4,
+        "net_pnl": 13.284812
+      }
+    ],
+    "context_alignment": [
+      {
+        "value": "daily_only",
+        "trades": 6,
+        "wins": 3,
+        "losses": 3,
+        "net_pnl": -3.331917
+      },
+      {
+        "value": "fallback_entry",
+        "trades": 3,
+        "wins": 1,
+        "losses": 2,
+        "net_pnl": -2.086938
+      },
+      {
+        "value": "aligned",
+        "trades": 8,
+        "wins": 5,
+        "losses": 3,
+        "net_pnl": 4.72194
+      },
+      {
+        "value": "h4_only",
+        "trades": 7,
+        "wins": 5,
+        "losses": 2,
+        "net_pnl": 12.626757
+      }
+    ],
+    "liquidity_state": [
+      {
+        "value": "none",
+        "trades": 24,
+        "wins": 14,
+        "losses": 10,
+        "net_pnl": 11.929841
+      }
+    ],
+    "volume_bucket": [
+      {
+        "value": "0.75_1.0",
+        "trades": 7,
+        "wins": 5,
+        "losses": 2,
+        "net_pnl": 6.876603
+      },
+      {
+        "value": "1.0_1.5",
+        "trades": 5,
+        "wins": 2,
+        "losses": 3,
+        "net_pnl": -5.669477
+      },
+      {
+        "value": "1.5_2.0",
+        "trades": 4,
+        "wins": 3,
+        "losses": 1,
+        "net_pnl": 4.900015
+      },
+      {
+        "value": "gte_2.0",
+        "trades": 4,
+        "wins": 2,
+        "losses": 2,
+        "net_pnl": 0.382422
+      },
+      {
+        "value": "lt_0.75",
+        "trades": 4,
+        "wins": 2,
+        "losses": 2,
+        "net_pnl": 5.440278
+      }
+    ]
+  }
+}

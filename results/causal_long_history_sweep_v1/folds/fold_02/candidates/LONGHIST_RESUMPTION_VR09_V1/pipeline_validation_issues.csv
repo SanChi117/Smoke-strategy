@@ -1,0 +1,3 @@
+level,check,message
+warning,summary:allowed,Pipeline produced zero allowed candidates.
+warning,summary:executed,Pipeline executed zero trades.

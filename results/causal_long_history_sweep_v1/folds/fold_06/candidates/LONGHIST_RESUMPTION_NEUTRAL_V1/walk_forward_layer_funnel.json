@@ -1,0 +1,23 @@
+{
+  "validation_candidates": 9331,
+  "validation_allowed": 1,
+  "setup_counts": {
+    "breakout": 8130,
+    "ignition": 193,
+    "liquidity_reclaim": 697,
+    "pullback": 36,
+    "pullback_resumption": 1,
+    "pullback_resumption_strict": 1,
+    "range_rotation": 250,
+    "watch_impulse": 23
+  },
+  "allowed_by_setup": {
+    "pullback_resumption": 1
+  },
+  "blocking_reasons": {
+    "structure_skip": 8066,
+    "setup_filtered": 841,
+    "quality_skip": 423,
+    "allowed_full_balanced": 1
+  }
+}

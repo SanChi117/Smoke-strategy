@@ -1,0 +1,4 @@
+CAUSAL_SYMBOL_SECTOR_RANKING_V1
+triggered_after=FLAT_V72_5M_SOFT_TIMING_RISK_V1_BLOCK
+external_holdout=false
+candidate_additions_after_result=false

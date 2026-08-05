@@ -1,0 +1,16 @@
+{
+  "candles": 184288,
+  "features": 182656,
+  "candidates": 20295,
+  "generated_trades": 20295,
+  "setups": {
+    "breakout": 16603,
+    "ignition": 377,
+    "liquidity_reclaim": 1310,
+    "pullback": 554,
+    "pullback_resumption": 46,
+    "pullback_resumption_strict": 5,
+    "range_rotation": 1359,
+    "watch_impulse": 41
+  }
+}
