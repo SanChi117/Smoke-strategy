@@ -7,6 +7,9 @@ import unittest
 from pathlib import Path
 
 from strategy_lab.outcome_blind_recognition_v1 import RecognitionObservation
+from strategy_lab.p7_partitioned_recognition_entrypoint_v1 import (
+    _authoritative_transport_contract_matches,
+)
 from strategy_lab.p8_semantic_replay_freeze_v1 import (
     P8_ID,
     build_freeze_manifest,
@@ -78,6 +81,36 @@ class P8SemanticReplayFreezeTest(unittest.TestCase):
         self.assertEqual(manifest["p8_id"], P8_ID)
         self.assertGreater(len(manifest["missing_files"]), 0)
         self.assertEqual(manifest["hashed_file_count"], 0)
+
+    def test_authoritative_level_transport_accepts_only_exact_frozen_contract(self) -> None:
+        payload = {
+            "recognition_id": "SMOKE_CORE_P7_FULL_RECOGNITION_FIXED_V1",
+            "symbol": "BTCUSDT",
+            "source": "Binance Vision USD-M Futures monthly klines",
+            "interval": "5m",
+            "boundary_count": 17472,
+        }
+        manifest = {
+            "recognition_id": "SMOKE_CORE_P7_FULL_RECOGNITION_FIXED_V1",
+            "source": "Binance Vision USD-M Futures monthly klines",
+            "interval": "5m",
+            "start_inclusive": "2024-01-01T00:00:00+00:00",
+            "end_inclusive": "2024-06-30T23:55:00+00:00",
+            "archive_count": 30,
+            "symbols": ["BTCUSDT", "ETHUSDT", "SOLUSDT", "LINKUSDT", "AAVEUSDT"],
+            "months": ["2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06"],
+            "canonical_files": {
+                "BTCUSDT": {
+                    "row_count": 52416,
+                    "first_open_time": "2024-01-01T00:00:00+00:00",
+                    "last_open_time": "2024-06-30T23:55:00+00:00",
+                }
+            },
+        }
+        self.assertTrue(_authoritative_transport_contract_matches(payload, manifest))
+        broken = dict(manifest)
+        broken["archive_count"] = 29
+        self.assertFalse(_authoritative_transport_contract_matches(payload, broken))
 
 
 if __name__ == "__main__":
