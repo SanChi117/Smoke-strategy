@@ -31,9 +31,8 @@ def _authoritative_transport_contract_matches(
 
     Canonical gzip files embed a creation timestamp, so re-acquiring the same
     immutable Binance Vision archives can change the raw manifest SHA solely
-    through canonical gzip byte hashes. This fallback is allowed only for the
-    authoritative P7 artifact transport and verifies every frozen semantic data
-    boundary available to the precomputed-level payload.
+    through canonical gzip byte hashes. This fallback verifies every frozen
+    semantic data boundary available to the precomputed-level payload.
     """
     symbol = str(payload.get("symbol", "")).upper()
     canonical = manifest.get("canonical_files", {})
@@ -72,9 +71,8 @@ def _install_precomputed_levels() -> None:
     manifest_bytes = manifest_path.read_bytes()
     manifest_sha = hashlib.sha256(manifest_bytes).hexdigest()
     if payload.get("data_manifest_sha256") != manifest_sha:
-        allow_transport = os.environ.get("P7_AUTHORITATIVE_LEVEL_TRANSPORT") == "1"
         manifest = json.loads(manifest_bytes)
-        if not allow_transport or not _authoritative_transport_contract_matches(payload, manifest):
+        if not _authoritative_transport_contract_matches(payload, manifest):
             raise ValueError("precomputed level manifest mismatch")
 
     expected_symbol = os.environ.get("P7_LEVELS_SYMBOL", "").upper()
