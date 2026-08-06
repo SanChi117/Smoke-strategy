@@ -30,3 +30,4 @@ Authoritative development-profitability workflow PR #15 обнаружил, чт
 Это amendment только вычислительного транспорта, созданный после runner timeout и до появления authoritative profitability report.
 
 <!-- Technical retrigger for the existing authoritative PR workflow only; no semantic, gate, dataset, or transport change. -->
+<!-- 2026-08-07 synchronization retrigger only; authoritative contract and implementation unchanged. -->
