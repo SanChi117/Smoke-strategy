@@ -28,3 +28,5 @@ Authoritative development-profitability workflow PR #15 обнаружил, чт
 - frozen gates: >=60 closed trades, PF >=1.20, positive average net trade return, >=6/10 positive folds, max drawdown <=8%.
 
 Это amendment только вычислительного транспорта, созданный после runner timeout и до появления authoritative profitability report.
+
+<!-- Technical retrigger for the existing authoritative PR workflow only; no semantic, gate, dataset, or transport change. -->
