@@ -7,6 +7,7 @@ on:
     paths:
       - 'research/SMOKE_CORE_CANDIDATE_1_DEVELOPMENT_PROFITABILITY_PREREG_V1.md'
       - 'research/SMOKE_CORE_DEVELOPMENT_PROFITABILITY_PREREG_V1.md'
+      - 'research/SMOKE_CORE_CANDIDATE_1_DEVELOPMENT_TRANSPORT_AMENDMENT_V1.md'
       - 'strategy_lab/smoke_core_development_profitability_v1.py'
       - 'strategy_lab/smoke_core_development_profitability_v1_smoke_test.py'
       - '.github/workflows/smoke-core-candidate-1-development-profitability.yml'
@@ -14,7 +15,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -31,13 +32,15 @@ jobs:
           python-version: '3.12'
       - name: Install package
         run: python -m pip install -e .
-      - name: Validate exact preregistration and implementation
+      - name: Validate exact preregistration, amendment and implementation
         shell: bash
         run: |
           set -euo pipefail
           grep -q 'SMOKE_CORE_CANDIDATE_1_DEVELOPMENT_PROFITABILITY_FIXED_V1' research/SMOKE_CORE_CANDIDATE_1_DEVELOPMENT_PROFITABILITY_PREREG_V1.md
           grep -q 'eef6bf319f53e4434d5f99bf54bc7f78c1b41f75' research/SMOKE_CORE_CANDIDATE_1_DEVELOPMENT_PROFITABILITY_PREREG_V1.md
           grep -q 'Exactly one valid development profitability test' research/SMOKE_CORE_CANDIDATE_1_DEVELOPMENT_PROFITABILITY_PREREG_V1.md
+          grep -q '400 physical subshards' research/SMOKE_CORE_CANDIDATE_1_DEVELOPMENT_TRANSPORT_AMENDMENT_V1.md
+          grep -q 'PF >=1.20' research/SMOKE_CORE_CANDIDATE_1_DEVELOPMENT_TRANSPORT_AMENDMENT_V1.md
           python -m py_compile strategy_lab/smoke_core_development_profitability_v1.py strategy_lab/smoke_core_development_profitability_v1_smoke_test.py
           python -u strategy_lab/smoke_core_development_profitability_v1_smoke_test.py
       - name: Download authoritative locked P7 dataset
@@ -75,16 +78,16 @@ jobs:
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: candidate-1-development-locked-data
+          name: candidate-1-development-locked-data-v2
           path: research_outputs/p7_full_recognition_data_v1/
           retention-days: 90
       - uses: actions/upload-artifact@v4
         with:
-          name: candidate-1-development-frozen-levels
+          name: candidate-1-development-frozen-levels-v2
           path: research_outputs/p7_levels/
           retention-days: 90
 
-  profitability-shard:
+  profitability-physical-subshard:
     needs: validate-and-lock-inputs
     runs-on: ubuntu-latest
     timeout-minutes: 360
@@ -94,7 +97,7 @@ jobs:
       matrix:
         symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
         fold: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-        shard: [0, 1, 2, 3]
+        subshard: [0, 1, 2, 3, 4, 5, 6, 7]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -103,30 +106,30 @@ jobs:
       - run: python -m pip install -e .
       - uses: actions/download-artifact@v4
         with:
-          name: candidate-1-development-locked-data
+          name: candidate-1-development-locked-data-v2
           path: research_outputs/p7_full_recognition_data_v1
       - uses: actions/download-artifact@v4
         with:
-          name: candidate-1-development-frozen-levels
+          name: candidate-1-development-frozen-levels-v2
           path: research_outputs/p7_levels
-      - name: Replay exact recognition shard and capture frozen plan
+      - name: Replay exact physical subshard and capture frozen plan
         env:
           P7_LEVELS_FILE: research_outputs/p7_levels/p7_levels_${{ matrix.symbol }}.pkl
           P7_LEVELS_SYMBOL: ${{ matrix.symbol }}
         run: |
           python -u strategy_lab/smoke_core_development_profitability_v1.py scan-shard \
             --symbol '${{ matrix.symbol }}' --fold '${{ matrix.fold }}' \
-            --shard-index '${{ matrix.shard }}' --shard-count 4 \
-            --output 'research_outputs/profitability_shards/profitability_shard_${{ matrix.symbol }}_${{ matrix.fold }}_${{ matrix.shard }}.json'
+            --shard-index '${{ matrix.subshard }}' --shard-count 8 \
+            --output 'research_outputs/profitability_subshards/profitability_shard_${{ matrix.symbol }}_${{ matrix.fold }}_${{ matrix.subshard }}.json'
       - uses: actions/upload-artifact@v4
         with:
-          name: candidate-1-profitability-shard-${{ matrix.symbol }}-${{ matrix.fold }}-${{ matrix.shard }}
-          path: research_outputs/profitability_shards/*.json
+          name: candidate-1-profitability-subshard-${{ matrix.symbol }}-${{ matrix.fold }}-${{ matrix.subshard }}
+          path: research_outputs/profitability_subshards/*.json
           if-no-files-found: error
           retention-days: 90
 
   merge-profitability-partitions:
-    needs: profitability-shard
+    needs: profitability-physical-subshard
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -143,12 +146,13 @@ jobs:
       - run: python -m pip install -e .
       - uses: actions/download-artifact@v4
         with:
-          pattern: candidate-1-profitability-shard-${{ matrix.symbol }}-${{ matrix.fold }}-*
-          path: research_outputs/profitability_shards
+          pattern: candidate-1-profitability-subshard-${{ matrix.symbol }}-${{ matrix.fold }}-*
+          path: research_outputs/profitability_subshards
           merge-multiple: true
-      - run: |
+      - name: Merge eight physical parts into the original symbol-fold partition
+        run: |
           python -u strategy_lab/smoke_core_development_profitability_v1.py merge-shards \
-            --input-dir research_outputs/profitability_shards --symbol '${{ matrix.symbol }}' --fold '${{ matrix.fold }}' \
+            --input-dir research_outputs/profitability_subshards --symbol '${{ matrix.symbol }}' --fold '${{ matrix.fold }}' \
             --output 'research_outputs/profitability_partitions/profitability_partition_${{ matrix.symbol }}_${{ matrix.fold }}.json'
       - uses: actions/upload-artifact@v4
         with:
@@ -169,7 +173,7 @@ jobs:
       - run: python -m pip install -e .
       - uses: actions/download-artifact@v4
         with:
-          name: candidate-1-development-locked-data
+          name: candidate-1-development-locked-data-v2
           path: research_outputs/p7_full_recognition_data_v1
       - uses: actions/download-artifact@v4
         with:
