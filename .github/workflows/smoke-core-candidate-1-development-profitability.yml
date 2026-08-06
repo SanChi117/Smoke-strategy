@@ -87,7 +87,7 @@ jobs:
           path: research_outputs/p7_levels/
           retention-days: 90
 
-  profitability-physical-subshard:
+  profitability-physical-subshard-a:
     needs: validate-and-lock-inputs
     runs-on: ubuntu-latest
     timeout-minutes: 360
@@ -95,7 +95,48 @@ jobs:
       fail-fast: false
       max-parallel: 20
       matrix:
-        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+        symbol: [BTCUSDT, ETHUSDT]
+        fold: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        subshard: [0, 1, 2, 3, 4, 5, 6, 7]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          name: candidate-1-development-locked-data-v2
+          path: research_outputs/p7_full_recognition_data_v1
+      - uses: actions/download-artifact@v4
+        with:
+          name: candidate-1-development-frozen-levels-v2
+          path: research_outputs/p7_levels
+      - name: Replay exact physical subshard and capture frozen plan
+        env:
+          P7_LEVELS_FILE: research_outputs/p7_levels/p7_levels_${{ matrix.symbol }}.pkl
+          P7_LEVELS_SYMBOL: ${{ matrix.symbol }}
+        run: |
+          python -u strategy_lab/smoke_core_development_profitability_v1.py scan-shard \
+            --symbol '${{ matrix.symbol }}' --fold '${{ matrix.fold }}' \
+            --shard-index '${{ matrix.subshard }}' --shard-count 8 \
+            --output 'research_outputs/profitability_subshards/profitability_shard_${{ matrix.symbol }}_${{ matrix.fold }}_${{ matrix.subshard }}.json'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candidate-1-profitability-subshard-${{ matrix.symbol }}-${{ matrix.fold }}-${{ matrix.subshard }}
+          path: research_outputs/profitability_subshards/*.json
+          if-no-files-found: error
+          retention-days: 90
+
+  profitability-physical-subshard-b:
+    needs: validate-and-lock-inputs
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        symbol: [SOLUSDT, LINKUSDT, AAVEUSDT]
         fold: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
         subshard: [0, 1, 2, 3, 4, 5, 6, 7]
     steps:
@@ -129,7 +170,7 @@ jobs:
           retention-days: 90
 
   merge-profitability-partitions:
-    needs: profitability-physical-subshard
+    needs: [profitability-physical-subshard-a, profitability-physical-subshard-b]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
