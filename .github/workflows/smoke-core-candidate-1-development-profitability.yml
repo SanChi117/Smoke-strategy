@@ -1,6 +1,16 @@
 name: SMOKE CORE Candidate 1 Development Profitability
 
 on:
+  push:
+    branches:
+      - agent/smoke-core-1-development-profitability
+    paths:
+      - 'research/SMOKE_CORE_CANDIDATE_1_DEVELOPMENT_PROFITABILITY_PREREG_V1.md'
+      - 'research/SMOKE_CORE_DEVELOPMENT_PROFITABILITY_PREREG_V1.md'
+      - 'research/SMOKE_CORE_CANDIDATE_1_DEVELOPMENT_TRANSPORT_AMENDMENT_V1.md'
+      - 'strategy_lab/smoke_core_development_profitability_v1.py'
+      - 'strategy_lab/smoke_core_development_profitability_v1_smoke_test.py'
+      - '.github/workflows/smoke-core-candidate-1-development-profitability.yml'
   pull_request:
     branches:
       - agent/smoke-core-1-p8-semantic-freeze
