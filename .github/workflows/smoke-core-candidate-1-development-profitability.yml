@@ -1,0 +1,208 @@
+name: SMOKE CORE Candidate 1 Development Profitability
+
+on:
+  pull_request:
+    branches:
+      - agent/smoke-core-1-p8-semantic-freeze
+    paths:
+      - 'research/SMOKE_CORE_CANDIDATE_1_DEVELOPMENT_PROFITABILITY_PREREG_V1.md'
+      - 'research/SMOKE_CORE_DEVELOPMENT_PROFITABILITY_PREREG_V1.md'
+      - 'strategy_lab/smoke_core_development_profitability_v1.py'
+      - 'strategy_lab/smoke_core_development_profitability_v1_smoke_test.py'
+      - '.github/workflows/smoke-core-candidate-1-development-profitability.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  validate-and-lock-inputs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install package
+        run: python -m pip install -e .
+      - name: Validate exact preregistration and implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'SMOKE_CORE_CANDIDATE_1_DEVELOPMENT_PROFITABILITY_FIXED_V1' research/SMOKE_CORE_CANDIDATE_1_DEVELOPMENT_PROFITABILITY_PREREG_V1.md
+          grep -q 'eef6bf319f53e4434d5f99bf54bc7f78c1b41f75' research/SMOKE_CORE_CANDIDATE_1_DEVELOPMENT_PROFITABILITY_PREREG_V1.md
+          grep -q 'Exactly one valid development profitability test' research/SMOKE_CORE_CANDIDATE_1_DEVELOPMENT_PROFITABILITY_PREREG_V1.md
+          python -m py_compile strategy_lab/smoke_core_development_profitability_v1.py strategy_lab/smoke_core_development_profitability_v1_smoke_test.py
+          python -u strategy_lab/smoke_core_development_profitability_v1_smoke_test.py
+      - name: Download authoritative locked P7 dataset
+        uses: actions/download-artifact@v4
+        with:
+          name: p7-full-recognition-data-v1
+          path: research_outputs/p7_full_recognition_data_v1
+          repository: SanChi117/Smoke-strategy
+          run-id: '30899050584'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download authoritative precomputed levels
+        uses: actions/download-artifact@v4
+        with:
+          pattern: p7-full-recognition-levels-*
+          path: research_outputs/p7_levels
+          merge-multiple: true
+          repository: SanChi117/Smoke-strategy
+          run-id: '30899050584'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify immutable data contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          root=Path('research_outputs/p7_full_recognition_data_v1')
+          path=root/'p7_full_recognition_data_manifest_v1.json'
+          assert hashlib.sha256(path.read_bytes()).hexdigest()=='f87c38951bd1564b687411c2d7a956c6f6ff2a63afbce719f029344f8af2568b'
+          m=json.loads(path.read_text())
+          assert m['symbols']==['BTCUSDT','ETHUSDT','SOLUSDT','LINKUSDT','AAVEUSDT']
+          assert m['start_inclusive']=='2024-01-01T00:00:00+00:00'
+          assert m['end_inclusive']=='2024-06-30T23:55:00+00:00'
+          assert len(list(Path('research_outputs/p7_levels').rglob('p7_levels_*.pkl')))==5
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candidate-1-development-locked-data
+          path: research_outputs/p7_full_recognition_data_v1/
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candidate-1-development-frozen-levels
+          path: research_outputs/p7_levels/
+          retention-days: 90
+
+  profitability-shard:
+    needs: validate-and-lock-inputs
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+        fold: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        shard: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          name: candidate-1-development-locked-data
+          path: research_outputs/p7_full_recognition_data_v1
+      - uses: actions/download-artifact@v4
+        with:
+          name: candidate-1-development-frozen-levels
+          path: research_outputs/p7_levels
+      - name: Replay exact recognition shard and capture frozen plan
+        env:
+          P7_LEVELS_FILE: research_outputs/p7_levels/p7_levels_${{ matrix.symbol }}.pkl
+          P7_LEVELS_SYMBOL: ${{ matrix.symbol }}
+        run: |
+          python -u strategy_lab/smoke_core_development_profitability_v1.py scan-shard \
+            --symbol '${{ matrix.symbol }}' --fold '${{ matrix.fold }}' \
+            --shard-index '${{ matrix.shard }}' --shard-count 4 \
+            --output 'research_outputs/profitability_shards/profitability_shard_${{ matrix.symbol }}_${{ matrix.fold }}_${{ matrix.shard }}.json'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candidate-1-profitability-shard-${{ matrix.symbol }}-${{ matrix.fold }}-${{ matrix.shard }}
+          path: research_outputs/profitability_shards/*.json
+          if-no-files-found: error
+          retention-days: 90
+
+  merge-profitability-partitions:
+    needs: profitability-shard
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+        fold: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: candidate-1-profitability-shard-${{ matrix.symbol }}-${{ matrix.fold }}-*
+          path: research_outputs/profitability_shards
+          merge-multiple: true
+      - run: |
+          python -u strategy_lab/smoke_core_development_profitability_v1.py merge-shards \
+            --input-dir research_outputs/profitability_shards --symbol '${{ matrix.symbol }}' --fold '${{ matrix.fold }}' \
+            --output 'research_outputs/profitability_partitions/profitability_partition_${{ matrix.symbol }}_${{ matrix.fold }}.json'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candidate-1-profitability-partition-${{ matrix.symbol }}-${{ matrix.fold }}
+          path: research_outputs/profitability_partitions/*.json
+          if-no-files-found: error
+          retention-days: 90
+
+  authoritative-development-test:
+    needs: merge-profitability-partitions
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          name: candidate-1-development-locked-data
+          path: research_outputs/p7_full_recognition_data_v1
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: candidate-1-profitability-partition-*
+          path: research_outputs/profitability_partitions
+          merge-multiple: true
+      - name: Execute the one authoritative profitability aggregation
+        run: |
+          python -u strategy_lab/smoke_core_development_profitability_v1.py aggregate \
+            --input-dir research_outputs/profitability_partitions \
+            --data-root research_outputs/p7_full_recognition_data_v1
+      - name: Verify complete formal report
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('research_outputs/smoke_core_candidate_1_development_profitability_report_v1.json').read_text())
+          assert r['test_id']=='SMOKE_CORE_CANDIDATE_1_DEVELOPMENT_PROFITABILITY_FIXED_V1'
+          assert r['candidate_id']=='SMOKE_CORE_1_0_CANDIDATE_1'
+          assert r['status'] in ('PASS','FAIL')
+          assert r['frozen_basis']['recognized_entry_ready']==2620
+          assert r['contract']['fold_count']==10
+          assert r['contract']['symbols']==['BTCUSDT','ETHUSDT','SOLUSDT','LINKUSDT','AAVEUSDT']
+          assert r['contract']['directions']==['LONG','SHORT']
+          assert r['contract']['global_fingerprint_dedupe'] is True
+          assert r['contract']['stop_first_same_bar'] is True
+          assert set(r['gates'])=={'minimum_60_closed_trades','pooled_pf_at_least_1_20','positive_average_trade_return','at_least_6_of_10_positive_folds','max_drawdown_at_most_8_pct'}
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smoke-core-candidate-1-development-profitability-v1
+          path: research_outputs/smoke_core_candidate_1_development_profitability_report_v1.json
+          if-no-files-found: error
+          retention-days: 90
