@@ -1,0 +1,1 @@
+P9 implementation branch is intentionally based on the authoritative P8 head `eef6bf319f53e4434d5f99bf54bc7f78c1b41f75`. The preregistration was committed before the outcome engine, tests and workflow. This note contains no outcome result and authorizes no holdout, paper, live, VPS or real-order activity.
