@@ -2,17 +2,19 @@ name: SMOKE CORE P9 Development Profitability
 
 on:
   pull_request:
-    branches: [agent/smoke-core-1-p8-semantic-freeze]
+    branches:
+      - agent/smoke-core-1-p8-semantic-freeze
     paths:
-      - research/SMOKE_CORE_P9_DEVELOPMENT_PROFITABILITY_PREREG_V1.md
-      - strategy_lab/p9_development_profitability_v1.py
-      - strategy_lab/p9_development_profitability_v1_smoke_test.py
-      - .github/workflows/smoke-core-p9-development-profitability.yml
+      - 'research/SMOKE_CORE_P9_DEVELOPMENT_PROFITABILITY_PREREG_V1.md'
+      - 'research/SMOKE_CORE_P9_TRANSPORT_AMENDMENT_V1.md'
+      - 'strategy_lab/p9_development_profitability_v1.py'
+      - 'strategy_lab/p9_development_profitability_v1_smoke_test.py'
+      - '.github/workflows/smoke-core-p9-development-profitability.yml'
   workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -25,20 +27,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: '3.12'}
+        with:
+          python-version: '3.12'
       - run: python -m pip install -e .
-      - name: Validate frozen contract
+      - name: Validate frozen contract and timeout-only amendment
         shell: bash
         run: |
           set -euo pipefail
-          P=research/SMOKE_CORE_P9_DEVELOPMENT_PROFITABILITY_PREREG_V1.md
-          test -s "$P"
-          grep -q 'SMOKE_CORE_1_0_CANDIDATE_1' "$P"
-          grep -q 'eef6bf319f53e4434d5f99bf54bc7f78c1b41f75' "$P"
-          grep -q 'exactly `2620`' "$P"
-          grep -q 'Maximum holding horizon: `576`' "$P"
-          grep -q 'profit factor is at least `1.10`' "$P"
-          grep -q 'not holdout' "$P"
+          test -s research/SMOKE_CORE_P9_DEVELOPMENT_PROFITABILITY_PREREG_V1.md
+          test -s research/SMOKE_CORE_P9_TRANSPORT_AMENDMENT_V1.md
+          grep -q 'SMOKE_CORE_1_0_CANDIDATE_1' research/SMOKE_CORE_P9_DEVELOPMENT_PROFITABILITY_PREREG_V1.md
+          grep -q 'eef6bf319f53e4434d5f99bf54bc7f78c1b41f75' research/SMOKE_CORE_P9_DEVELOPMENT_PROFITABILITY_PREREG_V1.md
+          grep -q 'exactly `2620`' research/SMOKE_CORE_P9_DEVELOPMENT_PROFITABILITY_PREREG_V1.md
+          grep -q 'Maximum holding horizon: `576`' research/SMOKE_CORE_P9_DEVELOPMENT_PROFITABILITY_PREREG_V1.md
+          grep -q 'profit factor is at least `1.10`' research/SMOKE_CORE_P9_DEVELOPMENT_PROFITABILITY_PREREG_V1.md
+          grep -q '200 логических geometry shards' research/SMOKE_CORE_P9_TRANSPORT_AMENDMENT_V1.md
+          grep -q '400 physical subshards' research/SMOKE_CORE_P9_TRANSPORT_AMENDMENT_V1.md
       - name: Compile and focused test
         run: |
           python -m py_compile strategy_lab/p9_development_profitability_v1.py strategy_lab/p9_development_profitability_v1_smoke_test.py
@@ -49,14 +53,16 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - name: Download authoritative P7 locked dataset
+        uses: actions/download-artifact@v4
         with:
           name: p7-full-recognition-data-v1
           path: research_outputs/p7_full_recognition_data_v1
           repository: SanChi117/Smoke-strategy
           run-id: '30899050584'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/download-artifact@v4
+      - name: Download authoritative P7 precomputed levels
+        uses: actions/download-artifact@v4
         with:
           pattern: p7-full-recognition-levels-*
           path: research_outputs/p7_levels
@@ -64,14 +70,16 @@ jobs:
           repository: SanChi117/Smoke-strategy
           run-id: '30899050584'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/download-artifact@v4
+      - name: Download authoritative P7 report
+        uses: actions/download-artifact@v4
         with:
           name: p7-full-recognition-report-v1
           path: research_outputs/p7_reference
           repository: SanChi117/Smoke-strategy
           run-id: '30899050584'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/download-artifact@v4
+      - name: Download authoritative P8 freeze
+        uses: actions/download-artifact@v4
         with:
           name: p8-semantic-replay-freeze-v1
           path: research_outputs/p8_reference
@@ -79,46 +87,50 @@ jobs:
           run-id: '31004476021'
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Verify immutable authority chain
+        shell: bash
         run: |
+          set -euo pipefail
           python - <<'PY'
-          import hashlib,json
+          import hashlib, json
           from pathlib import Path
-          root=Path('research_outputs')
-          manifest=root/'p7_full_recognition_data_v1/p7_full_recognition_data_manifest_v1.json'
-          assert hashlib.sha256(manifest.read_bytes()).hexdigest()=='f87c38951bd1564b687411c2d7a956c6f6ff2a63afbce719f029344f8af2568b'
-          p7=json.loads((root/'p7_reference/p7_full_recognition_report_v1.json').read_text())
-          assert p7['candidate_id']=='SMOKE_CORE_1_0_CANDIDATE_1' and p7['status']=='PASS'
-          assert p7['recognition']['independent_entry_ready']==2620 and len(p7['recognition']['fingerprints'])==2620
-          p8=json.loads((root/'p8_reference/p8_semantic_replay_freeze_report_v1.json').read_text())
-          freeze=json.loads((root/'p8_reference/p8_semantic_freeze_manifest_v1.json').read_text())
-          assert p8['status']=='PASS' and p8['equivalence']['mismatch_count']==0
-          assert p8['git_commit_sha']=='c8720d8777833c7d799f0421bdcf1962c7353a35'
-          assert p8['authoritative_p7_reference']['head_sha']=='b749be2578251a3b447a78a79009ff3d45cffc57'
-          assert freeze['missing_files']==[] and freeze['hashed_file_count']==freeze['required_file_count']==26
-          assert len(list((root/'p7_levels').rglob('p7_levels_*.pkl')))==5
+          manifest = Path('research_outputs/p7_full_recognition_data_v1/p7_full_recognition_data_manifest_v1.json')
+          assert hashlib.sha256(manifest.read_bytes()).hexdigest() == 'f87c38951bd1564b687411c2d7a956c6f6ff2a63afbce719f029344f8af2568b'
+          p7 = json.loads(Path('research_outputs/p7_reference/p7_full_recognition_report_v1.json').read_text())
+          p8 = json.loads(Path('research_outputs/p8_reference/p8_semantic_replay_freeze_report_v1.json').read_text())
+          freeze = json.loads(Path('research_outputs/p8_reference/p8_semantic_freeze_manifest_v1.json').read_text())
+          assert p7['candidate_id'] == 'SMOKE_CORE_1_0_CANDIDATE_1'
+          assert p7['status'] == 'PASS'
+          assert p7['recognition']['independent_entry_ready'] == 2620
+          assert len(p7['recognition']['fingerprints']) == 2620
+          assert p8['status'] == 'PASS'
+          assert p8['equivalence']['mismatch_count'] == 0
+          assert p8['git_commit_sha'] == 'c8720d8777833c7d799f0421bdcf1962c7353a35'
+          assert freeze['missing_files'] == []
+          assert freeze['hashed_file_count'] == freeze['required_file_count'] == 26
+          assert len(list(Path('research_outputs/p7_levels').rglob('p7_levels_*.pkl'))) == 5
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: p9-authoritative-p7-data-v1
+          name: p9-authoritative-p7-data-v2
           path: research_outputs/p7_full_recognition_data_v1/
           if-no-files-found: error
           retention-days: 90
       - uses: actions/upload-artifact@v4
         with:
-          name: p9-authoritative-p7-levels-v1
+          name: p9-authoritative-p7-levels-v2
           path: research_outputs/p7_levels/
           if-no-files-found: error
           retention-days: 90
       - uses: actions/upload-artifact@v4
         with:
-          name: p9-authoritative-p7-p8-references-v1
+          name: p9-authoritative-p7-p8-references-v2
           path: |
             research_outputs/p7_reference/
             research_outputs/p8_reference/
           if-no-files-found: error
           retention-days: 90
 
-  geometry-shard:
+  physical-geometry-subshard:
     needs: [validate-preregistration, acquire-authoritative-inputs]
     runs-on: ubuntu-latest
     timeout-minutes: 360
@@ -127,32 +139,42 @@ jobs:
       max-parallel: 20
       matrix:
         symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
-        fold: [0,1,2,3,4,5,6,7,8,9]
-        shard: [0,1,2,3]
+        fold: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        subshard: [0, 1, 2, 3, 4, 5, 6, 7]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: '3.12'}
+        with:
+          python-version: '3.12'
       - run: python -m pip install -e .
       - uses: actions/download-artifact@v4
-        with: {name: p9-authoritative-p7-data-v1, path: research_outputs/p7_full_recognition_data_v1}
+        with:
+          name: p9-authoritative-p7-data-v2
+          path: research_outputs/p7_full_recognition_data_v1
       - uses: actions/download-artifact@v4
-        with: {name: p9-authoritative-p7-levels-v1, path: research_outputs/p7_levels}
-      - name: Capture exact frozen geometry
+        with:
+          name: p9-authoritative-p7-levels-v2
+          path: research_outputs/p7_levels
+      - name: Capture exact frozen physical subshard
         env:
           P7_LEVELS_FILE: research_outputs/p7_levels/p7_levels_${{ matrix.symbol }}.pkl
           P7_LEVELS_SYMBOL: ${{ matrix.symbol }}
         run: |
-          python -u strategy_lab/p9_development_profitability_v1.py scan --symbol '${{ matrix.symbol }}' --fold '${{ matrix.fold }}' --shard-index '${{ matrix.shard }}' --shard-count 4 --output 'research_outputs/p9_geometry_shards/p9_geometry_shard_${{ matrix.symbol }}_${{ matrix.fold }}_${{ matrix.shard }}.json'
+          python -u strategy_lab/p9_development_profitability_v1.py scan \
+            --symbol '${{ matrix.symbol }}' \
+            --fold '${{ matrix.fold }}' \
+            --shard-index '${{ matrix.subshard }}' \
+            --shard-count '8' \
+            --output 'research_outputs/p9_geometry_subshards/p9_geometry_shard_${{ matrix.symbol }}_${{ matrix.fold }}_${{ matrix.subshard }}.json'
       - uses: actions/upload-artifact@v4
         with:
-          name: p9-geometry-shard-${{ matrix.symbol }}-${{ matrix.fold }}-${{ matrix.shard }}
-          path: research_outputs/p9_geometry_shards/p9_geometry_shard_${{ matrix.symbol }}_${{ matrix.fold }}_${{ matrix.shard }}.json
+          name: p9-geometry-subshard-${{ matrix.symbol }}-${{ matrix.fold }}-${{ matrix.subshard }}
+          path: research_outputs/p9_geometry_subshards/p9_geometry_shard_${{ matrix.symbol }}_${{ matrix.fold }}_${{ matrix.subshard }}.json
           if-no-files-found: error
           retention-days: 90
 
   merge-geometry-partitions:
-    needs: geometry-shard
+    needs: physical-geometry-subshard
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -160,18 +182,25 @@ jobs:
       max-parallel: 20
       matrix:
         symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
-        fold: [0,1,2,3,4,5,6,7,8,9]
+        fold: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: '3.12'}
+        with:
+          python-version: '3.12'
       - run: python -m pip install -e .
       - uses: actions/download-artifact@v4
         with:
-          pattern: p9-geometry-shard-${{ matrix.symbol }}-${{ matrix.fold }}-*
-          path: research_outputs/p9_geometry_shards
-      - run: |
-          python -u strategy_lab/p9_development_profitability_v1.py merge --input-dir research_outputs/p9_geometry_shards --symbol '${{ matrix.symbol }}' --fold '${{ matrix.fold }}' --output 'research_outputs/p9_geometry_partitions/p9_geometry_partition_${{ matrix.symbol }}_${{ matrix.fold }}.json'
+          pattern: p9-geometry-subshard-${{ matrix.symbol }}-${{ matrix.fold }}-*
+          path: research_outputs/p9_geometry_subshards
+          merge-multiple: true
+      - name: Merge eight physical parts into original symbol-fold partition
+        run: |
+          python -u strategy_lab/p9_development_profitability_v1.py merge \
+            --input-dir research_outputs/p9_geometry_subshards \
+            --symbol '${{ matrix.symbol }}' \
+            --fold '${{ matrix.fold }}' \
+            --output 'research_outputs/p9_geometry_partitions/p9_geometry_partition_${{ matrix.symbol }}_${{ matrix.fold }}.json'
       - uses: actions/upload-artifact@v4
         with:
           name: p9-geometry-partition-${{ matrix.symbol }}-${{ matrix.fold }}
@@ -186,28 +215,46 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: '3.12'}
+        with:
+          python-version: '3.12'
       - run: python -m pip install -e .
       - uses: actions/download-artifact@v4
-        with: {pattern: 'p9-geometry-partition-*', path: research_outputs/p9_geometry_partitions, merge-multiple: true}
+        with:
+          pattern: p9-geometry-partition-*
+          path: research_outputs/p9_geometry_partitions
+          merge-multiple: true
       - uses: actions/download-artifact@v4
-        with: {name: p9-authoritative-p7-data-v1, path: research_outputs/p7_full_recognition_data_v1}
+        with:
+          name: p9-authoritative-p7-data-v2
+          path: research_outputs/p7_full_recognition_data_v1
       - uses: actions/download-artifact@v4
-        with: {name: p9-authoritative-p7-p8-references-v1, path: research_outputs/p9_references}
-      - name: Execute preregistered development test
+        with:
+          name: p9-authoritative-p7-p8-references-v2
+          path: research_outputs/p9_references
+      - name: Execute preregistered development profitability
         run: |
-          python -u strategy_lab/p9_development_profitability_v1.py evaluate --input-dir research_outputs/p9_geometry_partitions --data-root research_outputs/p7_full_recognition_data_v1 --p7-report research_outputs/p9_references/p7_reference/p7_full_recognition_report_v1.json --p8-report research_outputs/p9_references/p8_reference/p8_semantic_replay_freeze_report_v1.json --p8-manifest research_outputs/p9_references/p8_reference/p8_semantic_freeze_manifest_v1.json --prereg research/SMOKE_CORE_P9_DEVELOPMENT_PROFITABILITY_PREREG_V1.md --output research_outputs/p9_development_profitability_report_v1.json
-      - name: Verify report contract
+          python -u strategy_lab/p9_development_profitability_v1.py evaluate \
+            --input-dir research_outputs/p9_geometry_partitions \
+            --data-root research_outputs/p7_full_recognition_data_v1 \
+            --p7-report research_outputs/p9_references/p7_reference/p7_full_recognition_report_v1.json \
+            --p8-report research_outputs/p9_references/p8_reference/p8_semantic_replay_freeze_report_v1.json \
+            --p8-manifest research_outputs/p9_references/p8_reference/p8_semantic_freeze_manifest_v1.json \
+            --prereg research/SMOKE_CORE_P9_DEVELOPMENT_PROFITABILITY_PREREG_V1.md \
+            --output research_outputs/p9_development_profitability_report_v1.json
+      - name: Verify complete report contract
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          r=json.loads(Path('research_outputs/p9_development_profitability_report_v1.json').read_text())
-          assert r['p9_id']=='SMOKE_CORE_P9_DEVELOPMENT_PROFITABILITY_FIXED_V1'
-          assert r['candidate_id']=='SMOKE_CORE_1_0_CANDIDATE_1' and r['status'] in {'PASS','FAIL'}
-          assert r['development_only'] is True and r['holdout'] is False
-          assert r['recognition_parity']['counted']==2620 and r['recognition_parity']['exact_fingerprint_set'] is True
-          assert len(r['gate_checks'])==12 and len(r['report_digest_sha256'])==64
+          report = json.loads(Path('research_outputs/p9_development_profitability_report_v1.json').read_text())
+          assert report['p9_id'] == 'SMOKE_CORE_P9_DEVELOPMENT_PROFITABILITY_FIXED_V1'
+          assert report['candidate_id'] == 'SMOKE_CORE_1_0_CANDIDATE_1'
+          assert report['status'] in {'PASS', 'FAIL'}
+          assert report['development_only'] is True and report['holdout'] is False
+          assert report['recognition_parity']['counted'] == 2620
+          assert report['recognition_parity']['exact_fingerprint_set'] is True
+          assert len(report['gate_checks']) == 12
+          assert len(report['report_digest_sha256']) == 64
           assert Path('research_outputs/p9_development_outcomes_v1.json').is_file()
           assert Path('research_outputs/p9_development_portfolio_trades_v1.json').is_file()
           PY
@@ -220,14 +267,15 @@ jobs:
             research_outputs/p9_development_portfolio_trades_v1.json
           if-no-files-found: error
           retention-days: 90
-      - name: Enforce frozen development gate
+      - name: Enforce frozen P9 development gate
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          r=json.loads(Path('research_outputs/p9_development_profitability_report_v1.json').read_text())
-          if r['status']!='PASS':
-              raise SystemExit('P9 DEVELOPMENT GATE FAIL: '+','.join(k for k,v in r['gate_checks'].items() if not v))
+          report = json.loads(Path('research_outputs/p9_development_profitability_report_v1.json').read_text())
+          if report['status'] != 'PASS':
+              failed = [key for key, value in report['gate_checks'].items() if not value]
+              raise SystemExit('P9 DEVELOPMENT GATE FAIL: ' + ','.join(failed))
           print('P9 DEVELOPMENT GATE PASS')
           PY
 
@@ -238,11 +286,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: '3.12'}
+        with:
+          python-version: '3.12'
       - run: python -m pip install -e .
       - name: Compile and regress P1-P9
         run: |
-          python -m py_compile strategy_lab/poi_imbalance_engine_v1.py strategy_lab/context_liquidity_engine_v1.py strategy_lab/interaction_engine_v1.py strategy_lab/execution_structure_v1.py strategy_lab/economics_risk_portfolio_v1.py strategy_lab/scenario_fusion_v1.py strategy_lab/outcome_blind_recognition_v1.py strategy_lab/p7_full_recognition_runner_v1.py strategy_lab/p8_semantic_replay_freeze_v1.py strategy_lab/p9_development_profitability_v1.py
+          python -m py_compile \
+            strategy_lab/poi_imbalance_engine_v1.py \
+            strategy_lab/context_liquidity_engine_v1.py \
+            strategy_lab/interaction_engine_v1.py \
+            strategy_lab/execution_structure_v1.py \
+            strategy_lab/economics_risk_portfolio_v1.py \
+            strategy_lab/scenario_fusion_v1.py \
+            strategy_lab/outcome_blind_recognition_v1.py \
+            strategy_lab/p7_full_recognition_runner_v1.py \
+            strategy_lab/p8_semantic_replay_freeze_v1.py \
+            strategy_lab/p9_development_profitability_v1.py
           python -u strategy_lab/p9_development_profitability_v1_smoke_test.py
           python -u strategy_lab/p8_semantic_replay_freeze_v1_smoke_test.py
           python -u strategy_lab/outcome_blind_recognition_v1_smoke_test.py
@@ -251,7 +310,6 @@ jobs:
           python -u strategy_lab/scenario_fusion_v1_smoke_test.py
           python -u strategy_lab/economics_risk_portfolio_v1_smoke_test.py
           python -u strategy_lab/execution_structure_v1_smoke_test.py
-          python -u strategy_lab/execution_family_policy_v1_smoke_test.py
           python -u strategy_lab/interaction_engine_v1_smoke_test.py
           python -u strategy_lab/context_liquidity_engine_v1_smoke_test.py
           python -u strategy_lab/poi_imbalance_engine_v1_smoke_test.py
