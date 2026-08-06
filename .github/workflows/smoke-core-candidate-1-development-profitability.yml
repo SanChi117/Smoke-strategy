@@ -261,3 +261,5 @@ jobs:
           path: research_outputs/smoke_core_candidate_1_development_profitability_report_v1.json
           if-no-files-found: error
           retention-days: 90
+
+# Technical retrigger only: frozen development test contract and implementation are unchanged.
