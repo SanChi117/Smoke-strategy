@@ -1,0 +1,106 @@
+name: SMOKE CORE Candidate 2 Full Causal Replay
+
+on:
+  pull_request:
+    branches:
+      - agent/smoke-core-1-p8-semantic-freeze
+    paths:
+      - 'strategy_lab/candidate_2_*.py'
+      - '.github/workflows/smoke-core-candidate-2-full-replay.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e .
+      - run: python -m py_compile strategy_lab/candidate_2_*.py
+      - run: |
+          python -u strategy_lab/candidate_2_hypothesis_contract_v1_smoke_test.py
+          python -u strategy_lab/candidate_2_causal_engines_v1_smoke_test.py
+          python -u strategy_lab/candidate_2_policy_quality_v1_smoke_test.py
+          python -u strategy_lab/candidate_2_recognition_v1_smoke_test.py
+
+  causal-symbol-replay:
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e .
+      - name: Download frozen replay/debug dataset
+        uses: actions/download-artifact@v4
+        with:
+          name: candidate-1-development-locked-data-v2
+          path: research_outputs/p7_full_recognition_data_v1
+          repository: SanChi117/Smoke-strategy
+          run-id: '31130707800'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Scan Candidate 2 symbol causally
+        run: |
+          mkdir -p research_outputs/candidate_2_replay
+          python -u strategy_lab/candidate_2_replay_shards_v1.py scan-symbol \
+            --symbol '${{ matrix.symbol }}' \
+            --data-root research_outputs/p7_full_recognition_data_v1 \
+            --output research_outputs/candidate_2_replay/candidate_2_replay_${{ matrix.symbol }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candidate-2-causal-replay-${{ matrix.symbol }}
+          path: research_outputs/candidate_2_replay/candidate_2_replay_${{ matrix.symbol }}.json
+          if-no-files-found: error
+          retention-days: 90
+
+  aggregate-causal-replay:
+    needs: causal-symbol-replay
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: candidate-2-causal-replay-*
+          path: research_outputs/candidate_2_replay_shards
+          merge-multiple: true
+      - name: Aggregate and audit Candidate 2 replay
+        run: |
+          python -u strategy_lab/candidate_2_replay_shards_v1.py aggregate \
+            --input-dir research_outputs/candidate_2_replay_shards \
+            --output research_outputs/candidate_2_full_causal_replay_v1.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('research_outputs/candidate_2_full_causal_replay_v1.json')
+          r=json.loads(p.read_text())
+          assert r['purpose']=='CAUSAL_REPLAY_DEBUG_ONLY_NOT_PROFITABILITY'
+          assert r['semantic_clean'] is True
+          q=r['recognition']
+          assert q['duplicate_rows']==0
+          assert q['forbidden_rows']==0
+          assert q['missing_provenance_rows']==0
+          assert q['invalid_lifecycle_rows']==0
+          assert q['reproducible'] is True
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smoke-core-candidate-2-full-causal-replay-v1
+          path: research_outputs/candidate_2_full_causal_replay_v1.json
+          if-no-files-found: error
+          retention-days: 90
