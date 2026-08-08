@@ -34,25 +34,18 @@ jobs:
           grep -q 'Attainable Target Engine' "$P"
           grep -q 'Acceptance / Persistence Engine' "$P"
           grep -q 'Quality Model V2' "$P"
+          grep -q 'Outcome-blind recognition' "$P"
           grep -q 'не могут быть единственным authoritative profitability' "$P"
       - name: Compile Candidate 2 modules
-        run: |
-          python -m py_compile \
-            strategy_lab/candidate_2_hypothesis_contract_v1.py \
-            strategy_lab/candidate_2_hypothesis_contract_v1_smoke_test.py \
-            strategy_lab/candidate_2_regime_engine_v1.py \
-            strategy_lab/candidate_2_acceptance_engine_v1.py \
-            strategy_lab/candidate_2_target_reachability_v1.py \
-            strategy_lab/candidate_2_causal_engines_v1_smoke_test.py \
-            strategy_lab/candidate_2_family_policy_v1.py \
-            strategy_lab/candidate_2_quality_model_v2.py \
-            strategy_lab/candidate_2_policy_quality_v1_smoke_test.py
+        run: python -m py_compile strategy_lab/candidate_2_*.py
       - name: Run Candidate 2 contract smoke tests
         run: python -u strategy_lab/candidate_2_hypothesis_contract_v1_smoke_test.py
       - name: Run Candidate 2 causal engine smoke tests
         run: python -u strategy_lab/candidate_2_causal_engines_v1_smoke_test.py
       - name: Run Candidate 2 family policy and quality tests
         run: python -u strategy_lab/candidate_2_policy_quality_v1_smoke_test.py
+      - name: Run Candidate 2 outcome-blind recognition tests
+        run: python -u strategy_lab/candidate_2_recognition_v1_smoke_test.py
       - name: Regression compile frozen P1-P8 transports
         run: |
           python -m py_compile \
