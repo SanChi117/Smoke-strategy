@@ -1,0 +1,95 @@
+name: SMOKE CORE Candidate 1 Post-Mortem
+
+on:
+  pull_request:
+    branches:
+      - agent/smoke-core-1-development-profitability
+    paths:
+      - 'research/SMOKE_CORE_CANDIDATE_1_POSTMORTEM_SCOPE_V1.md'
+      - 'strategy_lab/smoke_core_candidate_1_postmortem_v1.py'
+      - '.github/workflows/smoke-core-candidate-1-postmortem.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  diagnostic-postmortem:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e .
+      - name: Compile diagnostic code
+        run: python -m py_compile strategy_lab/smoke_core_candidate_1_postmortem_v1.py
+
+      - name: Download authoritative Candidate 1 partitions
+        uses: actions/download-artifact@v4
+        with:
+          pattern: candidate-1-profitability-partition-*
+          path: research_outputs/candidate_1_partitions
+          merge-multiple: true
+          repository: SanChi117/Smoke-strategy
+          run-id: '31130707800'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download authoritative locked dataset
+        uses: actions/download-artifact@v4
+        with:
+          name: candidate-1-development-locked-data-v2
+          path: research_outputs/p7_full_recognition_data_v1
+          repository: SanChi117/Smoke-strategy
+          run-id: '31130707800'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download authoritative profitability verdict
+        uses: actions/download-artifact@v4
+        with:
+          name: smoke-core-candidate-1-development-profitability-v1
+          path: research_outputs/authoritative_report
+          repository: SanChi117/Smoke-strategy
+          run-id: '31130707800'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify source artifact count
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find research_outputs/candidate_1_partitions -name 'profitability_partition_*.json' | wc -l)" -eq 50
+          test -s research_outputs/authoritative_report/smoke_core_candidate_1_development_profitability_report_v1.json
+          test -s research_outputs/p7_full_recognition_data_v1/p7_full_recognition_data_manifest_v1.json
+
+      - name: Build diagnostic post-mortem
+        run: |
+          python -u strategy_lab/smoke_core_candidate_1_postmortem_v1.py \
+            --input-dir research_outputs/candidate_1_partitions \
+            --data-root research_outputs/p7_full_recognition_data_v1 \
+            --authoritative-report research_outputs/authoritative_report/smoke_core_candidate_1_development_profitability_report_v1.json \
+            --output research_outputs/smoke_core_candidate_1_postmortem_v1.json
+
+      - name: Verify diagnostic guardrails
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('research_outputs/smoke_core_candidate_1_postmortem_v1.json')
+          r=json.loads(p.read_text())
+          assert r['postmortem_id']=='SMOKE_CORE_CANDIDATE_1_POSTMORTEM_V1'
+          assert r['source']['authoritative_run_id']==31130707800
+          assert r['source']['verdict']=='FAIL'
+          assert r['source']['diagnostic_only'] is True
+          assert r['source']['not_a_second_development_test'] is True
+          assert all(r['reproduction_checks'].values())
+          assert r['authoritative_metrics']['closed_trades']==909
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smoke-core-candidate-1-postmortem-v1
+          path: research_outputs/smoke_core_candidate_1_postmortem_v1.json
+          if-no-files-found: error
+          retention-days: 90
