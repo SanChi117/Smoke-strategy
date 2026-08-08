@@ -5,6 +5,7 @@ on:
     branches:
       - agent/smoke-core-1-development-profitability
     paths:
+      - 'research/SMOKE_CORE_CANDIDATE_1_POSTMORTEM_SCOPE_V1.md'
       - 'strategy_lab/smoke_core_candidate_1_postmortem_v1.py'
       - '.github/workflows/smoke-core-candidate-1-postmortem.yml'
   workflow_dispatch:
