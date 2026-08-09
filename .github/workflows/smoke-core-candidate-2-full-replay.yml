@@ -57,7 +57,18 @@ jobs:
           repository: SanChi117/Smoke-strategy
           run-id: '31130707800'
           github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download authoritative P7 precomputed levels
+        uses: actions/download-artifact@v4
+        with:
+          name: p7-full-recognition-levels-${{ matrix.symbol }}
+          path: research_outputs/p7_levels
+          repository: SanChi117/Smoke-strategy
+          run-id: '30899050584'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Scan Candidate 2 physical shard causally
+        env:
+          P7_LEVELS_FILE: research_outputs/p7_levels/p7_levels_${{ matrix.symbol }}.pkl
+          P7_LEVELS_SYMBOL: ${{ matrix.symbol }}
         run: |
           mkdir -p research_outputs/candidate_2_replay
           python -u strategy_lab/candidate_2_replay_shards_v1.py scan-segment \
@@ -102,6 +113,7 @@ jobs:
           assert r['physical_shard_count']==40
           assert r['segments_per_symbol']==8
           assert r['semantic_clean'] is True
+          assert r['transport']=='AUTHORITATIVE_P7_INCREMENTAL_POI_PLUS_PRECOMPUTED_LEVELS'
           q=r['recognition']
           assert q['duplicate_rows']==0
           assert q['forbidden_rows']==0
