@@ -13,6 +13,10 @@ permissions:
   contents: read
   actions: read
 
+concurrency:
+  group: smoke-core-candidate-2-full-replay-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -29,14 +33,16 @@ jobs:
           python -u strategy_lab/candidate_2_policy_quality_v1_smoke_test.py
           python -u strategy_lab/candidate_2_recognition_v1_smoke_test.py
 
-  causal-symbol-replay:
+  causal-physical-shard:
     needs: validate
     strategy:
       fail-fast: false
+      max-parallel: 12
       matrix:
         symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+        segment: [0, 1, 2, 3, 4, 5, 6, 7]
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -51,23 +57,26 @@ jobs:
           repository: SanChi117/Smoke-strategy
           run-id: '31130707800'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Scan Candidate 2 symbol causally
+      - name: Scan Candidate 2 physical shard causally
         run: |
           mkdir -p research_outputs/candidate_2_replay
-          python -u strategy_lab/candidate_2_replay_shards_v1.py scan-symbol \
+          python -u strategy_lab/candidate_2_replay_shards_v1.py scan-segment \
             --symbol '${{ matrix.symbol }}' \
+            --segment-index '${{ matrix.segment }}' \
+            --segment-count 8 \
             --data-root research_outputs/p7_full_recognition_data_v1 \
-            --output research_outputs/candidate_2_replay/candidate_2_replay_${{ matrix.symbol }}.json
+            --output research_outputs/candidate_2_replay/candidate_2_replay_${{ matrix.symbol }}_${{ matrix.segment }}.json
       - uses: actions/upload-artifact@v4
         with:
-          name: candidate-2-causal-replay-${{ matrix.symbol }}
-          path: research_outputs/candidate_2_replay/candidate_2_replay_${{ matrix.symbol }}.json
+          name: candidate-2-causal-replay-${{ matrix.symbol }}-${{ matrix.segment }}
+          path: research_outputs/candidate_2_replay/candidate_2_replay_${{ matrix.symbol }}_${{ matrix.segment }}.json
           if-no-files-found: error
           retention-days: 90
 
   aggregate-causal-replay:
-    needs: causal-symbol-replay
+    needs: causal-physical-shard
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -90,6 +99,8 @@ jobs:
           p=Path('research_outputs/candidate_2_full_causal_replay_v1.json')
           r=json.loads(p.read_text())
           assert r['purpose']=='CAUSAL_REPLAY_DEBUG_ONLY_NOT_PROFITABILITY'
+          assert r['physical_shard_count']==40
+          assert r['segments_per_symbol']==8
           assert r['semantic_clean'] is True
           q=r['recognition']
           assert q['duplicate_rows']==0
