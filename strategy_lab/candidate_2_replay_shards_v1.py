@@ -11,7 +11,8 @@ from pathlib import Path
 from typing import Any, Iterable
 
 import strategy_lab.p7_full_recognition_runner_v1 as p7
-from strategy_lab.candidate_2_full_recognition_runner_v1 import REPLAY_ID, scan_symbol
+from strategy_lab.candidate_2_full_recognition_runner_v1 import REPLAY_ID
+from strategy_lab.candidate_2_segmented_replay_v1 import SEGMENT_COUNT, scan_symbol_segment
 from strategy_lab.candidate_2_outcome_blind_recognition_v1 import (
     Candidate2RecognitionObservation,
     assert_clean,
@@ -20,7 +21,7 @@ from strategy_lab.candidate_2_outcome_blind_recognition_v1 import (
     run_recognition,
 )
 
-SHARD_ID = "SMOKE_CORE_CANDIDATE_2_REPLAY_SHARDS_V1"
+SHARD_ID = "SMOKE_CORE_CANDIDATE_2_REPLAY_SHARDS_V2"
 
 
 def _row_to_dict(row: Candidate2RecognitionObservation) -> dict[str, Any]:
@@ -43,17 +44,24 @@ def _row_from_dict(payload: dict[str, Any]) -> Candidate2RecognitionObservation:
     )
 
 
-def scan_symbol_shard(symbol: str, data_root: Path, output: Path) -> dict[str, Any]:
-    manifest, candles_by_symbol = p7.load_locked_dataset(data_root)
+def scan_physical_shard(symbol: str, segment_index: int, segment_count: int, data_root: Path, output: Path) -> dict[str, Any]:
+    _manifest, candles_by_symbol = p7.load_locked_dataset(data_root)
     symbol = symbol.upper()
     if symbol not in p7.ALLOWED_SYMBOLS:
         raise ValueError(f"unsupported symbol: {symbol}")
-    rows, diagnostics = scan_symbol(symbol, candles_by_symbol[symbol])
+    rows, diagnostics = scan_symbol_segment(
+        symbol,
+        candles_by_symbol[symbol],
+        segment_index=segment_index,
+        segment_count=segment_count,
+    )
     payload = {
         "shard_id": SHARD_ID,
         "replay_id": REPLAY_ID,
         "candidate_id": "SMOKE_CORE_1_0_CANDIDATE_2",
         "symbol": symbol,
+        "segment_index": segment_index,
+        "segment_count": segment_count,
         "purpose": "CAUSAL_REPLAY_DEBUG_ONLY_NOT_PROFITABILITY",
         "data_manifest_sha256": hashlib.sha256((data_root / "p7_full_recognition_data_manifest_v1.json").read_bytes()).hexdigest(),
         "rows": [_row_to_dict(row) for row in rows],
@@ -66,12 +74,18 @@ def scan_symbol_shard(symbol: str, data_root: Path, output: Path) -> dict[str, A
 
 def aggregate_shards(paths: Iterable[Path], output: Path) -> dict[str, Any]:
     payloads = [json.loads(path.read_text(encoding="utf-8")) for path in sorted(paths)]
-    if len(payloads) != len(p7.ALLOWED_SYMBOLS):
-        raise ValueError("expected one Candidate 2 replay shard per symbol")
+    expected = len(p7.ALLOWED_SYMBOLS) * SEGMENT_COUNT
+    if len(payloads) != expected:
+        raise ValueError(f"expected {expected} Candidate 2 physical shards, got {len(payloads)}")
     if {p["symbol"] for p in payloads} != set(p7.ALLOWED_SYMBOLS):
         raise ValueError("Candidate 2 replay symbol coverage mismatch")
     if len({p["data_manifest_sha256"] for p in payloads}) != 1:
         raise ValueError("Candidate 2 replay data manifest mismatch")
+    coverage = {(p["symbol"], int(p["segment_index"])) for p in payloads}
+    expected_coverage = {(symbol, idx) for symbol in p7.ALLOWED_SYMBOLS for idx in range(SEGMENT_COUNT)}
+    if coverage != expected_coverage:
+        raise ValueError("Candidate 2 replay physical-shard coverage mismatch")
+
     rows = [_row_from_dict(row) for payload in payloads for row in payload["rows"]]
     report = run_recognition(rows)
     assert_clean(report)
@@ -84,6 +98,8 @@ def aggregate_shards(paths: Iterable[Path], output: Path) -> dict[str, Any]:
         "candidate_id": "SMOKE_CORE_1_0_CANDIDATE_2",
         "purpose": "CAUSAL_REPLAY_DEBUG_ONLY_NOT_PROFITABILITY",
         "data_manifest_sha256": payloads[0]["data_manifest_sha256"],
+        "physical_shard_count": len(payloads),
+        "segments_per_symbol": SEGMENT_COUNT,
         "semantic_clean": True,
         "recognition": {
             "total_rows": report.total_rows,
@@ -108,12 +124,19 @@ def aggregate_shards(paths: Iterable[Path], output: Path) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(); sub = parser.add_subparsers(dest="command", required=True)
-    scan = sub.add_parser("scan-symbol"); scan.add_argument("--symbol", required=True); scan.add_argument("--data-root", type=Path, required=True); scan.add_argument("--output", type=Path, required=True)
-    agg = sub.add_parser("aggregate"); agg.add_argument("--input-dir", type=Path, required=True); agg.add_argument("--output", type=Path, required=True)
+    scan = sub.add_parser("scan-segment")
+    scan.add_argument("--symbol", required=True)
+    scan.add_argument("--segment-index", type=int, required=True)
+    scan.add_argument("--segment-count", type=int, default=SEGMENT_COUNT)
+    scan.add_argument("--data-root", type=Path, required=True)
+    scan.add_argument("--output", type=Path, required=True)
+    agg = sub.add_parser("aggregate")
+    agg.add_argument("--input-dir", type=Path, required=True)
+    agg.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    if args.command == "scan-symbol":
-        result = scan_symbol_shard(args.symbol, args.data_root, args.output)
-        print(json.dumps({"symbol": result["symbol"], "rows": len(result["rows"])}, sort_keys=True))
+    if args.command == "scan-segment":
+        result = scan_physical_shard(args.symbol, args.segment_index, args.segment_count, args.data_root, args.output)
+        print(json.dumps({"symbol": result["symbol"], "segment": result["segment_index"], "rows": len(result["rows"])}, sort_keys=True))
     else:
         result = aggregate_shards(args.input_dir.rglob("candidate_2_replay_*.json"), args.output)
         print(json.dumps({"entry_ready": result["recognition"]["independent_entry_ready"], "fingerprint_digest": result["fingerprint_digest_sha256"]}, sort_keys=True))
