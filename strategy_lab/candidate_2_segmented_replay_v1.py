@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
-"""Segmented causal replay for Candidate 2 C2-P8.
-
-This is transport-only. It preserves the exact Candidate 2 recognition semantics,
-uses global fold assignment, primes each segment with all prior market bars plus a
-small scenario warmup, and emits observations only inside the requested segment.
-"""
+"""Segmented causal replay for Candidate 2 C2-P8 with state checkpoints."""
 from __future__ import annotations
 
+from pathlib import Path
+import pickle
 from typing import Any, Sequence
 
 import strategy_lab.p7_full_recognition_runner_v1 as p7
 import strategy_lab.candidate_2_full_recognition_runner_v1 as c2
+import strategy_lab.candidate_2_checkpoint_transport_v1 as checkpoint_transport
 from strategy_lab.context_liquidity_engine_v1 import ContextLiquidityConfig
 from strategy_lab.execution_family_policy_v1 import apply_family_policy
 from strategy_lab.execution_structure_v1 import evaluate_execution_structure
@@ -23,6 +21,8 @@ from strategy_lab.candidate_2_outcome_blind_recognition_v1 import Candidate2Reco
 
 SEGMENT_COUNT = 8
 WARMUP_15M_BARS = c2.PENDING_MAX_15M_BARS + 4
+CHECKPOINT_VERSION = "C2_CAUSAL_CHECKPOINT_V1"
+checkpoint_transport.install(p7)
 
 
 def _bounds(total: int, index: int, count: int) -> tuple[int, int]:
@@ -34,12 +34,42 @@ def _bounds(total: int, index: int, count: int) -> tuple[int, int]:
     return start, end
 
 
+def _load_checkpoint(path: Path, *, symbol: str, segment_index: int, engine: Any) -> dict[str, c2.PendingTrendScenario]:
+    with path.open("rb") as handle:
+        payload = pickle.load(handle)
+    if payload.get("version") != CHECKPOINT_VERSION:
+        raise ValueError("Candidate 2 checkpoint version mismatch")
+    if payload.get("symbol") != symbol:
+        raise ValueError("Candidate 2 checkpoint symbol mismatch")
+    if int(payload.get("next_segment_index", -1)) != segment_index:
+        raise ValueError("Candidate 2 checkpoint segment continuity mismatch")
+    checkpoint_transport.restore_provider(engine, payload["poi_provider"])
+    return dict(payload.get("pending", {}))
+
+
+def _save_checkpoint(path: Path, *, symbol: str, segment_index: int, emit_end_time: Any, engine: Any, pending: dict[str, c2.PendingTrendScenario]) -> None:
+    payload = {
+        "version": CHECKPOINT_VERSION,
+        "symbol": symbol,
+        "completed_segment_index": segment_index,
+        "next_segment_index": segment_index + 1,
+        "asof": emit_end_time.isoformat(),
+        "poi_provider": checkpoint_transport.get_provider(engine),
+        "pending": dict(pending),
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("wb") as handle:
+        pickle.dump(payload, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+
 def scan_symbol_segment(
     symbol: str,
     candles: Sequence[Candle],
     *,
     segment_index: int,
     segment_count: int = SEGMENT_COUNT,
+    checkpoint_in: Path | None = None,
+    checkpoint_out: Path | None = None,
 ) -> tuple[list[Candidate2RecognitionObservation], dict[str, Any]]:
     engine = MtfDealingRangeEngine(candles)
     bars_5m_all = [bar for bar in engine.bars["5m"] if bar.symbol == symbol]
@@ -50,9 +80,16 @@ def scan_symbol_segment(
     if emit_start == emit_end:
         return [], {"symbol": symbol, "segment_index": segment_index, "segment_count": segment_count, "empty": True}
 
-    process_start = max(0, emit_start - WARMUP_15M_BARS)
     emit_start_time = boundaries[emit_start]
     emit_end_time = boundaries[emit_end - 1]
+    if checkpoint_in is not None:
+        pending = _load_checkpoint(checkpoint_in, symbol=symbol, segment_index=segment_index, engine=engine)
+        process_start = emit_start
+        checkpoint_restored = True
+    else:
+        pending = {}
+        process_start = max(0, emit_start - WARMUP_15M_BARS)
+        checkpoint_restored = False
 
     context_cfg = ContextLiquidityConfig()
     interaction_cfg = InteractionConfig()
@@ -61,7 +98,6 @@ def scan_symbol_segment(
     levels_all = p7._precompute_levels(engine, symbol, boundaries, context_cfg)
     context_cache: dict[Any, p7.ContextView] = {}
     poi_cache: dict[Any, tuple[tuple[Any, ...], dict[str, Any]]] = {}
-    pending: dict[str, c2.PendingTrendScenario] = {}
     observations: list[Candidate2RecognitionObservation] = []
 
     bars_15m: list[ClosedBar] = list(bars_15m_all[:process_start])
@@ -80,6 +116,8 @@ def scan_symbol_segment(
         "emit_start": emit_start_time.isoformat(),
         "emit_end": emit_end_time.isoformat(),
         "process_start_index": process_start,
+        "checkpoint_restored": checkpoint_restored,
+        "checkpoint_version": CHECKPOINT_VERSION,
         "trend_triggers": 0,
         "pending_evaluations": 0,
         "entry_ready": 0,
@@ -104,13 +142,8 @@ def scan_symbol_segment(
                 pending.pop(pid, None)
                 continue
             obs = c2._evaluate_pending(
-                item,
-                symbol=symbol,
-                fold=folds[timestamp],
-                timestamp=timestamp,
-                bars_5m=bars_5m,
-                bars_15m=bars_15m,
-                view=view,
+                item, symbol=symbol, fold=folds[timestamp], timestamp=timestamp,
+                bars_5m=bars_5m, bars_15m=bars_15m, view=view,
             )
             if obs is None:
                 continue
@@ -140,27 +173,19 @@ def scan_symbol_segment(
         ) + 2
         recent_15m = bars_15m[-lookback:]
         relevant_levels = p7._relevant_levels(levels_all, bars_5m, recent_15m, timestamp, context_cfg)
-        relevant_pois = tuple(
-            poi for poi in pois
-            if any(bar.high >= poi.low and bar.low <= poi.high for bar in recent_15m)
-        )
+        relevant_pois = tuple(poi for poi in pois if any(bar.high >= poi.low and bar.low <= poi.high for bar in recent_15m))
         if not relevant_levels and not relevant_pois:
             continue
 
         interaction = interaction_engine.snapshot(
-            symbol=symbol,
-            timeframe="15m",
-            bars=recent_15m,
-            pois=relevant_pois,
-            levels=relevant_levels,
-            evaluated_at=timestamp,
+            symbol=symbol, timeframe="15m", bars=recent_15m,
+            pois=relevant_pois, levels=relevant_levels, evaluated_at=timestamp,
         )
         specs = p7._family_specs(
             interaction,
             {poi.poi_id: poi for poi in relevant_pois},
             {level.level_id: level for level in relevant_levels},
-            view,
-            recent_15m,
+            view, recent_15m,
         )
         for spec in specs:
             if spec.family != ScenarioFamily.TREND_PULLBACK_CONTINUATION:
@@ -180,12 +205,8 @@ def scan_symbol_segment(
                 continue
             trigger_price, trigger_time = geometry
             target, target_level = p7._select_target(
-                levels_all,
-                bars_5m,
-                spec.anchor.confirmed_at,
-                trigger_price,
-                spec.anchor.direction,
-                context_cfg,
+                levels_all, bars_5m, spec.anchor.confirmed_at, trigger_price,
+                spec.anchor.direction, context_cfg,
             )
             if target is None or target_level is None:
                 continue
@@ -201,4 +222,12 @@ def scan_symbol_segment(
             if timestamp >= emit_start_time:
                 diagnostics["trend_triggers"] += 1
 
+    if checkpoint_out is not None:
+        _save_checkpoint(
+            checkpoint_out, symbol=symbol, segment_index=segment_index,
+            emit_end_time=emit_end_time, engine=engine, pending=pending,
+        )
+        diagnostics["checkpoint_saved"] = True
+    else:
+        diagnostics["checkpoint_saved"] = False
     return observations, diagnostics
