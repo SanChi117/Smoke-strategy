@@ -99,7 +99,7 @@ jobs:
         run: |
           mkdir -p research_outputs/equivalence/legacy
           python -u strategy_lab/candidate_2_replay_shards_v1.py scan-segment \
-            --symbol BTCUSDT --segment-index 1 --segment-count 8 \
+            --symbol BTCUSDT --segment-index 1 --segment-count 16 \
             --data-root research_outputs/p7_full_recognition_data_v1 \
             --output research_outputs/equivalence/legacy/candidate_2_replay_BTCUSDT_1.json
           python -u strategy_lab/candidate_2_replay_shards_v1.py verify-equivalence \
@@ -190,8 +190,120 @@ jobs:
       has_checkpoint: true
     secrets: inherit
 
-  aggregate-causal-replay:
+  segment-8:
     needs: segment-7
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 8
+      previous_segment: 7
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-9:
+    needs: segment-8
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 9
+      previous_segment: 8
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-10:
+    needs: segment-9
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 10
+      previous_segment: 9
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-11:
+    needs: segment-10
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 11
+      previous_segment: 10
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-12:
+    needs: segment-11
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 12
+      previous_segment: 11
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-13:
+    needs: segment-12
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 13
+      previous_segment: 12
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-14:
+    needs: segment-13
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 14
+      previous_segment: 13
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-15:
+    needs: segment-14
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 15
+      previous_segment: 14
+      has_checkpoint: true
+    secrets: inherit
+
+  aggregate-causal-replay:
+    needs: segment-15
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -207,7 +319,7 @@ jobs:
           merge-multiple: true
       - name: Aggregate and audit Candidate 2 replay
         run: |
-          python -u strategy_lab/candidate_2_replay_shards_v1.py aggregate \
+          python -u strategy_lab/candidate_2_dynamic_checkpoint_aggregate_v1.py \
             --input-dir research_outputs/candidate_2_replay_shards \
             --output research_outputs/candidate_2_full_causal_replay_v1.json
           python - <<'PY'
@@ -215,8 +327,8 @@ jobs:
           from pathlib import Path
           r=json.loads(Path('research_outputs/candidate_2_full_causal_replay_v1.json').read_text())
           assert r['purpose']=='CAUSAL_REPLAY_DEBUG_ONLY_NOT_PROFITABILITY'
-          assert r['physical_shard_count']==40
-          assert r['segments_per_symbol']==8
+          assert r['physical_shard_count']==80
+          assert r['segments_per_symbol']==16
           assert r['semantic_clean'] is True
           assert r['transport']=='AUTHORITATIVE_P7_INCREMENTAL_POI_CHECKPOINT_CHAIN_PLUS_PRECOMPUTED_LEVELS'
           q=r['recognition']
