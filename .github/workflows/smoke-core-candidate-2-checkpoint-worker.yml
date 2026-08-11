@@ -68,7 +68,7 @@ jobs:
           python -u strategy_lab/candidate_2_replay_shards_v1.py scan-segment \
             --symbol '${{ inputs.symbol }}' \
             --segment-index '${{ inputs.segment }}' \
-            --segment-count 8 \
+            --segment-count 16 \
             --data-root research_outputs/p7_full_recognition_data_v1 \
             $EXTRA \
             --checkpoint-out research_outputs/candidate_2_checkpoints/candidate_2_checkpoint_${{ inputs.symbol }}_${{ inputs.segment }}.pkl \
