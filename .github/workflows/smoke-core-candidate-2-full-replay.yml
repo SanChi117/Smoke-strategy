@@ -99,7 +99,7 @@ jobs:
         run: |
           mkdir -p research_outputs/equivalence/legacy
           python -u strategy_lab/candidate_2_replay_shards_v1.py scan-segment \
-            --symbol BTCUSDT --segment-index 1 --segment-count 16 \
+            --symbol BTCUSDT --segment-index 1 --segment-count 32 \
             --data-root research_outputs/p7_full_recognition_data_v1 \
             --output research_outputs/equivalence/legacy/candidate_2_replay_BTCUSDT_1.json
           python -u strategy_lab/candidate_2_replay_shards_v1.py verify-equivalence \
@@ -302,8 +302,232 @@ jobs:
       has_checkpoint: true
     secrets: inherit
 
-  aggregate-causal-replay:
+  segment-16:
     needs: segment-15
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 16
+      previous_segment: 15
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-17:
+    needs: segment-16
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 17
+      previous_segment: 16
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-18:
+    needs: segment-17
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 18
+      previous_segment: 17
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-19:
+    needs: segment-18
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 19
+      previous_segment: 18
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-20:
+    needs: segment-19
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 20
+      previous_segment: 19
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-21:
+    needs: segment-20
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 21
+      previous_segment: 20
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-22:
+    needs: segment-21
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 22
+      previous_segment: 21
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-23:
+    needs: segment-22
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 23
+      previous_segment: 22
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-24:
+    needs: segment-23
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 24
+      previous_segment: 23
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-25:
+    needs: segment-24
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 25
+      previous_segment: 24
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-26:
+    needs: segment-25
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 26
+      previous_segment: 25
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-27:
+    needs: segment-26
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 27
+      previous_segment: 26
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-28:
+    needs: segment-27
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 28
+      previous_segment: 27
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-29:
+    needs: segment-28
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 29
+      previous_segment: 28
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-30:
+    needs: segment-29
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 30
+      previous_segment: 29
+      has_checkpoint: true
+    secrets: inherit
+
+  segment-31:
+    needs: segment-30
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-checkpoint-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      segment: 31
+      previous_segment: 30
+      has_checkpoint: true
+    secrets: inherit
+
+  aggregate-causal-replay:
+    needs: segment-31
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -327,8 +551,8 @@ jobs:
           from pathlib import Path
           r=json.loads(Path('research_outputs/candidate_2_full_causal_replay_v1.json').read_text())
           assert r['purpose']=='CAUSAL_REPLAY_DEBUG_ONLY_NOT_PROFITABILITY'
-          assert r['physical_shard_count']==80
-          assert r['segments_per_symbol']==16
+          assert r['physical_shard_count']==160
+          assert r['segments_per_symbol']==32
           assert r['semantic_clean'] is True
           assert r['transport']=='AUTHORITATIVE_P7_INCREMENTAL_POI_CHECKPOINT_CHAIN_PLUS_PRECOMPUTED_LEVELS'
           q=r['recognition']
