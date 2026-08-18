@@ -1,0 +1,44 @@
+name: smoke-validation-audit-r1
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/run_corrected_fixed_baseline_wfo_r1.py'
+      - 'docs/SMOKE_VALIDATION_AUDIT_R1.md'
+      - '.github/workflows/smoke-validation-audit-r1.yml'
+  workflow_dispatch:
+
+jobs:
+  corrected-fixed-baseline-wfo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install project
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+      - name: Syntax check
+        run: python -m py_compile scripts/run_corrected_fixed_baseline_wfo_r1.py
+      - name: Run corrected fixed-baseline audit
+        run: |
+          python scripts/run_corrected_fixed_baseline_wfo_r1.py \
+            --baseline strategy_lab/baselines/tactical_core_direct_micro_strict.json \
+            --interval 1h \
+            --limit 1500 \
+            --windows 4 \
+            --lookback-days 30 \
+            --out-dir results/corrected_fixed_baseline_wfo_r1 \
+            --candles-out data/corrected_fixed_baseline_wfo_r1.csv
+      - name: Upload audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-validation-audit-r1
+          path: |
+            results/corrected_fixed_baseline_wfo_r1/**
+            data/corrected_fixed_baseline_wfo_r1.csv
+          retention-days: 30
