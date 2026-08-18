@@ -1,0 +1,258 @@
+name: SMOKE CORE Candidate 2 Tail Recovery
+
+on:
+  pull_request:
+    branches:
+      - agent/smoke-core-1-p8-semantic-freeze
+    paths:
+      - 'strategy_lab/c2_tail_recovery_v1.py'
+      - '.github/workflows/smoke-core-candidate-2-tail-worker.yml'
+      - '.github/workflows/smoke-core-candidate-2-tail-recovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: smoke-core-candidate-2-tail-recovery-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  bootstrap:
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download authoritative checkpoint-27 from failed full run
+        uses: actions/download-artifact@v4
+        with:
+          name: candidate-2-checkpoint-${{ matrix.symbol }}-27
+          path: research_outputs/source_checkpoint
+          repository: SanChi117/Smoke-strategy
+          run-id: '31944319793'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Reindex exact 28/32 boundary onto 56/64 boundary
+        run: |
+          mkdir -p research_outputs/tail_bootstrap
+          python -u strategy_lab/c2_tail_recovery_v1.py rewrite-checkpoint \
+            --src research_outputs/source_checkpoint/candidate_2_checkpoint_${{ matrix.symbol }}_27.pkl \
+            --dst research_outputs/tail_bootstrap/candidate_2_tail_checkpoint_${{ matrix.symbol }}_55.pkl \
+            --symbol '${{ matrix.symbol }}' \
+            --next-segment-index 56
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candidate-2-tail-checkpoint-${{ matrix.symbol }}-55
+          path: research_outputs/tail_bootstrap/candidate_2_tail_checkpoint_${{ matrix.symbol }}_55.pkl
+          if-no-files-found: error
+          retention-days: 90
+
+  micro-56:
+    needs: bootstrap
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-tail-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      micro_index: 56
+      previous_micro: 55
+    secrets: inherit
+
+  micro-57:
+    needs: micro-56
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-tail-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      micro_index: 57
+      previous_micro: 56
+    secrets: inherit
+
+  micro-58:
+    needs: micro-57
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-tail-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      micro_index: 58
+      previous_micro: 57
+    secrets: inherit
+
+  micro-59:
+    needs: micro-58
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-tail-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      micro_index: 59
+      previous_micro: 58
+    secrets: inherit
+
+  micro-60:
+    needs: micro-59
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-tail-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      micro_index: 60
+      previous_micro: 59
+    secrets: inherit
+
+  micro-61:
+    needs: micro-60
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-tail-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      micro_index: 61
+      previous_micro: 60
+    secrets: inherit
+
+  micro-62:
+    needs: micro-61
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-tail-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      micro_index: 62
+      previous_micro: 61
+    secrets: inherit
+
+  micro-63:
+    needs: micro-62
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    uses: ./.github/workflows/smoke-core-candidate-2-tail-worker.yml
+    with:
+      symbol: ${{ matrix.symbol }}
+      micro_index: 63
+      previous_micro: 62
+    secrets: inherit
+
+  stitch:
+    needs: micro-63
+    strategy:
+      fail-fast: false
+      matrix:
+        symbol: [BTCUSDT, ETHUSDT, SOLUSDT, LINKUSDT, AAVEUSDT]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download all tail microshards for symbol
+        uses: actions/download-artifact@v4
+        with:
+          pattern: candidate-2-tail-micro-${{ matrix.symbol }}-*
+          path: research_outputs/tail_micro
+          merge-multiple: true
+      - name: Stitch 64-way tail back to exact 32-way logical boundaries
+        run: |
+          mkdir -p research_outputs/tail_logical
+          for logical in 28 29 30 31; do
+            left=$((logical*2))
+            right=$((left+1))
+            python -u strategy_lab/c2_tail_recovery_v1.py stitch-pair \
+              --left research_outputs/tail_micro/candidate_2_tail_micro_${{ matrix.symbol }}_${left}.json \
+              --right research_outputs/tail_micro/candidate_2_tail_micro_${{ matrix.symbol }}_${right}.json \
+              --out research_outputs/tail_logical/candidate_2_replay_${{ matrix.symbol }}_${logical}.json \
+              --logical-index ${logical}
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candidate-2-tail-logical-${{ matrix.symbol }}
+          path: research_outputs/tail_logical/candidate_2_replay_${{ matrix.symbol }}_*.json
+          if-no-files-found: error
+          retention-days: 90
+
+  aggregate:
+    needs: stitch
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e .
+      - name: Download successful baseline shards from full run
+        uses: actions/download-artifact@v4
+        with:
+          pattern: candidate-2-causal-replay-*
+          path: research_outputs/baseline
+          merge-multiple: true
+          repository: SanChi117/Smoke-strategy
+          run-id: '31944319793'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Remove incomplete baseline tail 28-31
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          for p in Path('research_outputs/baseline').glob('candidate_2_replay_*.json'):
+              try:
+                  idx=int(p.stem.rsplit('_',1)[1])
+              except Exception:
+                  continue
+              if idx >= 28:
+                  p.unlink()
+          PY
+      - name: Download recovered logical tail
+        uses: actions/download-artifact@v4
+        with:
+          pattern: candidate-2-tail-logical-*
+          path: research_outputs/recovered_tail
+          merge-multiple: true
+      - name: Assemble exact 32-way authoritative grid
+        run: |
+          cp research_outputs/recovered_tail/candidate_2_replay_*.json research_outputs/baseline/
+          python -u strategy_lab/candidate_2_dynamic_checkpoint_aggregate_v1.py \
+            --input-dir research_outputs/baseline \
+            --output research_outputs/candidate_2_full_causal_replay_v1.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('research_outputs/candidate_2_full_causal_replay_v1.json').read_text())
+          assert r['purpose']=='CAUSAL_REPLAY_DEBUG_ONLY_NOT_PROFITABILITY'
+          assert r['physical_shard_count']==160
+          assert r['segments_per_symbol']==32
+          assert r['semantic_clean'] is True
+          q=r['recognition']
+          assert q['duplicate_rows']==0 and q['forbidden_rows']==0
+          assert q['missing_provenance_rows']==0 and q['invalid_lifecycle_rows']==0
+          assert q['reproducible'] is True
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smoke-core-candidate-2-full-causal-replay-v1-tail-recovered
+          path: research_outputs/candidate_2_full_causal_replay_v1.json
+          if-no-files-found: error
+          retention-days: 90
