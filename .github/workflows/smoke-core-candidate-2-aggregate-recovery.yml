@@ -28,7 +28,7 @@ jobs:
       - name: Install project
         run: python -m pip install -e .
 
-      - name: Download completed baseline shards 0-27
+      - name: Download completed baseline shards 2-31
         uses: actions/download-artifact@v4
         with:
           pattern: candidate-2-causal-replay-*
@@ -38,7 +38,7 @@ jobs:
           run-id: '31944319793'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Keep only authoritative baseline segments 0-27
+      - name: Keep only authoritative baseline segments 2-27
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -48,9 +48,29 @@ jobs:
                   idx = int(p.stem.rsplit('_', 1)[1])
               except Exception:
                   continue
-              if idx >= 28:
+              if idx < 2 or idx >= 28:
                   p.unlink()
           PY
+
+      - name: Download authoritative 32-way segment 0
+        uses: actions/download-artifact@v4
+        with:
+          pattern: candidate-2-causal-replay-*-0
+          path: research_outputs/baseline_head
+          merge-multiple: true
+          repository: SanChi117/Smoke-strategy
+          run-id: '31820724655'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download authoritative 32-way segment 1
+        uses: actions/download-artifact@v4
+        with:
+          pattern: candidate-2-causal-replay-*-1
+          path: research_outputs/baseline_head
+          merge-multiple: true
+          repository: SanChi117/Smoke-strategy
+          run-id: '31820724655'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download recovered logical tail 28-31 from Tail Recovery
         uses: actions/download-artifact@v4
@@ -66,6 +86,7 @@ jobs:
         run: |
           mkdir -p research_outputs/assembled
           cp research_outputs/baseline/candidate_2_replay_*.json research_outputs/assembled/
+          cp research_outputs/baseline_head/candidate_2_replay_*.json research_outputs/assembled/
           cp research_outputs/recovered_tail/candidate_2_replay_*.json research_outputs/assembled/
           python - <<'PY'
           import json
@@ -74,13 +95,16 @@ jobs:
           root=Path('research_outputs/assembled')
           files=sorted(root.glob('candidate_2_replay_*.json'))
           seen=[]
+          manifests=set()
           for p in files:
               d=json.loads(p.read_text())
               seen.append((d['symbol'], int(d['segment_index']), int(d['segment_count'])))
+              manifests.add(d['data_manifest_sha256'])
           assert len(files)==160, f'expected 160 files, got {len(files)}'
           assert len(set(seen))==160, 'duplicate symbol/segment payloads'
           assert {x[0] for x in seen}==symbols, f'symbol coverage mismatch: {sorted({x[0] for x in seen})}'
           assert {x[2] for x in seen}=={32}, f'segment_count mismatch: {sorted({x[2] for x in seen})}'
+          assert len(manifests)==1, f'data manifest mismatch: {sorted(manifests)}'
           expected={(s,i,32) for s in symbols for i in range(32)}
           actual=set(seen)
           assert actual==expected, f'grid mismatch missing={sorted(expected-actual)[:20]} extra={sorted(actual-expected)[:20]}'
