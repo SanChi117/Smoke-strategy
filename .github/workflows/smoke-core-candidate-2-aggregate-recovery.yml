@@ -52,22 +52,83 @@ jobs:
                   p.unlink()
           PY
 
-      - name: Download authoritative 32-way segment 0
+      - name: Download BTCUSDT segment 0
         uses: actions/download-artifact@v4
         with:
-          pattern: candidate-2-causal-replay-*-0
+          name: candidate-2-causal-replay-BTCUSDT-0
           path: research_outputs/baseline_head
-          merge-multiple: true
           repository: SanChi117/Smoke-strategy
           run-id: '31820724655'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Download authoritative 32-way segment 1
+      - name: Download BTCUSDT segment 1
         uses: actions/download-artifact@v4
         with:
-          pattern: candidate-2-causal-replay-*-1
+          name: candidate-2-causal-replay-BTCUSDT-1
           path: research_outputs/baseline_head
-          merge-multiple: true
+          repository: SanChi117/Smoke-strategy
+          run-id: '31820724655'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download ETHUSDT segment 0
+        uses: actions/download-artifact@v4
+        with:
+          name: candidate-2-causal-replay-ETHUSDT-0
+          path: research_outputs/baseline_head
+          repository: SanChi117/Smoke-strategy
+          run-id: '31820724655'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download ETHUSDT segment 1
+        uses: actions/download-artifact@v4
+        with:
+          name: candidate-2-causal-replay-ETHUSDT-1
+          path: research_outputs/baseline_head
+          repository: SanChi117/Smoke-strategy
+          run-id: '31820724655'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download SOLUSDT segment 0
+        uses: actions/download-artifact@v4
+        with:
+          name: candidate-2-causal-replay-SOLUSDT-0
+          path: research_outputs/baseline_head
+          repository: SanChi117/Smoke-strategy
+          run-id: '31820724655'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download SOLUSDT segment 1
+        uses: actions/download-artifact@v4
+        with:
+          name: candidate-2-causal-replay-SOLUSDT-1
+          path: research_outputs/baseline_head
+          repository: SanChi117/Smoke-strategy
+          run-id: '31820724655'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download LINKUSDT segment 0
+        uses: actions/download-artifact@v4
+        with:
+          name: candidate-2-causal-replay-LINKUSDT-0
+          path: research_outputs/baseline_head
+          repository: SanChi117/Smoke-strategy
+          run-id: '31820724655'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download LINKUSDT segment 1
+        uses: actions/download-artifact@v4
+        with:
+          name: candidate-2-causal-replay-LINKUSDT-1
+          path: research_outputs/baseline_head
+          repository: SanChi117/Smoke-strategy
+          run-id: '31820724655'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download AAVEUSDT segment 0
+        uses: actions/download-artifact@v4
+        with:
+          name: candidate-2-causal-replay-AAVEUSDT-0
+          path: research_outputs/baseline_head
+          repository: SanChi117/Smoke-strategy
+          run-id: '31820724655'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download AAVEUSDT segment 1
+        uses: actions/download-artifact@v4
+        with:
+          name: candidate-2-causal-replay-AAVEUSDT-1
+          path: research_outputs/baseline_head
           repository: SanChi117/Smoke-strategy
           run-id: '31820724655'
           github-token: ${{ secrets.GITHUB_TOKEN }}
