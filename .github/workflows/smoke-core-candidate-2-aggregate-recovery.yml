@@ -6,6 +6,7 @@ on:
       - agent/smoke-core-1-p8-semantic-freeze
     paths:
       - '.github/workflows/smoke-core-candidate-2-aggregate-recovery.yml'
+      - 'strategy_lab/candidate_2_dynamic_checkpoint_aggregate_v1.py'
   workflow_dispatch:
 
 permissions:
