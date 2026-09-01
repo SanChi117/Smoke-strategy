@@ -8,6 +8,7 @@ count. Trading semantics are untouched.
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import hashlib
 import json
 from pathlib import Path
@@ -28,18 +29,7 @@ EXPECTED_CHECKPOINT_VERSION = "C2_CAUSAL_CHECKPOINT_V1"
 
 
 def _audit_transport(payloads: list[dict[str, Any]], segment_count: int) -> None:
-    """Audit the transport contract that is actually serialized by replay shards.
-
-    candidate_2_replay_shards_v1 serializes checkpoint-chain, checkpoint-version,
-    checkpoint-restored/saved and precomputed-level diagnostics. It does not serialize
-    p7_incremental_poi_installed or checkpoint_transport booleans, so requiring those
-    fields rejects valid shards by schema mismatch rather than detecting a transport
-    failure.
-
-    The incremental POI provider is part of candidate_2_segmented_replay_v1 and is
-    installed before scanning. Artifact-level proof is therefore the exact V4 shard
-    identity plus a complete, continuous checkpoint chain and precomputed P7 levels.
-    """
+    """Audit the transport contract that is actually serialized by replay shards."""
     bad_shard_ids = [
         (p.get("symbol"), p.get("segment_index"), p.get("shard_id"))
         for p in payloads
@@ -128,6 +118,20 @@ def aggregate(input_dir: Path, output: Path) -> dict[str, Any]:
     counted = tuple(row for row in deduped if is_counted(row))
     digest = hashlib.sha256("\n".join(sorted(row.fingerprint for row in counted)).encode("utf-8")).hexdigest()
 
+    lifecycle_counts = Counter(row.lifecycle for row in rows)
+    block_reason_counts = Counter(reason for row in rows for reason in row.block_reasons)
+    family_counts = Counter(row.family for row in rows)
+    direction_observation_counts = Counter(row.direction for row in rows)
+    quality_by_lifecycle: dict[str, dict[str, float | int]] = {}
+    for lifecycle in lifecycle_counts:
+        scores = [row.quality_score_0_100 for row in rows if row.lifecycle == lifecycle]
+        quality_by_lifecycle[lifecycle] = {
+            "count": len(scores),
+            "min": min(scores) if scores else 0.0,
+            "max": max(scores) if scores else 0.0,
+            "mean": (sum(scores) / len(scores)) if scores else 0.0,
+        }
+
     result = {
         "replay_id": payloads[0]["replay_id"],
         "candidate_id": payloads[0]["candidate_id"],
@@ -157,6 +161,16 @@ def aggregate(input_dir: Path, output: Path) -> dict[str, Any]:
             "by_direction": dict(report.by_direction),
             "by_fold": {str(k): v for k, v in report.by_fold.items()},
         },
+        "recognition_diagnostics": {
+            "lifecycle_counts": dict(sorted(lifecycle_counts.items())),
+            "block_reason_counts": dict(sorted(block_reason_counts.items(), key=lambda kv: (-kv[1], kv[0]))),
+            "family_observation_counts": dict(sorted(family_counts.items())),
+            "direction_observation_counts": dict(sorted(direction_observation_counts.items())),
+            "quality_by_lifecycle": quality_by_lifecycle,
+            "trend_triggers": sum(int(p.get("diagnostics", {}).get("trend_triggers", 0) or 0) for p in payloads),
+            "pending_evaluations": sum(int(p.get("diagnostics", {}).get("pending_evaluations", 0) or 0) for p in payloads),
+            "cancelled": sum(int(p.get("diagnostics", {}).get("cancelled", 0) or 0) for p in payloads),
+        },
         "fingerprint_digest_sha256": digest,
         "fingerprints": sorted(row.fingerprint for row in counted),
         "diagnostics": [p["diagnostics"] for p in payloads],
@@ -172,7 +186,12 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     result = aggregate(args.input_dir, args.output)
-    print(json.dumps({"entry_ready": result["recognition"]["independent_entry_ready"], "fingerprint_digest": result["fingerprint_digest_sha256"]}, sort_keys=True))
+    print(json.dumps({
+        "entry_ready": result["recognition"]["independent_entry_ready"],
+        "fingerprint_digest": result["fingerprint_digest_sha256"],
+        "lifecycle_counts": result["recognition_diagnostics"]["lifecycle_counts"],
+        "block_reason_counts": result["recognition_diagnostics"]["block_reason_counts"],
+    }, sort_keys=True))
     return 0
 
 
