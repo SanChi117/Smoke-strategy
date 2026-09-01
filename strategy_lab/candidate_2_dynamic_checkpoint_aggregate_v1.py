@@ -23,56 +23,77 @@ from strategy_lab.candidate_2_outcome_blind_recognition_v1 import (
 )
 
 TRANSPORT = "AUTHORITATIVE_P7_INCREMENTAL_POI_CHECKPOINT_CHAIN_PLUS_PRECOMPUTED_LEVELS"
-LEGACY_CHECKPOINT_VERSION = "C2_CAUSAL_CHECKPOINT_V1"
-LEGACY_HEAD_SEGMENTS = {0, 1}
+EXPECTED_SHARD_ID = "SMOKE_CORE_CANDIDATE_2_REPLAY_SHARDS_V4_CHECKPOINT_CHAIN"
+EXPECTED_CHECKPOINT_VERSION = "C2_CAUSAL_CHECKPOINT_V1"
 
 
-def _legacy_transport_proven(payload: dict[str, Any]) -> bool:
-    """Accept the pre-diagnostic-schema head shards without weakening transport checks.
+def _audit_transport(payloads: list[dict[str, Any]], segment_count: int) -> None:
+    """Audit the transport contract that is actually serialized by replay shards.
 
-    The 32-way head shards from the earlier checkpoint run were produced by code that
-    explicitly installed candidate_2_checkpoint_transport_v1 into P7, but that version
-    did not yet serialize p7_incremental_poi_installed/checkpoint_transport diagnostics.
-    Restrict compatibility to segments 0-1 and require the contemporaneous checkpoint
-    chain + precomputed-level evidence. Explicit false values are never accepted.
+    candidate_2_replay_shards_v1 serializes checkpoint-chain, checkpoint-version,
+    checkpoint-restored/saved and precomputed-level diagnostics. It does not serialize
+    p7_incremental_poi_installed or checkpoint_transport booleans, so requiring those
+    fields rejects valid shards by schema mismatch rather than detecting a transport
+    failure.
+
+    The incremental POI provider is part of candidate_2_segmented_replay_v1 and is
+    installed before scanning. Artifact-level proof is therefore the exact V4 shard
+    identity plus a complete, continuous checkpoint chain and precomputed P7 levels.
     """
-    diagnostics = payload.get("diagnostics", {})
-    if int(payload.get("segment_count", -1)) != 32:
-        return False
-    if int(payload.get("segment_index", -1)) not in LEGACY_HEAD_SEGMENTS:
-        return False
-    if diagnostics.get("p7_incremental_poi_installed") is False:
-        return False
-    if diagnostics.get("checkpoint_transport") is False:
-        return False
-    return (
-        diagnostics.get("checkpoint_chain_enabled") is True
-        and diagnostics.get("checkpoint_version") == LEGACY_CHECKPOINT_VERSION
-        and diagnostics.get("checkpoint_saved") is True
-        and diagnostics.get("p7_precomputed_levels_enabled") is True
-    )
+    bad_shard_ids = [
+        (p.get("symbol"), p.get("segment_index"), p.get("shard_id"))
+        for p in payloads
+        if p.get("shard_id") != EXPECTED_SHARD_ID
+    ]
+    if bad_shard_ids:
+        raise ValueError(f"unexpected Candidate 2 shard transport identity: {bad_shard_ids[:10]}")
 
+    bad_precomputed = [
+        (p["symbol"], int(p["segment_index"]))
+        for p in payloads
+        if p.get("diagnostics", {}).get("p7_precomputed_levels_enabled") is not True
+    ]
+    if bad_precomputed:
+        raise ValueError(f"precomputed P7 levels missing: {bad_precomputed[:20]}")
 
-def _has_incremental_poi_transport(payload: dict[str, Any]) -> bool:
-    diagnostics = payload.get("diagnostics", {})
-    return diagnostics.get("p7_incremental_poi_installed") is True or _legacy_transport_proven(payload)
+    bad_chain = [
+        (p["symbol"], int(p["segment_index"]))
+        for p in payloads
+        if p.get("diagnostics", {}).get("checkpoint_chain_enabled") is not True
+    ]
+    if bad_chain:
+        raise ValueError(f"checkpoint chain missing: {bad_chain[:20]}")
 
+    bad_version = [
+        (p["symbol"], int(p["segment_index"]), p.get("diagnostics", {}).get("checkpoint_version"))
+        for p in payloads
+        if p.get("diagnostics", {}).get("checkpoint_version") != EXPECTED_CHECKPOINT_VERSION
+    ]
+    if bad_version:
+        raise ValueError(f"checkpoint version mismatch: {bad_version[:20]}")
 
-def _has_checkpoint_transport(payload: dict[str, Any]) -> bool:
-    diagnostics = payload.get("diagnostics", {})
-    return diagnostics.get("checkpoint_transport") is True or _legacy_transport_proven(payload)
+    bad_saved = [
+        (p["symbol"], int(p["segment_index"]))
+        for p in payloads
+        if p.get("diagnostics", {}).get("checkpoint_saved") is not True
+    ]
+    if bad_saved:
+        raise ValueError(f"checkpoint save audit failed: {bad_saved[:20]}")
 
+    bad_continuity: list[tuple[str, int, Any]] = []
+    for p in payloads:
+        idx = int(p["segment_index"])
+        restored = p.get("diagnostics", {}).get("checkpoint_restored")
+        expected_restored = idx > 0
+        if restored is not expected_restored:
+            bad_continuity.append((p["symbol"], idx, restored))
+    if bad_continuity:
+        raise ValueError(f"checkpoint continuity audit failed: {bad_continuity[:20]}")
 
-def _result_diagnostics(payload: dict[str, Any]) -> dict[str, Any]:
-    diagnostics = dict(payload["diagnostics"])
-    if _legacy_transport_proven(payload):
-        diagnostics["p7_incremental_poi_installed"] = True
-        diagnostics["checkpoint_transport"] = True
-        diagnostics["legacy_transport_diagnostics_normalized"] = True
-        diagnostics["legacy_transport_evidence"] = (
-            "segment_0_1_checkpoint_chain_precomputed_levels_and_source_install"
-        )
-    return diagnostics
+    coverage = {(p["symbol"], int(p["segment_index"])) for p in payloads}
+    expected = {(symbol, idx) for symbol in p7.ALLOWED_SYMBOLS for idx in range(segment_count)}
+    if coverage != expected:
+        raise ValueError("checkpoint transport coverage mismatch")
 
 
 def aggregate(input_dir: Path, output: Path) -> dict[str, Any]:
@@ -97,12 +118,8 @@ def aggregate(input_dir: Path, output: Path) -> dict[str, Any]:
         raise ValueError("Candidate 2 replay segment coverage mismatch")
     if len({p["data_manifest_sha256"] for p in payloads}) != 1:
         raise ValueError("Candidate 2 replay data manifest mismatch")
-    if not all(_has_incremental_poi_transport(p) for p in payloads):
-        raise ValueError("incremental POI transport missing")
-    if not all(p["diagnostics"].get("p7_precomputed_levels_enabled") is True for p in payloads):
-        raise ValueError("precomputed P7 levels missing")
-    if not all(_has_checkpoint_transport(p) for p in payloads):
-        raise ValueError("checkpoint transport missing")
+
+    _audit_transport(payloads, segment_count)
 
     rows = [_row_from_dict(row) for payload in payloads for row in payload["rows"]]
     report = run_recognition(rows)
@@ -120,6 +137,14 @@ def aggregate(input_dir: Path, output: Path) -> dict[str, Any]:
         "segments_per_symbol": segment_count,
         "semantic_clean": True,
         "transport": TRANSPORT,
+        "transport_audit": {
+            "shard_id": EXPECTED_SHARD_ID,
+            "checkpoint_version": EXPECTED_CHECKPOINT_VERSION,
+            "checkpoint_chain_complete": True,
+            "checkpoint_continuity_clean": True,
+            "precomputed_p7_levels_complete": True,
+            "note": "incremental POI is proven by V4 checkpoint-chain shard identity and continuous serialized checkpoint state; non-serialized diagnostic flags are not required",
+        },
         "recognition": {
             "total_rows": report.total_rows,
             "independent_entry_ready": report.independent_entry_ready,
@@ -134,7 +159,7 @@ def aggregate(input_dir: Path, output: Path) -> dict[str, Any]:
         },
         "fingerprint_digest_sha256": digest,
         "fingerprints": sorted(row.fingerprint for row in counted),
-        "diagnostics": [_result_diagnostics(p) for p in payloads],
+        "diagnostics": [p["diagnostics"] for p in payloads],
     }
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
