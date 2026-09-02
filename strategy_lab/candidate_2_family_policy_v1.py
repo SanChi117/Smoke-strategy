@@ -18,6 +18,11 @@ POLICY_ID = "SMOKE_CORE_CANDIDATE_2_FAMILY_POLICY_V1"
 
 TREND_LONG_REGIMES = frozenset({RegimeState.TREND_EXPANSION_UP, RegimeState.TREND_PULLBACK_UP})
 TREND_SHORT_REGIMES = frozenset({RegimeState.TREND_EXPANSION_DOWN, RegimeState.TREND_PULLBACK_DOWN})
+NEUTRAL_TRANSITION_REGIMES = frozenset({
+    RegimeState.BALANCED_RANGE,
+    RegimeState.VOLATILITY_TRANSITION,
+    RegimeState.DISORDERED,
+})
 
 
 def evaluate_trend_pullback_policy(
@@ -43,12 +48,25 @@ def evaluate_trend_pullback_policy(
         raise ValueError("target evidence cannot come from the future")
 
     allowed = TREND_LONG_REGIMES if direction == "LONG" else TREND_SHORT_REGIMES
+    opposite = TREND_SHORT_REGIMES if direction == "LONG" else TREND_LONG_REGIMES
     reasons: list[str] = []
     lifecycle = Candidate2Lifecycle.ACCEPTANCE_PENDING
 
-    if regime.regime not in allowed:
+    # The P7 trend trigger is already created only when the frozen HTF context is
+    # directionally aligned with the anchor. Candidate 2 therefore treats a later
+    # neutral/transition 5m regime as unresolved rather than as proof that the HTF
+    # continuation thesis is invalid. Entry is still impossible until the local
+    # regime becomes directionally compatible. Only an explicit opposite trend
+    # state is an immediate regime cancellation.
+    if regime.regime in opposite:
         lifecycle = Candidate2Lifecycle.CANCELLED_REGIME
-        reasons.append("regime_not_compatible_with_trend_direction")
+        reasons.append("opposite_trend_regime_invalidates_continuation")
+    elif regime.regime in NEUTRAL_TRANSITION_REGIMES:
+        lifecycle = Candidate2Lifecycle.ACCEPTANCE_PENDING
+        reasons.append("local_regime_not_yet_directionally_committed")
+    elif regime.regime not in allowed:
+        lifecycle = Candidate2Lifecycle.CANCELLED_REGIME
+        reasons.append("unsupported_regime_state")
     elif not structure_valid:
         lifecycle = Candidate2Lifecycle.CANCELLED_STRUCTURE
         reasons.append("protected_structure_invalid")
