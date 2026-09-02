@@ -40,6 +40,16 @@ def main() -> int:
         economics_pass=True, risk_pass=True,
     )
     assert rejected.lifecycle == Candidate2Lifecycle.CANCELLED_REGIME
+    assert "opposite_trend_regime_invalidates_continuation" in rejected.rejection_reasons
+
+    neutral_regime = RegimeEvidence(t, RegimeState.DISORDERED, 0.05, 0.1, 0.2, 0.02, 0.0, 0.0, 0.0, ("regime_neutral",), t-timedelta(hours=4), t)
+    pending = evaluate_trend_pullback_policy(
+        scenario_id="s2b", evaluated_at=t, direction="LONG", regime=neutral_regime,
+        persistence=persistence, target=target, structure_valid=True,
+        economics_pass=True, risk_pass=True,
+    )
+    assert pending.lifecycle == Candidate2Lifecycle.ACCEPTANCE_PENDING
+    assert "local_regime_not_yet_directionally_committed" in pending.rejection_reasons
 
     raid = evaluate_raid_reversal_policy(scenario_id="s3", evaluated_at=t, direction="SHORT", regime=bad_regime)
     assert raid.lifecycle != Candidate2Lifecycle.ENTRY_READY
