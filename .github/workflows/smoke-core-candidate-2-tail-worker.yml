@@ -1,0 +1,76 @@
+name: SMOKE CORE Candidate 2 Tail Worker
+
+on:
+  workflow_call:
+    inputs:
+      symbol:
+        required: true
+        type: string
+      micro_index:
+        required: true
+        type: number
+      previous_micro:
+        required: true
+        type: number
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e .
+      - name: Download frozen replay/debug dataset
+        uses: actions/download-artifact@v4
+        with:
+          name: candidate-1-development-locked-data-v2
+          path: research_outputs/p7_full_recognition_data_v1
+          repository: SanChi117/Smoke-strategy
+          run-id: '31130707800'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download authoritative P7 precomputed levels
+        uses: actions/download-artifact@v4
+        with:
+          name: p7-full-recognition-levels-${{ inputs.symbol }}
+          path: research_outputs/p7_levels
+          repository: SanChi117/Smoke-strategy
+          run-id: '30899050584'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download previous tail checkpoint
+        uses: actions/download-artifact@v4
+        with:
+          name: candidate-2-tail-checkpoint-${{ inputs.symbol }}-${{ inputs.previous_micro }}
+          path: research_outputs/tail_checkpoint_in
+      - name: Scan 64-way tail microsegment
+        env:
+          P7_LEVELS_FILE: research_outputs/p7_levels/p7_levels_${{ inputs.symbol }}.pkl
+          P7_LEVELS_SYMBOL: ${{ inputs.symbol }}
+        run: |
+          mkdir -p research_outputs/tail_replay research_outputs/tail_checkpoints
+          python -u strategy_lab/candidate_2_replay_shards_v1.py scan-segment \
+            --symbol '${{ inputs.symbol }}' \
+            --segment-index '${{ inputs.micro_index }}' \
+            --segment-count 64 \
+            --data-root research_outputs/p7_full_recognition_data_v1 \
+            --checkpoint-in research_outputs/tail_checkpoint_in/candidate_2_tail_checkpoint_${{ inputs.symbol }}_${{ inputs.previous_micro }}.pkl \
+            --checkpoint-out research_outputs/tail_checkpoints/candidate_2_tail_checkpoint_${{ inputs.symbol }}_${{ inputs.micro_index }}.pkl \
+            --output research_outputs/tail_replay/candidate_2_tail_micro_${{ inputs.symbol }}_${{ inputs.micro_index }}.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candidate-2-tail-micro-${{ inputs.symbol }}-${{ inputs.micro_index }}
+          path: research_outputs/tail_replay/candidate_2_tail_micro_${{ inputs.symbol }}_${{ inputs.micro_index }}.json
+          if-no-files-found: error
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candidate-2-tail-checkpoint-${{ inputs.symbol }}-${{ inputs.micro_index }}
+          path: research_outputs/tail_checkpoints/candidate_2_tail_checkpoint_${{ inputs.symbol }}_${{ inputs.micro_index }}.pkl
+          if-no-files-found: error
+          retention-days: 90
