@@ -52,28 +52,29 @@ def evaluate_trend_pullback_policy(
     reasons: list[str] = []
     lifecycle = Candidate2Lifecycle.ACCEPTANCE_PENDING
 
-    # The P7 trend trigger is already created only when the frozen HTF context is
-    # directionally aligned with the anchor. Candidate 2 therefore treats a later
-    # neutral/transition 5m regime as unresolved rather than as proof that the HTF
-    # continuation thesis is invalid. Entry is still impossible until the local
-    # regime becomes directionally compatible. Only an explicit opposite trend
-    # state is an immediate regime cancellation.
+    # Trend Pullback Continuation has a causal sequence:
+    # TREND REGIME -> pullback/interaction -> RE-ACCEPTANCE -> ENTRY_READY.
+    # The upstream frozen P7 trigger is created only when HTF context is already
+    # directionally aligned with the anchor, so the post-trigger regime is an
+    # invalidation/compatibility observation, not a second mandatory trend trigger.
+    # An explicit opposite trend invalidates the continuation thesis. A neutral or
+    # transition state may continue only after the independent persistence engine
+    # causally proves directional re-acceptance; it never grants entry by itself.
     if regime.regime in opposite:
         lifecycle = Candidate2Lifecycle.CANCELLED_REGIME
         reasons.append("opposite_trend_regime_invalidates_continuation")
-    elif regime.regime in NEUTRAL_TRANSITION_REGIMES:
-        lifecycle = Candidate2Lifecycle.ACCEPTANCE_PENDING
-        reasons.append("local_regime_not_yet_directionally_committed")
-    elif regime.regime not in allowed:
-        lifecycle = Candidate2Lifecycle.CANCELLED_REGIME
-        reasons.append("unsupported_regime_state")
     elif not structure_valid:
         lifecycle = Candidate2Lifecycle.CANCELLED_STRUCTURE
         reasons.append("protected_structure_invalid")
-    elif persistence is None or not persistence.accepted:
-        lifecycle = Candidate2Lifecycle.CANCELLED_ACCEPTANCE if persistence is not None else Candidate2Lifecycle.ACCEPTANCE_PENDING
-        if persistence is not None:
-            reasons.append("persistence_not_accepted")
+    elif persistence is None:
+        lifecycle = Candidate2Lifecycle.ACCEPTANCE_PENDING
+        reasons.append("persistence_evidence_pending")
+    elif not persistence.accepted:
+        lifecycle = Candidate2Lifecycle.CANCELLED_ACCEPTANCE
+        reasons.append("persistence_not_accepted")
+    elif regime.regime not in allowed and regime.regime not in NEUTRAL_TRANSITION_REGIMES:
+        lifecycle = Candidate2Lifecycle.CANCELLED_REGIME
+        reasons.append("unsupported_regime_state")
     elif target is None or not target.reachable:
         lifecycle = Candidate2Lifecycle.CANCELLED_TARGET if target is not None else Candidate2Lifecycle.ACCEPTANCE_CONFIRMED
         if target is not None:
